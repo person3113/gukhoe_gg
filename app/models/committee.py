@@ -20,7 +20,6 @@ class Committee(Base):
     # 관계 정의
     members = relationship("CommitteeMember", back_populates="committee")
     attendances = relationship("Attendance", back_populates="committee")
-    pass
 
 class CommitteeMember(Base):
     # 테이블명 정의
@@ -35,7 +34,6 @@ class CommitteeMember(Base):
     # 관계 정의
     committee = relationship("Committee", back_populates="members")
     legislator = relationship("Legislator", back_populates="committee_memberships")
-    pass
 
 class CommitteeHistory(Base):
     # 테이블명 정의

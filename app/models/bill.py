@@ -23,7 +23,6 @@ class Bill(Base):
     main_proposer = relationship("Legislator", back_populates="bills_proposed", foreign_keys=[main_proposer_id])
     co_proposers = relationship("BillCoProposer", back_populates="bill")
     votes = relationship("Vote", back_populates="bill")
-    pass
 
 class BillCoProposer(Base):
     # 테이블명 정의
