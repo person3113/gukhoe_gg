@@ -2,8 +2,9 @@ from fastapi import FastAPI, Depends, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
+import os
 
-from app.db.database import engine, Base
+from app.db.database import engine, Base, get_db
 from app.api import home, search, champions, ranking, misc_ranking
 
 def create_app():
@@ -46,6 +47,12 @@ app = create_app()
 async def startup_event():
     # 애플리케이션 시작 시 실행할 작업
     init_db()
+    
+    # 메모리 DB를 사용하는 경우에만 더미 데이터 생성
+    if os.getenv("DB_MODE") == "memory":
+        from scripts.create_dummy_data import create_dummy_data
+        create_dummy_data()
+    
     # API 키와 기타 설정 로드
     # 필요시 백그라운드 작업 시작
     pass

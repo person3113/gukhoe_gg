@@ -2,7 +2,7 @@ from typing import List, Dict, Any
 
 def generate_top_score_chart_data(legislators: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
-    상위 의원들의 점수를 차트.js에서 사용 가능한 형식으로 변환하는 함수
+    상위 의원들의 점수를 chart.js에서 사용 가능한 형식으로 변환하는 함수
     
     Args:
         legislators: 상위 의원 목록
@@ -13,11 +13,14 @@ def generate_top_score_chart_data(legislators: List[Dict[str, Any]]) -> Dict[str
     # 차트에 표시할 라벨(의원 이름) 추출
     labels = [leg["name"] for leg in legislators]
     
-    # 각 카테고리별 데이터셋 생성 - 핵심 데이터만 포함
+    # 데이터값 추출
+    scores = [float(leg["overall_score"]) for leg in legislators]
+    
+    # 각 카테고리별 데이터셋 생성
     datasets = [
         {
             "label": "종합 점수",
-            "data": [leg["overall_score"] for leg in legislators],
+            "data": scores,
             "backgroundColor": "rgba(75, 192, 192, 0.6)",
             "borderColor": "rgba(75, 192, 192, 1)",
             "borderWidth": 1

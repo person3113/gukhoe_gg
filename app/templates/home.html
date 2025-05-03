@@ -36,7 +36,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     var ctx = document.getElementById('topScoreChart').getContext('2d');
     var chartData = {{ chart_data|tojson }};
-    
+
     var myChart = new Chart(ctx, {
         type: 'bar',
         data: chartData,
