@@ -8,7 +8,36 @@ from app.utils.xml_parser import parse_xml_to_dict
 class ApiService:
     def __init__(self, api_key=None):
         # API 키 설정 및 기본 URL 초기화
-        pass
+        self.api_key = api_key or settings.API_KEY
+        self.base_url = settings.BASE_API_URL
+        self.endpoints = settings.API_ENDPOINTS
+        self.default_args = settings.DEFAULT_API_ARGS
+        self.required_args = settings.API_REQUIRED_ARGS
+    
+    async def _make_api_call(self, endpoint_key: str, additional_params: Optional[Dict[str, str]] = None) -> str:
+      """
+      공통 API 호출 메서드
+      
+      Args:
+          endpoint_key: API 엔드포인트 키 (config에 정의된 키)
+          additional_params: 추가 요청 인자
+              
+      Returns:
+          str: API 응답 (XML 문자열)
+      """
+      # 1. 엔드포인트 URL 구성 (base_url + endpoint)
+      
+      # 2. 기본 인자 설정 (Key, Type, pIndex, pSize)
+      
+      # 3. API별 필수 인자 확인 및 추가
+      
+      # 4. 추가 인자 병합
+      
+      # 5. API 호출 및 응답 받기
+      
+      # 6. 응답 반환 (XML 문자열)
+      
+      pass  
 
     async def fetch_legislators_info(self) -> List[Dict[str, Any]]:
         # 호출: requests.get()로 국회의원 인적사항 API 호출
