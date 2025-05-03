@@ -1,6 +1,6 @@
 # app/config.py
 import os
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     # 데이터베이스 설정
@@ -41,7 +41,10 @@ class Settings(BaseSettings):
         "processed_bills_stats": {"ERACO": "제22대"}  # 처리 의안통계(위원회별) - 대수 필수
     }
     
-    class Config:
-        env_file = ".env"
+    # Pydantic 2.x에서 Config 클래스 대신 model_config 사용
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        extra="ignore"  # 추가 필드 허용 (assembly_api_key 등)
+    )
 
 settings = Settings()

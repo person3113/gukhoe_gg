@@ -1,9 +1,36 @@
 from typing import List, Dict, Any
 
 def generate_top_score_chart_data(legislators: List[Dict[str, Any]]) -> Dict[str, Any]:
-    # 상위 의원 데이터를 Chart.js에 맞는 형식으로 변환
-    # 반환: 차트 데이터 딕셔너리
-    pass
+    """
+    상위 의원들의 점수를 차트.js에서 사용 가능한 형식으로 변환하는 함수
+    
+    Args:
+        legislators: 상위 의원 목록
+        
+    Returns:
+        차트 데이터가 포함된 딕셔너리
+    """
+    # 차트에 표시할 라벨(의원 이름) 추출
+    labels = [leg["name"] for leg in legislators]
+    
+    # 각 카테고리별 데이터셋 생성 - 핵심 데이터만 포함
+    datasets = [
+        {
+            "label": "종합 점수",
+            "data": [leg["overall_score"] for leg in legislators],
+            "backgroundColor": "rgba(75, 192, 192, 0.6)",
+            "borderColor": "rgba(75, 192, 192, 1)",
+            "borderWidth": 1
+        }
+    ]
+    
+    # 차트 데이터 딕셔너리 구성
+    chart_data = {
+        "labels": labels,
+        "datasets": datasets
+    }
+    
+    return chart_data
 
 def generate_comparison_chart_data(stats: Dict[str, Any], avg_stats: Dict[str, Any]) -> Dict[str, Any]:
     # 개인 스탯과 평균 스탯을 비교 차트 데이터로 변환

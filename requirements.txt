@@ -6,6 +6,7 @@ jinja2==3.1.2
 # 데이터베이스 및 ORM
 SQLAlchemy==2.0.39
 pydantic==2.10.6
+pydantic-settings==2.1.0  # 추가됨
 
 # API 통신
 requests==2.32.3
@@ -15,3 +16,8 @@ xmltodict==0.13.0
 pandas==2.2.3
 numpy==2.2.4
 openpyxl==3.1.2
+
+# 테스트 관련 패키지
+pytest==7.4.3
+httpx==0.25.1
+pytest-asyncio==0.21.1
