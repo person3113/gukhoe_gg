@@ -15,8 +15,37 @@
     <style>
         body {
             padding-top: 20px;
+            display: flex;
+            min-height: 100vh;
         }
-        .navbar {
+        .sidebar {
+            width: 200px;
+            background-color: #212529;
+            color: white;
+            padding-top: 20px;
+            position: fixed;
+            height: 100vh;
+        }
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.75);
+            padding: 0.5rem 1rem;
+        }
+        .sidebar .nav-link:hover {
+            color: rgba(255, 255, 255, 1);
+        }
+        .sidebar .nav-link.active {
+            color: #fff;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .main-content {
+            flex: 1;
+            margin-left: 200px;
+            padding: 20px;
+        }
+        .search-container {
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
             margin-bottom: 20px;
         }
     </style>
@@ -24,41 +53,40 @@
     {% block extra_head %}{% endblock %}
 </head>
 <body>
-    <!-- 네비게이션 -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="/">국회.gg</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/">홈</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/champions">챔피언</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/ranking">활동 랭킹</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/misc-ranking">잡다한 랭킹</a>
-                    </li>
-                </ul>
-                <!-- 검색 폼 -->
-                <form class="d-flex" action="/search">
-                    <input class="form-control me-2" type="search" name="name" placeholder="의원명 검색" required>
-                    <button class="btn btn-outline-light" type="submit">검색</button>
-                </form>
-            </div>
-        </div>
-    </nav>
+    <!-- 좌측 세로 네비게이션 -->
+    <div class="sidebar">
+        <h2 class="text-center mb-4">국회.gg</h2>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="/">홈</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/champions">챔피언</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/ranking">활동 랭킹</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/misc-ranking">잡다한 랭킹</a>
+            </li>
+        </ul>
+    </div>
 
-    <!-- 메인 컨텐츠 -->
-    <main class="container">
-        {% block content %}{% endblock %}
-    </main>
+    <!-- 메인 컨텐츠 영역 -->
+    <div class="main-content">
+        <!-- 상단 검색 영역 -->
+        <div class="search-container">
+            <form class="d-flex" action="/search">
+                <input class="form-control me-2" type="search" name="name" placeholder="의원명 검색" required>
+                <button class="btn btn-outline-dark" type="submit">검색</button>
+            </form>
+        </div>
+
+        <!-- 메인 컨텐츠 -->
+        <main class="container">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
