@@ -17,11 +17,13 @@ class Bill(Base):
     main_proposer_id = Column(Integer, ForeignKey("legislators.id"), index=True)  # 대표발의자 ID
     committee = Column(String)  # 소관위원회
     proc_result = Column(String)  # 본회의심의결과
+    law_title = Column(String)  # 법률명 (추가)
     
     # 관계 정의
     main_proposer = relationship("Legislator", back_populates="bills_proposed", foreign_keys=[main_proposer_id])
     co_proposers = relationship("BillCoProposer", back_populates="bill")
     votes = relationship("Vote", back_populates="bill")
+    pass
 
 class BillCoProposer(Base):
     # 테이블명 정의

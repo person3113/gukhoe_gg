@@ -15,25 +15,21 @@ def fetch_all_data():
     모든 데이터 수집 함수 호출
     """
     # DB 세션 생성
-    db = SessionLocal()
-    try:
-        print("Fetching all data...")
-        fetch_legislators(db)
-        fetch_bills(db)
-        fetch_votes(db)
-        fetch_committees(db)
-        fetch_excel_data(db)
-        print("Data fetching completed.")
-    finally:
-        db.close()
+    # 호출: fetch_legislators()
+    # 호출: fetch_bills()
+    # 호출: fetch_votes()
+    # 호출: fetch_committees()
+    # 호출: fetch_committee_info()  # 추가
+    # 호출: fetch_processed_bills_stats()  # 추가
+    # 호출: fetch_excel_data()
+    # DB 세션 닫기
+    pass
 
 def fetch_legislators(db: Session):
     """
     국회의원 정보 및 SNS 정보 수집
     """
     # ApiService 인스턴스 생성
-    api_service = ApiService()
-    
     # 호출: api_service.fetch_legislators_info()로 의원 정보 수집
     # 호출: api_service.fetch_legislators_sns()로 의원 SNS 정보 수집
     # DB에 저장
@@ -44,8 +40,6 @@ def fetch_bills(db: Session):
     법안 정보 수집
     """
     # ApiService 인스턴스 생성
-    api_service = ApiService()
-    
     # 호출: api_service.fetch_bills()로 법안 정보 수집
     # 호출: process_bill_data()로 데이터 처리
     # DB에 저장
@@ -56,8 +50,6 @@ def fetch_votes(db: Session):
     표결 정보 수집
     """
     # ApiService 인스턴스 생성
-    api_service = ApiService()
-    
     # 호출: api_service.fetch_vote_results()로 표결 정보 수집
     # 호출: process_vote_data()로 데이터 처리
     # DB에 저장
@@ -68,10 +60,28 @@ def fetch_committees(db: Session):
     위원회 정보 수집
     """
     # ApiService 인스턴스 생성
-    api_service = ApiService()
-    
     # 호출: api_service.fetch_committee_members()로 위원회 정보 수집
     # DB에 저장
+    pass
+
+def fetch_committee_info(db: Session):
+    """
+    위원회 현황 정보 수집
+    """
+    # ApiService 인스턴스 생성
+    # 호출: api_service.fetch_committee_info()로 위원회 현황 정보 수집
+    # 위원회 테이블에서 해당 위원회 조회 후 정보 업데이트 또는 새로 생성
+    # 변경사항 커밋
+    pass
+
+def fetch_processed_bills_stats(db: Session):
+    """
+    처리 의안통계(위원회별) 수집
+    """
+    # ApiService 인스턴스 생성
+    # 호출: api_service.fetch_processed_bills_stats()로 처리 의안통계 수집
+    # 위원회 테이블에서 해당 위원회 조회 후 접수건수, 처리건수 정보 업데이트
+    # 변경사항 커밋
     pass
 
 def fetch_excel_data(db: Session):
