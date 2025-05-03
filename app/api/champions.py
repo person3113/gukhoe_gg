@@ -1,11 +1,13 @@
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
+from fastapi.templating import Jinja2Templates
 from typing import Optional
 
 from app.db.database import get_db
-from app.services import legislator_service, stats_service, chart_service, bill_service, speech_service, vote_service
+from app.services import legislator_service
 
 router = APIRouter()
+templates = Jinja2Templates(directory="app/templates")
 
 @router.get("/champions")
 async def list_champions(
@@ -16,10 +18,33 @@ async def list_champions(
     district: Optional[str] = None, 
     term: Optional[str] = None
 ):
-    # 호출: legislator_service.get_filter_options()로 필터 옵션 가져오기
-    # 호출: legislator_service.filter_legislators()로 필터링된 의원 목록 조회
-    # 반환: 템플릿 렌더링(champions/list.html)
-    pass
+    # 필터 옵션 가져오기
+    filter_options = legislator_service.get_filter_options(db)
+    
+    # 필터링된 의원 목록 조회
+    legislators = legislator_service.filter_legislators(
+        db, 
+        name=name, 
+        party=party, 
+        district=district, 
+        term=term
+    )
+    
+    # 템플릿 렌더링
+    return templates.TemplateResponse(
+        "champions/list.html", 
+        {
+            "request": request, 
+            "legislators": legislators,
+            "filter_options": filter_options,
+            "current_filters": {
+                "name": name,
+                "party": party,
+                "district": district,
+                "term": term
+            }
+        }
+    )
 
 @router.get("/champions/{legislator_id}")
 async def champion_detail(
