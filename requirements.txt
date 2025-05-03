@@ -1,0 +1,17 @@
+# 백엔드 프레임워크
+fastapi==0.115.11
+uvicorn==0.34.0
+jinja2==3.1.2
+
+# 데이터베이스 및 ORM
+SQLAlchemy==2.0.39
+pydantic==2.10.6
+
+# API 통신
+requests==2.32.3
+xmltodict==0.13.0
+
+# 데이터 처리
+pandas==2.2.3
+numpy==2.2.4
+openpyxl==3.1.2

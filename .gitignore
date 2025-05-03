@@ -1,0 +1,65 @@
+# 가상환경
+venv/
+env/
+ENV/
+
+# 파이썬 캐시 파일
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.coverage
+htmlcov/
+
+# 데이터베이스
+*.db
+*.sqlite
+*.sqlite3
+
+# 로그 파일
+*.log
+
+# 환경 변수 및 민감한 정보
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+config.ini
+secrets.json
+api_keys.json
+credentials.json
+
+# 데이터 폴더 (필요한 경우 주석 처리)
+data/db.sqlite
+data/excel/*.xlsx
+data/excel/*.xls
+data/images/*
+!data/images/.gitkeep
+
+# IDE 및 에디터 파일
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# 빌드 결과물
+build/
+dist/
+*.egg-info/
+
+# 임시 파일
+tmp/
+temp/
+
+# 실행 파일
+*.exe
+*.dll
+*.so
+*.dylib
+
+# 기타
+node_modules/
