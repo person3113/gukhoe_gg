@@ -12,9 +12,9 @@ class Vote(Base):
     vote_date = Column(String)  # 의결일자
     bill_id = Column(Integer, ForeignKey("bills.id"), index=True)
     
-    # 관계 정의
-    bill = relationship("Bill", back_populates="votes")
-    results = relationship("VoteResult", back_populates="vote")
+    # 관계 정의 - 단방향 관계로 유지
+    # bill = relationship("Bill", back_populates="votes")
+    results = relationship("VoteResult", back_populates=None)
 
 class VoteResult(Base):
     # 테이블명 정의
@@ -26,6 +26,6 @@ class VoteResult(Base):
     legislator_id = Column(Integer, ForeignKey("legislators.id"), index=True)
     result_vote_mod = Column(String)  # 표결결과 (찬성/반대/기권)
     
-    # 관계 정의
-    vote = relationship("Vote", back_populates="results")
-    legislator = relationship("Legislator", back_populates="vote_results")
+    # 관계 정의 - 단방향으로 변경하기 위해 제거
+    # vote = relationship("Vote", back_populates="results")
+    # legislator = relationship("Legislator", back_populates="vote_results")

@@ -15,5 +15,5 @@ class LegislatorSNS(Base):
     youtube_url = Column(String)
     blog_url = Column(String)
     
-    # 관계 정의
-    legislator = relationship("Legislator", back_populates="sns")
+    # 관계 정의 - 단방향으로 변경하기 위해 제거
+    # legislator = relationship("Legislator", back_populates="sns")

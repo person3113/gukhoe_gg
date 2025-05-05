@@ -17,12 +17,12 @@ class Bill(Base):
     main_proposer_id = Column(Integer, ForeignKey("legislators.id"), index=True)  # 대표발의자 ID
     committee = Column(String)  # 소관위원회
     proc_result = Column(String)  # 본회의심의결과
-    law_title = Column(String)  # 법률명 (추가)
+    law_title = Column(String)  # 법률명
     
-    # 관계 정의
-    main_proposer = relationship("Legislator", back_populates="bills_proposed", foreign_keys=[main_proposer_id])
-    co_proposers = relationship("BillCoProposer", back_populates="bill")
-    votes = relationship("Vote", back_populates="bill")
+    # 관계 정의 - 단방향 관계로 유지할 것들만 남기고 나머지 제거
+    # main_proposer = relationship("Legislator", back_populates="bills_proposed", foreign_keys=[main_proposer_id])
+    co_proposers = relationship("BillCoProposer", back_populates=None)
+    votes = relationship("Vote", back_populates=None)
 
 class BillCoProposer(Base):
     # 테이블명 정의
@@ -33,6 +33,6 @@ class BillCoProposer(Base):
     bill_id = Column(Integer, ForeignKey("bills.id"), index=True)
     legislator_id = Column(Integer, ForeignKey("legislators.id"), index=True)
     
-    # 관계 정의
-    bill = relationship("Bill", back_populates="co_proposers")
-    legislator = relationship("Legislator", back_populates="bill_co_proposals")
+    # 관계 정의 - 단방향으로 변경하기 위해 제거
+    # bill = relationship("Bill", back_populates="co_proposers")
+    # legislator = relationship("Legislator", back_populates="bill_co_proposals")

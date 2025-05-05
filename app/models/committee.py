@@ -13,14 +13,13 @@ class Committee(Base):
     avg_score = Column(Float)  # 평균 점수
     rcp_cnt = Column(Integer)  # 접수건수
     proc_cnt = Column(Integer)  # 처리건수
-    curr_cnt = Column(Integer)  # 현원 (추가)
-    limit_cnt = Column(Integer)  # 위원정수 (추가)
-    committee_chair = Column(String)  # 위원장 (추가)
+    curr_cnt = Column(Integer)  # 현원
+    limit_cnt = Column(Integer)  # 위원정수
+    committee_chair = Column(String)  # 위원장
     
-    # 관계 정의
-    members = relationship("CommitteeMember", back_populates="committee")
-    attendances = relationship("Attendance", back_populates="committee")
-
+    # 관계 정의 - 단방향 관계로 유지
+    members = relationship("CommitteeMember", back_populates=None)
+    
 class CommitteeMember(Base):
     # 테이블명 정의
     __tablename__ = "committee_members"
@@ -29,11 +28,11 @@ class CommitteeMember(Base):
     id = Column(Integer, primary_key=True, index=True)
     committee_id = Column(Integer, ForeignKey("committees.id"), index=True)
     legislator_id = Column(Integer, ForeignKey("legislators.id"), index=True)
-    role = Column(String)  # 역할 (위원장, 간사, 위원 등) (추가)
+    role = Column(String)  # 역할 (위원장, 간사, 위원 등)
     
-    # 관계 정의
-    committee = relationship("Committee", back_populates="members")
-    legislator = relationship("Legislator", back_populates="committee_memberships")
+    # 관계 정의 - 단방향으로 변경하기 위해 제거
+    # committee = relationship("Committee", back_populates="members")
+    # legislator = relationship("Legislator", back_populates="committee_memberships")
 
 class CommitteeHistory(Base):
     # 테이블명 정의
@@ -45,5 +44,5 @@ class CommitteeHistory(Base):
     frto_date = Column(String)  # 활동기간
     profile_sj = Column(String)  # 위원회 경력
     
-    # 관계 정의
-    legislator = relationship("Legislator", back_populates="committee_history")
+    # 관계 정의 - 단방향으로 변경하기 위해 제거
+    # legislator = relationship("Legislator", back_populates="committee_history")

@@ -15,6 +15,6 @@ class Attendance(Base):
     meeting_type = Column(String)  # 회의구분 (본회의/상임위)
     status = Column(String)  # 출석상태 (출석/결석/청가/출장/결석신고서)
     
-    # 관계 정의
-    legislator = relationship("Legislator", back_populates="attendances")
-    committee = relationship("Committee", back_populates="attendances")
+    # 관계 정의 - 단방향으로 변경하기 위해 제거
+    # legislator = relationship("Legislator", back_populates="attendances")
+    # committee = relationship("Committee", back_populates="attendances")
