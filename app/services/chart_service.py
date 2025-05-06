@@ -96,14 +96,96 @@ def generate_comparison_chart_data(stats: Dict[str, Any], avg_stats: Optional[Di
     return chart_data
 
 def generate_keyword_chart_data(keywords: List[Dict[str, Any]]) -> Dict[str, Any]:
-    # 키워드 데이터를 차트 데이터로 변환
-    # 반환: 차트 데이터 딕셔너리
-    pass
+    """
+    키워드 데이터를 차트 데이터로 변환
+    
+    Args:
+        keywords: 키워드 목록
+        
+    Returns:
+        차트 데이터 딕셔너리
+    """
+    # 차트에 표시할 라벨(키워드) 추출
+    labels = [keyword["keyword"] for keyword in keywords]
+    
+    # 데이터값(횟수) 추출
+    counts = [keyword["count"] for keyword in keywords]
+    
+    # 색상 목록 생성
+    colors = [
+        'rgba(75, 192, 192, 0.6)',
+        'rgba(54, 162, 235, 0.6)',
+        'rgba(255, 206, 86, 0.6)',
+        'rgba(255, 99, 132, 0.6)',
+        'rgba(153, 102, 255, 0.6)',
+        'rgba(255, 159, 64, 0.6)',
+        'rgba(199, 199, 199, 0.6)',
+        'rgba(83, 102, 255, 0.6)',
+        'rgba(40, 159, 64, 0.6)',
+        'rgba(210, 99, 132, 0.6)'
+    ]
+    
+    # 색상 목록 생성 (테두리)
+    border_colors = [color.replace('0.6', '1') for color in colors]
+    
+    # 차트 데이터 구성
+    chart_data = {
+        "labels": labels,
+        "datasets": [{
+            "label": "발언 횟수",
+            "data": counts,
+            "backgroundColor": colors[:len(labels)],
+            "borderColor": border_colors[:len(labels)],
+            "borderWidth": 1
+        }]
+    }
+    
+    return chart_data
 
 def generate_speech_chart_data(speeches: List[Dict[str, Any]]) -> Dict[str, Any]:
-    # 발언 데이터를 차트 데이터로 변환
-    # 반환: 차트 데이터 딕셔너리
-    pass
+    """
+    회의 구분별 발언 데이터를 차트 데이터로 변환
+    
+    Args:
+        speeches: 회의 구분별 발언 목록
+        
+    Returns:
+        차트 데이터 딕셔너리
+    """
+    # 차트에 표시할 라벨(회의 구분) 추출
+    labels = [speech["meeting_type"] for speech in speeches]
+    
+    # 데이터값(횟수) 추출
+    counts = [speech["count"] for speech in speeches]
+    
+    # 색상 목록 생성
+    colors = [
+        'rgba(54, 162, 235, 0.6)',
+        'rgba(255, 99, 132, 0.6)',
+        'rgba(255, 206, 86, 0.6)',
+        'rgba(75, 192, 192, 0.6)',
+        'rgba(153, 102, 255, 0.6)',
+        'rgba(255, 159, 64, 0.6)',
+        'rgba(199, 199, 199, 0.6)',
+        'rgba(83, 102, 255, 0.6)'
+    ]
+    
+    # 색상 목록 생성 (테두리)
+    border_colors = [color.replace('0.6', '1') for color in colors]
+    
+    # 차트 데이터 구성
+    chart_data = {
+        "labels": labels,
+        "datasets": [{
+            "label": "발언 횟수",
+            "data": counts,
+            "backgroundColor": colors[:len(labels)],
+            "borderColor": border_colors[:len(labels)],
+            "borderWidth": 1
+        }]
+    }
+    
+    return chart_data
 
 def generate_ranking_chart_data(top: List[Dict[str, Any]], bottom: List[Dict[str, Any]]) -> Dict[str, Any]:
     # 상위/하위 의원 데이터를 차트 데이터로 변환

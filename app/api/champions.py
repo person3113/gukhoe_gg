@@ -83,8 +83,19 @@ async def champion_detail(
         # 위원회 경력 조회
         tab_data["committee_history"] = legislator_service.get_legislator_committee_history(db, legislator_id)
     elif tab == "tendency":
-        # 현재는 구현하지 않음 - 향후 구현
-        pass
+        # 발언 키워드 TOP 10 조회
+        from app.services import speech_service, vote_service
+        
+        # 발언 키워드 및 차트 데이터
+        tab_data["top_keywords"] = speech_service.get_top_keywords(db, legislator_id)
+        tab_data["keyword_chart"] = chart_service.generate_keyword_chart_data(tab_data["top_keywords"])
+        
+        # 회의 구분별 발언 수 및 차트 데이터
+        tab_data["speeches_by_meeting"] = speech_service.get_speech_by_meeting_type(db, legislator_id)
+        tab_data["speech_chart"] = chart_service.generate_speech_chart_data(tab_data["speeches_by_meeting"])
+        
+        # 본회의 표결 결과 조회
+        tab_data["vote_results"] = vote_service.get_vote_results(db, legislator_id)
     elif tab == "bills":
         # 현재는 구현하지 않음 - 향후 구현
         pass

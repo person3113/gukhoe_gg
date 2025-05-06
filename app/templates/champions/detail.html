@@ -162,6 +162,141 @@
         </div>
     </div>
     {% endif %}
+
+    <!-- 성향 탭 컨텐츠 -->
+    {% if tab == 'tendency' %}
+    <div class="row">
+        <!-- 발언 키워드 TOP 10 -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5>발언 키워드 TOP 10</h5>
+                    <div class="btn-group" role="group">
+                        <input type="radio" class="btn-check" name="keyword-view" id="keyword-chart-btn" autocomplete="off" checked>
+                        <label class="btn btn-outline-primary btn-sm" for="keyword-chart-btn">차트</label>
+                        
+                        <input type="radio" class="btn-check" name="keyword-view" id="keyword-table-btn" autocomplete="off">
+                        <label class="btn btn-outline-primary btn-sm" for="keyword-table-btn">테이블</label>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="keyword-chart-view" style="height: 400px; overflow-y: auto;">
+                        <canvas id="keywordChart"></canvas>
+                    </div>
+                    <div id="keyword-table-view" class="mt-3 d-none">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>순위</th>
+                                    <th>키워드</th>
+                                    <th>발언 횟수</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for keyword in tab_data.top_keywords %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>{{ keyword.keyword }}</td>
+                                    <td>{{ keyword.count }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 회의 구분별 발언 수 -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5>회의 구분별 발언 수</h5>
+                    <div class="btn-group" role="group">
+                        <input type="radio" class="btn-check" name="speech-view" id="speech-chart-btn" autocomplete="off" checked>
+                        <label class="btn btn-outline-primary btn-sm" for="speech-chart-btn">차트</label>
+                        
+                        <input type="radio" class="btn-check" name="speech-view" id="speech-table-btn" autocomplete="off">
+                        <label class="btn btn-outline-primary btn-sm" for="speech-table-btn">테이블</label>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="speech-chart-view" style="height: 300px;">
+                        <canvas id="speechChart"></canvas>
+                    </div>
+                    <div id="speech-table-view" class="mt-3 d-none">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>회의 구분</th>
+                                    <th>발언 수</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for speech in tab_data.speeches_by_meeting %}
+                                <tr>
+                                    <td>{{ speech.meeting_type }}</td>
+                                    <td>{{ speech.count }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 본회의 표결 목록 -->
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>본회의 표결 결과</h5>
+                </div>
+                <div class="card-body">
+                    {% if tab_data.vote_results %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>안건</th>
+                                    <th>위원회</th>
+                                    <th>날짜</th>
+                                    <th>의결 결과</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for vote in tab_data.vote_results %}
+                                <tr>
+                                    <td>
+                                        {% if vote.detail_link %}
+                                        <a href="{{ vote.detail_link }}" target="_blank" title="{{ vote.bill_name }}">{{ vote.law_title }}</a>
+                                        {% else %}
+                                        <span title="{{ vote.bill_name }}">{{ vote.law_title }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ vote.committee }}</td>
+                                    <td>{{ vote.vote_date }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if vote.result == '찬성' %}bg-success{% 
+                                            elif vote.result == '반대' %}bg-danger{% 
+                                            else %}bg-secondary{% endif %}">
+                                            {{ vote.result }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">표결 내역이 없습니다.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
     
 </div>
 {% endblock %}
@@ -192,6 +327,89 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+    
+    // 성향 탭인 경우 추가 차트 그리기
+    {% if tab == 'tendency' %}
+    // 키워드 차트
+    var keywordCtx = document.getElementById('keywordChart').getContext('2d');
+    var keywordChartData = {{ tab_data.keyword_chart|tojson }};
+    
+    var keywordChart = new Chart(keywordCtx, {
+        type: 'bar',
+        data: keywordChartData,
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+    
+    // 회의별 발언 차트 - 파이 차트로 다시 변경
+    var speechCtx = document.getElementById('speechChart').getContext('2d');
+    var speechChartData = {{ tab_data.speech_chart|tojson }};
+    
+    var speechChart = new Chart(speechCtx, {
+        type: 'pie', // 다시 파이 차트로 변경
+        data: speechChartData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom', // 범례를 아래쪽 배치
+                    labels: {
+                        font: {
+                            size: 11 // 범례 폰트 크기 감소
+                        },
+                        padding: 20 // 범례 항목 간격 조정
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            // 툴팁에 회의 구분과 발언 수 모두 표시
+                            var label = context.label || '';
+                            var value = context.raw || 0;
+                            return label + ': ' + value + '회';
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    
+    // 키워드 차트-테이블 토글 버튼 이벤트
+    document.getElementById('keyword-chart-btn').addEventListener('change', function() {
+        document.getElementById('keyword-chart-view').classList.remove('d-none');
+        document.getElementById('keyword-table-view').classList.add('d-none');
+    });
+    
+    document.getElementById('keyword-table-btn').addEventListener('change', function() {
+        document.getElementById('keyword-chart-view').classList.add('d-none');
+        document.getElementById('keyword-table-view').classList.remove('d-none');
+    });
+    
+    // 회의별 발언 차트-테이블 토글 버튼 이벤트
+    document.getElementById('speech-chart-btn').addEventListener('change', function() {
+        document.getElementById('speech-chart-view').classList.remove('d-none');
+        document.getElementById('speech-table-view').classList.add('d-none');
+        // 차트가 보이게 될 때 크기 조정 이슈를 해결하기 위해 리사이즈 트리거
+        window.setTimeout(function() {
+            window.dispatchEvent(new Event('resize'));
+        }, 50);
+    });
+    
+    document.getElementById('speech-table-btn').addEventListener('change', function() {
+        document.getElementById('speech-chart-view').classList.add('d-none');
+        document.getElementById('speech-table-view').classList.remove('d-none');
+    });
+    {% endif %}
 });
 </script>
 {% endblock %}
