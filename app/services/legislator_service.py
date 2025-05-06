@@ -94,26 +94,132 @@ def filter_legislators(
     return result
 
 def get_legislator_detail(db: Session, legislator_id: int) -> Dict[str, Any]:
-    # 호출: db.query(Legislator)로 특정 의원 상세 정보 조회
-    # 반환: 의원 상세 정보
-    pass
+    """
+    특정 의원의 상세 정보 조회
+    
+    Args:
+        db: 데이터베이스 세션
+        legislator_id: 국회의원 ID
+    
+    Returns:
+        의원 상세 정보 딕셔너리
+    """
+    # 의원 정보 조회
+    legislator = db.query(Legislator).filter(Legislator.id == legislator_id).first()
+    
+    if not legislator:
+        return None
+    
+    # ORM 객체를 dict로 변환
+    result = {
+        "id": legislator.id,
+        "name": legislator.hg_nm,
+        "eng_name": legislator.eng_nm,
+        "birth_date": legislator.bth_date,
+        "job_title": legislator.job_res_nm,
+        "party": legislator.poly_nm,
+        "district": legislator.orig_nm,
+        "committee": legislator.cmit_nm,
+        "term": legislator.reele_gbn_nm,
+        "gender": legislator.sex_gbn_nm,
+        "tel": legislator.tel_no,
+        "email": legislator.e_mail,
+        "profile": legislator.mem_title,
+        "profile_image_url": legislator.profile_image_url or "/static/images/legislators/default.png",
+        "tier": legislator.tier,
+        "overall_rank": legislator.overall_rank,
+    }
+    
+    return result
 
 def get_legislator_stats(db: Session, legislator_id: int) -> Dict[str, Any]:
     # 호출: db.query(Legislator)로 특정 의원 스탯 정보 조회
     # 반환: 의원 스탯 정보
     pass
 
-def get_legislator_basic_info(db: Session, legislator_id: int) -> Dict[str, Any]:
-    # 호출: db.query(Legislator)로 특정 의원 기본 정보 조회
-    # 반환: 의원 기본 정보
-    pass
+def get_legislator_stats(db: Session, legislator_id: int) -> Dict[str, Any]:
+    """
+    특정 의원의 스탯 정보 조회
+    
+    Args:
+        db: 데이터베이스 세션
+        legislator_id: 국회의원 ID
+    
+    Returns:
+        의원 스탯 정보 딕셔너리
+    """
+    # 의원 정보 조회
+    legislator = db.query(Legislator).filter(Legislator.id == legislator_id).first()
+    
+    if not legislator:
+        return None
+    
+    # 스탯 정보 추출
+    result = {
+        "participation_score": round(legislator.participation_score, 1) if legislator.participation_score else 0,
+        "legislation_score": round(legislator.legislation_score, 1) if legislator.legislation_score else 0,
+        "speech_score": round(legislator.speech_score, 1) if legislator.speech_score else 0,
+        "voting_score": round(legislator.voting_score, 1) if legislator.voting_score else 0,
+        "cooperation_score": round(legislator.cooperation_score, 1) if legislator.cooperation_score else 0,
+        "overall_score": round(legislator.overall_score, 1) if legislator.overall_score else 0,
+    }
+    
+    return result
 
 def get_legislator_sns(db: Session, legislator_id: int) -> Dict[str, Any]:
-    # 호출: db.query(LegislatorSNS)로 특정 의원 SNS 정보 조회
-    # 반환: 의원 SNS 정보
-    pass
+    """
+    특정 의원의 SNS 정보 조회
+    
+    Args:
+        db: 데이터베이스 세션
+        legislator_id: 국회의원 ID
+    
+    Returns:
+        의원 SNS 정보 딕셔너리
+    """
+    # SNS 정보 조회
+    sns = db.query(LegislatorSNS).filter(LegislatorSNS.legislator_id == legislator_id).first()
+    
+    if not sns:
+        return {
+            "twitter_url": None,
+            "facebook_url": None,
+            "youtube_url": None,
+            "blog_url": None,
+        }
+    
+    # SNS 정보 딕셔너리 변환
+    result = {
+        "twitter_url": sns.twitter_url,
+        "facebook_url": sns.facebook_url,
+        "youtube_url": sns.youtube_url,
+        "blog_url": sns.blog_url,
+    }
+    
+    return result
 
 def get_legislator_committee_history(db: Session, legislator_id: int) -> List[Dict[str, Any]]:
-    # 호출: db.query(CommitteeHistory)로 특정 의원 위원회 경력 조회
-    # 반환: 의원 위원회 경력
-    pass
+    """
+    특정 의원의 위원회 경력 조회
+    
+    Args:
+        db: 데이터베이스 세션
+        legislator_id: 국회의원 ID
+    
+    Returns:
+        의원 위원회 경력 목록
+    """
+    # 위원회 경력 조회
+    histories = db.query(CommitteeHistory).filter(
+        CommitteeHistory.legislator_id == legislator_id
+    ).all()
+    
+    # 결과 리스트 구성
+    result = []
+    for history in histories:
+        result.append({
+            "period": history.frto_date,
+            "description": history.profile_sj,
+        })
+    
+    return result

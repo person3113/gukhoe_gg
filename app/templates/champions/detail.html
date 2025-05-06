@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}국회.gg - {{ legislator.name }} 상세 정보{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- 의원 기본 정보 헤더  -->
+    <div class="row mb-4" style="min-height: 350px;">
+        <!-- 의원 사진  -->
+        <div class="col-md-3">
+            <img src="{{ legislator.profile_image_url }}" class="img-fluid rounded" alt="{{ legislator.name }}" style="max-height: 300px;">
+        </div>
+        <!-- 의원 기본 정보 -->
+        <div class="col-md-2">
+            <div class="d-flex flex-column h-100">
+                <h1>{{ legislator.name }}</h1>
+                <p class="text-muted">{{ legislator.eng_name }}</p>
+                <h4 class="text-primary">{{ legislator.party }}</h4>
+                <h3>{{ legislator.tier }}</h3>
+                <p class="text-muted">전체 {{ legislator.overall_rank }}위</p>
+            </div>
+        </div>
+        <!-- 스탯 차트 - 너비 확대 및 높이 증가 -->
+        <div class="col-md-7">
+            <div class="card h-100">
+                <div class="card-body">
+                    <canvas id="statsChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 탭 메뉴 -->
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <a class="nav-link {{ 'active' if tab == 'basic_info' else '' }}" 
+               href="/champions/{{ legislator.id }}?tab=basic_info">기본정보</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {{ 'active' if tab == 'tendency' else '' }}" 
+               href="/champions/{{ legislator.id }}?tab=tendency">성향</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {{ 'active' if tab == 'bills' else '' }}" 
+               href="/champions/{{ legislator.id }}?tab=bills">대표발의안</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {{ 'active' if tab == 'co_bills' else '' }}" 
+               href="/champions/{{ legislator.id }}?tab=co_bills">공동발의안</a>
+        </li>
+    </ul>
+    
+    <!-- 기본정보 탭 컨텐츠 -->
+    {% if tab == 'basic_info' %}
+    <div class="row">
+        <!-- 기본 인적사항 -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5>기본 정보</h5>
+                </div>
+                <div class="card-body">
+                    <!-- SNS 정보를 상단에 배치하고, 있는 것만 표시 -->
+                    <h6>SNS 정보</h6>
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        {% if tab_data.sns.twitter_url %}
+                        <a href="{{ tab_data.sns.twitter_url }}" target="_blank" class="btn btn-sm btn-outline-primary">트위터</a>
+                        {% endif %}
+                        
+                        {% if tab_data.sns.facebook_url %}
+                        <a href="{{ tab_data.sns.facebook_url }}" target="_blank" class="btn btn-sm btn-outline-primary">페이스북</a>
+                        {% endif %}
+                        
+                        {% if tab_data.sns.youtube_url %}
+                        <a href="{{ tab_data.sns.youtube_url }}" target="_blank" class="btn btn-sm btn-outline-danger">유튜브</a>
+                        {% endif %}
+                        
+                        {% if tab_data.sns.blog_url %}
+                        <a href="{{ tab_data.sns.blog_url }}" target="_blank" class="btn btn-sm btn-outline-success">블로그</a>
+                        {% endif %}
+                        
+                        {% if not tab_data.sns.twitter_url and not tab_data.sns.facebook_url and not tab_data.sns.youtube_url and not tab_data.sns.blog_url %}
+                        <p class="text-muted">SNS 정보가 없습니다.</p>
+                        {% endif %}
+                    </div>
+                    
+                    <hr>
+                    
+                    <table class="table table-striped">
+                        <tr>
+                            <th width="30%">성별</th>
+                            <td>{{ legislator.gender }}</td>
+                        </tr>
+                        <tr>
+                            <th>생년월일</th>
+                            <td>{{ legislator.birth_date }}</td>
+                        </tr>
+                        <tr>
+                            <th>선거구</th>
+                            <td>{{ legislator.district }}</td>
+                        </tr>
+                        <tr>
+                            <th>초/재선</th>
+                            <td>{{ legislator.term }}</td>
+                        </tr>
+                        <tr>
+                            <th>소속위원회</th>
+                            <td>{{ legislator.committee }}</td>
+                        </tr>
+                        <tr>
+                            <th>전화번호</th>
+                            <td>{{ legislator.tel }}</td>
+                        </tr>
+                        <tr>
+                            <th>이메일</th>
+                            <td>{{ legislator.email }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 약력 -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5>약력</h5>
+                </div>
+                <div class="card-body">
+                    {% if legislator.profile %}
+                        {% for line in legislator.profile.splitlines() %}
+                        <p>{{ line }}</p>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">약력 정보가 없습니다.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- 위원회 경력 -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5>위원회 경력</h5>
+                </div>
+                <div class="card-body">
+                    {% if tab_data.committee_history %}
+                    <ul class="list-group list-group-flush">
+                        {% for history in tab_data.committee_history %}
+                        <li class="list-group-item">
+                            <strong>{{ history.period }}</strong>
+                            <p>{{ history.description }}</p>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted">위원회 경력 정보가 없습니다.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 스탯 차트 그리기
+    var ctx = document.getElementById('statsChart').getContext('2d');
+    
+    // 컨트롤러에서 전달받은 차트 데이터 사용
+    var chartData = {{ chart_data|tojson }};
+    
+    var statsChart = new Chart(ctx, {
+        type: 'radar',
+        data: chartData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                r: {
+                    angleLines: {
+                        display: true
+                    },
+                    suggestedMin: 0,
+                    suggestedMax: 100
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

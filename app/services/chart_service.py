@@ -1,4 +1,4 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 def generate_top_score_chart_data(legislators: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
@@ -35,10 +35,65 @@ def generate_top_score_chart_data(legislators: List[Dict[str, Any]]) -> Dict[str
     
     return chart_data
 
-def generate_comparison_chart_data(stats: Dict[str, Any], avg_stats: Dict[str, Any]) -> Dict[str, Any]:
-    # 개인 스탯과 평균 스탯을 비교 차트 데이터로 변환
-    # 반환: 차트 데이터 딕셔너리
-    pass
+def generate_comparison_chart_data(stats: Dict[str, Any], avg_stats: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """
+    개인 스탯과 평균 스탯을 비교 차트 데이터로 변환
+    
+    Args:
+        stats: 의원 스탯 정보
+        avg_stats: 평균 스탯 정보 (None인 경우 빈 차트 생성)
+    
+    Returns:
+        차트 데이터 딕셔너리
+    """
+    # 차트 라벨 (카테고리)
+    labels = ["참여", "입법활동", "의정발언", "표결 책임성", "협치/초당적 활동"]
+    
+    # 의원 스탯 데이터
+    personal_data = [
+        stats["participation_score"],
+        stats["legislation_score"],
+        stats["speech_score"],
+        stats["voting_score"],
+        stats["cooperation_score"]
+    ]
+    
+    # 데이터셋 구성
+    datasets = [
+        {
+            "label": "개인 점수",
+            "data": personal_data,
+            "backgroundColor": "rgba(75, 192, 192, 0.6)",
+            "borderColor": "rgba(75, 192, 192, 1)",
+            "borderWidth": 1
+        }
+    ]
+    
+    # 평균 스탯이 제공된 경우 추가
+    if avg_stats:
+        avg_data = [
+            avg_stats["participation_score"],
+            avg_stats["legislation_score"],
+            avg_stats["speech_score"],
+            avg_stats["voting_score"],
+            avg_stats["cooperation_score"]
+        ]
+        
+        datasets.append({
+            "label": "전체 평균",
+            "data": avg_data,
+            "backgroundColor": "rgba(153, 102, 255, 0.6)",
+            "borderColor": "rgba(153, 102, 255, 1)",
+            "borderWidth": 1
+        })
+    
+    # 차트 데이터 딕셔너리 구성
+    chart_data = {
+        "labels": labels,
+        "datasets": datasets
+    }
+    
+    return chart_data
 
 def generate_keyword_chart_data(keywords: List[Dict[str, Any]]) -> Dict[str, Any]:
     # 키워드 데이터를 차트 데이터로 변환

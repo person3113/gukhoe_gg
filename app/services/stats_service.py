@@ -1,14 +1,41 @@
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import func
 from typing import List, Dict, Any, Optional
 
 from app.models.legislator import Legislator
 from app.models.committee import Committee, CommitteeMember
 
 def get_average_stats(db: Session) -> Dict[str, Any]:
-    # 호출: db.query(Legislator)로 모든 의원의 스탯 조회
+    """
+    모든 의원의 평균 스탯 계산
+    
+    Args:
+        db: 데이터베이스 세션
+    
+    Returns:
+        평균 스탯 딕셔너리
+    """
     # 각 스탯별 평균 계산
-    # 반환: 평균 스탯 딕셔너리
-    pass
+    result = db.query(
+        func.avg(Legislator.participation_score).label("participation_score"),
+        func.avg(Legislator.legislation_score).label("legislation_score"),
+        func.avg(Legislator.speech_score).label("speech_score"),
+        func.avg(Legislator.voting_score).label("voting_score"),
+        func.avg(Legislator.cooperation_score).label("cooperation_score"),
+        func.avg(Legislator.overall_score).label("overall_score")
+    ).first()
+    
+    # 딕셔너리로 변환 및 반올림
+    avg_stats = {
+        "participation_score": round(result.participation_score, 1) if result.participation_score else 0,
+        "legislation_score": round(result.legislation_score, 1) if result.legislation_score else 0,
+        "speech_score": round(result.speech_score, 1) if result.speech_score else 0,
+        "voting_score": round(result.voting_score, 1) if result.voting_score else 0,
+        "cooperation_score": round(result.cooperation_score, 1) if result.cooperation_score else 0,
+        "overall_score": round(result.overall_score, 1) if result.overall_score else 0,
+    }
+    
+    return avg_stats
 
 ### 잡다한 랭킹 - 홈 ###
 def get_party_average_stats(db: Session, stat: str = 'asset') -> Dict[str, Any]:

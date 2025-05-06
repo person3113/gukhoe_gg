@@ -1,10 +1,13 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, HTTPException
 from sqlalchemy.orm import Session
 from fastapi.templating import Jinja2Templates
 from typing import Optional
 
 from app.db.database import get_db
-from app.services import legislator_service
+from app.models.legislator import Legislator
+from app.models.sns import LegislatorSNS
+from app.models.committee import CommitteeHistory
+from app.services import legislator_service, stats_service, chart_service
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -53,30 +56,52 @@ async def champion_detail(
     db: Session = Depends(get_db), 
     tab: str = "basic_info"
 ):
-    # 호출: legislator_service.get_legislator_detail()로 의원 상세 정보 조회
-    # 호출: legislator_service.get_legislator_stats()로 의원 스탯 정보 조회
-    # 호출: stats_service.get_average_stats()로 평균 스탯 조회
-    # 호출: chart_service.generate_comparison_chart_data()로 비교 차트 데이터 생성
-
-    # tab 값에 따라 다른 서비스 호출
+    # 의원 상세 정보 조회
+    legislator = legislator_service.get_legislator_detail(db, legislator_id)
+    if not legislator:
+        # 의원 정보가 없는 경우 404 에러
+        return templates.TemplateResponse(
+            "404.html", 
+            {"request": request, "message": "해당 의원 정보를 찾을 수 없습니다."}
+        )
+    
+    # 의원 스탯 정보 조회
+    stats = legislator_service.get_legislator_stats(db, legislator_id)
+    
+    # 평균 스탯 조회
+    avg_stats = stats_service.get_average_stats(db)
+    
+    # 비교 차트 데이터 생성
+    chart_data = chart_service.generate_comparison_chart_data(stats, avg_stats)
+    
+    # 탭별 추가 정보 조회
+    tab_data = {}
+    
     if tab == "basic_info":
-        # 호출: legislator_service.get_legislator_basic_info()
-        # 호출: legislator_service.get_legislator_sns()
-        # 호출: legislator_service.get_legislator_committee_history()
-        pass
+        # SNS 정보 조회
+        tab_data["sns"] = legislator_service.get_legislator_sns(db, legislator_id)
+        # 위원회 경력 조회
+        tab_data["committee_history"] = legislator_service.get_legislator_committee_history(db, legislator_id)
     elif tab == "tendency":
-        # 호출: speech_service.get_top_keywords()
-        # 호출: speech_service.get_speech_by_meeting_type()
-        # 호출: vote_service.get_vote_results()
-        # 호출: chart_service.generate_keyword_chart_data()
-        # 호출: chart_service.generate_speech_chart_data()
+        # 현재는 구현하지 않음 - 향후 구현
         pass
     elif tab == "bills":
-        # 호출: bill_service.get_representative_bills()
+        # 현재는 구현하지 않음 - 향후 구현
         pass
     elif tab == "co_bills":
-        # 호출: bill_service.get_co_sponsored_bills()
+        # 현재는 구현하지 않음 - 향후 구현
         pass
-
-    # 반환: 탭에 따른 템플릿 렌더링(champions/detail.html)
-    pass
+    
+    # 템플릿 렌더링
+    return templates.TemplateResponse(
+        "champions/detail.html", 
+        {
+            "request": request, 
+            "legislator": legislator,
+            "stats": stats,
+            "avg_stats": avg_stats,
+            "chart_data": chart_data,
+            "tab": tab,
+            "tab_data": tab_data
+        }
+    )
