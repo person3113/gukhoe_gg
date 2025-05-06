@@ -393,32 +393,50 @@ def create_dummy_data():
             ))
         db.commit()
 
-        # 발언 키워드 데이터
-        keywords = [
-            ["법안", "사법", "법원", "변호사", "재판"],
-            ["주택", "교통", "도시", "개발", "SOC"],
-            ["의료", "복지", "건강", "환자", "병원"],
-            ["과학", "기술", "통신", "방송", "인터넷"],
-            ["문화", "체육", "관광", "예술", "콘텐츠"]
-        ]
+        # 회의별 발언 데이터 - 실제 데이터와 동일한 8개의 회의 유형으로 확장
+        meeting_types = ["본회의", "상임위원회", "특별위원회", "예산결산특별위원회", "국정감사", "국정조사", "전원위원회", "소위원회"]
 
+        # 실제 데이터의 분포를 반영한 발언 데이터 생성
         for i, legislator in enumerate(legislator_objects):
-            for j, keyword in enumerate(keywords[i]):
+            # 실제 데이터에서는 상임위원회와 국정감사, 소위원회의 발언이 많은 편
+            counts = [1, 17, 0, 0, 9, 0, 0, 7]  # 실제 데이터와 유사한 분포
+            
+            # 의원별로 약간의 변동성 추가
+            if i > 0:
+                counts = [max(0, count + (i - 2)) for count in counts]
+            
+            for j, meeting_type in enumerate(meeting_types):
+                if counts[j] > 0:  # 발언 수가 0인 경우는 추가하지 않음
+                    db.add(SpeechByMeeting(
+                        legislator_id=i+1,
+                        meeting_type=meeting_type,
+                        count=counts[j]
+                    ))
+        db.commit()
+
+        # 발언 키워드 데이터 - 실제 데이터와 유사한 키워드 빈도 분포 반영
+        for i, legislator in enumerate(legislator_objects):
+            # 기존 키워드 리스트 유지하되, 각 위원회별 top 키워드 10개로 확장
+            keywords = [
+                ["법안", "사법", "법원", "변호사", "재판", "형법", "헌법", "검찰", "기소", "판결"],
+                ["주택", "교통", "도시", "개발", "SOC", "도로", "철도", "부동산", "건설", "택지"],
+                ["의료", "복지", "건강", "환자", "병원", "보험", "요양", "약제", "의약품", "질병"],
+                ["과학", "기술", "통신", "방송", "인터넷", "데이터", "연구", "개발", "혁신", "디지털"],
+                ["문화", "체육", "관광", "예술", "콘텐츠", "저작권", "공연", "여행", "스포츠", "전시"]
+            ][i]
+            
+            # 실제 데이터와 유사한 빈도 분포 (1위 키워드가 압도적으로 많고, 나머지는 점차 감소)
+            counts = [169, 119, 94, 69, 59, 55, 53, 53, 51, 43]
+            
+            # 각 의원별로 약간의 변동성 추가
+            if i > 0:
+                counts = [max(40, count - i*20) for count in counts]
+            
+            for j, keyword in enumerate(keywords):
                 db.add(SpeechKeyword(
                     legislator_id=i+1,
                     keyword=keyword,
-                    count=100 - j*10  # 100, 90, 80, 70, 60
-                ))
-        db.commit()
-
-        # 회의별 발언 데이터
-        meeting_types = ["본회의", "상임위", "소위원회", "국정감사", "국정조사"]
-        for i, legislator in enumerate(legislator_objects):
-            for j, meeting_type in enumerate(meeting_types):
-                db.add(SpeechByMeeting(
-                    legislator_id=i+1,
-                    meeting_type=meeting_type,
-                    count=50 - j*5  # 50, 45, 40, 35, 30
+                    count=counts[j]
                 ))
         db.commit()
 
