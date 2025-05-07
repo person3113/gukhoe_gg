@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     # API 엔드포인트들
     API_ENDPOINTS: dict = {
         "legislator_info": "nwvrqwxyaytdsfvhu",    # 국회의원 인적사항
+        "legislator_integrated": "ALLNAMEMBER",    # 국회의원 정보 통합 API
         "legislator_sns": "negnlnyvatsjwocar",     # 국회의원 SNS정보
         "committee_members": "nktulghcadyhmiqxi",  # 위원회 위원 명단
         "committee_info": "nxrvzonlafugpqjuh",     # 위원회 현황 정보

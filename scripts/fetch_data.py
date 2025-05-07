@@ -27,12 +27,15 @@ def fetch_all_data():
 
 def fetch_legislators(db: Session):
     """
-    국회의원 정보 및 SNS 정보 수집
+    국회의원 정보, SNS 정보, 사진 정보 수집
     """
     # ApiService 인스턴스 생성
     # 호출: api_service.fetch_legislators_info()로 의원 정보 수집
     # 호출: api_service.fetch_legislators_sns()로 의원 SNS 정보 수집
-    # DB에 저장
+    # 호출: api_service.fetch_legislator_images()로 의원 사진 정보 수집
+    # 국회의원코드(mona_cd)를 기준으로 사진 정보 매핑 딕셔너리 생성
+    # 의원 정보에 사진 URL 추가 (이미지 없는 경우 기본 이미지 경로 설정)
+    # 국회의원 및 SNS 정보 DB에 저장
     pass
 
 def fetch_bills(db: Session):

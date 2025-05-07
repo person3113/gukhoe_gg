@@ -51,6 +51,20 @@ class ApiService:
         # 반환: 의원 SNS 정보 리스트
         pass
 
+    async def fetch_legislator_images(self) -> List[Dict[str, Any]]:
+        """
+        국회의원 사진 정보 API 호출
+        
+        Returns:
+            List[Dict[str, Any]]: 의원 사진 정보 리스트
+        """
+        # 호출: self._make_api_call("legislator_integrated")로 국회의원 정보 통합 API 호출
+        # 호출: parse_xml_to_dict()로 XML 응답 파싱
+        # 국회의원코드(NAAS_CD)와 사진 URL(NAAS_PIC) 추출
+        # 결과 리스트 구성: [{"mona_cd": "...", "profile_image_url": "..."}]
+        # 반환: 사진 정보 리스트
+        pass
+
     async def fetch_committee_members(self) -> List[Dict[str, Any]]:
         # 호출: requests.get()로 위원회 위원 명단 API 호출
         # 호출: utils.xml_parser.parse_xml_to_dict()로 XML 응답 파싱
