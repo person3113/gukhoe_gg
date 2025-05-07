@@ -10,6 +10,9 @@
     
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+
+    <!-- Font Awesome 아이콘 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     
     <!-- 기본 스타일 -->
     <style>
@@ -50,7 +53,24 @@
         }
     </style>
     
-    {% block extra_head %}{% endblock %}
+    {% block extra_head %}
+    <style>
+        /* 정렬 아이콘 스타일 */
+        .sort-icon {
+            margin-left: 5px;
+        }
+        
+        /* 정렬 가능한 컬럼 스타일 */
+        th[data-sort] {
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        th[data-sort]:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+    </style>
+    {% endblock %}
 </head>
 <body>
     <!-- 좌측 세로 네비게이션 -->

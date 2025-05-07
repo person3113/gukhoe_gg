@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 from typing import List, Dict, Any, Optional
 
+from app.models.bill import Bill
 from app.models.legislator import Legislator
 from app.models.committee import Committee, CommitteeMember
 
@@ -51,27 +52,154 @@ def get_term_average_stats(db: Session, stat: str = 'overall_score') -> Dict[str
     pass
 
 ### 잡다한 랭킹 - 정당 ###
-def get_party_average_scores(db: Session) -> Dict[str, Any]:
-    # 호출: db.query(Legislator)로 정당별 의원 그룹화
+def get_party_average_scores(db: Session) -> Dict[str, float]:
+    """
+    정당별 평균 종합점수 조회
+    
+    Args:
+        db: 데이터베이스 세션
+    
+    Returns:
+        정당별 평균 종합점수 딕셔너리
+    """
+    # 정당 목록 조회
+    parties = db.query(Legislator.poly_nm).distinct().all()
+    party_list = [party[0] for party in parties]
+    
     # 정당별 평균 종합점수 계산
-    # 반환: 정당별 평균 종합점수 딕셔너리
-    pass
+    result = {}
+    for party in party_list:
+        # 해당 정당 의원들의 평균 종합점수 계산
+        avg_score = db.query(func.avg(Legislator.overall_score)).filter(
+            Legislator.poly_nm == party
+        ).scalar()
+        
+        # 결과 딕셔너리에 추가 (None인 경우 0으로 처리)
+        result[party] = round(avg_score, 1) if avg_score else 0
+    
+    return result
 
-def get_party_average_bill_counts(db: Session) -> Dict[str, Any]:
-    # 호출: db.query(Legislator, Bill)로 정당별 대표발의안수 평균 계산
-    # 반환: 정당별 평균 대표발의안수 딕셔너리
-    pass
+def get_party_average_bill_counts(db: Session) -> Dict[str, float]:
+    """
+    정당별 평균 대표발의안수 조회
+    
+    Args:
+        db: 데이터베이스 세션
+    
+    Returns:
+        정당별 평균 대표발의안수 딕셔너리
+    """
+    # 정당 목록 조회
+    parties = db.query(Legislator.poly_nm).distinct().all()
+    party_list = [party[0] for party in parties]
+    
+    # 정당별 평균 대표발의안수 계산
+    result = {}
+    for party in party_list:
+        # 해당 정당 의원들의 ID 목록
+        legislator_ids = db.query(Legislator.id).filter(
+            Legislator.poly_nm == party
+        ).all()
+        legislator_ids = [id[0] for id in legislator_ids]
+        
+        if not legislator_ids:
+            result[party] = 0
+            continue
+        
+        # 각 의원별 대표발의안수 계산
+        bill_counts = []
+        for legislator_id in legislator_ids:
+            count = db.query(func.count(Bill.id)).filter(
+                Bill.main_proposer_id == legislator_id
+            ).scalar()
+            bill_counts.append(count)
+        
+        # 평균 계산
+        avg_count = sum(bill_counts) / len(legislator_ids) if legislator_ids else 0
+        result[party] = round(avg_count, 1)
+    
+    return result
 
 def get_party_stats_summary(db: Session, party_name: str) -> Dict[str, Any]:
-    # 호출: db.query(Legislator)로 특정 정당 의원 조회
-    # 통계 요약 정보(평균, 최대, 최소, 티어 분포 등) 계산
-    # 반환: 정당 통계 요약 딕셔너리
-    pass
+    """
+    특정 정당의 통계 요약 정보 조회
+    
+    Args:
+        db: 데이터베이스 세션
+        party_name: 정당명
+    
+    Returns:
+        정당 통계 요약 딕셔너리
+    """
+    # 해당 정당 의원들의 점수 통계
+    stats = db.query(
+        func.avg(Legislator.overall_score).label("avg"),
+        func.max(Legislator.overall_score).label("max"),
+        func.min(Legislator.overall_score).label("min")
+    ).filter(
+        Legislator.poly_nm == party_name
+    ).first()
+    
+    # 티어 분포 계산
+    tier_query = db.query(
+        Legislator.tier, 
+        func.count(Legislator.id).label("count")
+    ).filter(
+        Legislator.poly_nm == party_name
+    ).group_by(
+        Legislator.tier
+    ).all()
+    
+    tier_distribution = {}
+    for tier, count in tier_query:
+        tier_distribution[tier] = count
+    
+    # 결과 딕셔너리 구성
+    result = {
+        "avg": round(stats.avg, 1) if stats.avg else 0,
+        "max": round(stats.max, 1) if stats.max else 0,
+        "min": round(stats.min, 1) if stats.min else 0,
+        "tier_distribution": tier_distribution
+    }
+    
+    return result
 
 def get_legislators_by_party(db: Session, party_name: str) -> List[Dict[str, Any]]:
-    # 호출: db.query(Legislator)로 특정 정당 소속 의원 목록 조회
-    # 반환: 의원 목록
-    pass
+    """
+    특정 정당 소속 의원 목록 조회
+    
+    Args:
+        db: 데이터베이스 세션
+        party_name: 정당명
+    
+    Returns:
+        의원 목록
+    """
+    # 해당 정당 소속 의원 조회
+    legislators = db.query(Legislator).filter(
+        Legislator.poly_nm == party_name
+    ).order_by(
+        Legislator.overall_score.desc()
+    ).all()
+    
+    # 결과 리스트 구성
+    result = []
+    for legislator in legislators:
+        result.append({
+            "id": legislator.id,
+            "name": legislator.hg_nm,
+            "tier": legislator.tier,
+            "overall_rank": legislator.overall_rank,
+            "profile_image_url": legislator.profile_image_url or "/static/images/legislators/default.png",
+            "overall_score": round(legislator.overall_score, 1) if legislator.overall_score else 0,
+            "participation_score": round(legislator.participation_score, 1) if legislator.participation_score else 0,
+            "legislation_score": round(legislator.legislation_score, 1) if legislator.legislation_score else 0,
+            "speech_score": round(legislator.speech_score, 1) if legislator.speech_score else 0,
+            "voting_score": round(legislator.voting_score, 1) if legislator.voting_score else 0,
+            "cooperation_score": round(legislator.cooperation_score, 1) if legislator.cooperation_score else 0
+        })
+    
+    return result
 
 ### 잡다한 랭킹 - 위원회 ###
 def get_committee_processing_ratio(db: Session) -> Dict[str, Any]:
