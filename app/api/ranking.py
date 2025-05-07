@@ -53,6 +53,53 @@ async def ranking_home(request: Request, db: Session = Depends(get_db)):
     # 템플릿 렌더링
     return templates.TemplateResponse("ranking/index.html", context)
 
+# 활동랭킹 - 참여
+@router.get("/ranking/participation")
+async def participation_ranking(request: Request, db: Session = Depends(get_db)):
+    """
+    참여 랭킹 페이지
+    """
+    # 참여 점수 기준 데이터 조회
+    top_legislators = ranking_service.get_top_legislators(db, count=5, category='participation')
+    bottom_legislators = ranking_service.get_bottom_legislators(db, count=5, category='participation')
+    all_legislators = ranking_service.get_legislators_by_filter(db, category='participation')
+    
+    # 차트 데이터 생성 (generate_ranking_chart_data 함수는 그대로 사용)
+    chart_data = chart_service.generate_ranking_chart_data(top_legislators, bottom_legislators)
+    
+    # 차트 레이블 수정
+    chart_data["top"]["datasets"][0]["label"] = "참여 점수"
+    chart_data["bottom"]["datasets"][0]["label"] = "참여 점수"
+    
+    # 필터 옵션 조회 (종합 페이지와 동일한 방식)
+    parties = db.query(Legislator.poly_nm).distinct().all()
+    party_list = [party[0] for party in parties]
+    
+    committees = db.query(Legislator.cmit_nm).distinct().all()
+    committee_list = [committee[0] for committee in committees]
+    
+    terms = db.query(Legislator.reele_gbn_nm).distinct().all()
+    term_list = [term[0] for term in terms]
+    
+    return templates.TemplateResponse(
+        "ranking/participation.html", 
+        {
+            "request": request, 
+            "top_legislators": top_legislators,
+            "bottom_legislators": bottom_legislators,
+            "all_legislators": all_legislators,
+            "chart_data": chart_data,
+            "category": "participation",
+            "filter_options": {
+                "parties": party_list,
+                "committees": committee_list,
+                "terms": term_list
+            },
+            "current_filters": {}
+        }
+    )
+
+
 @router.get("/ranking/{category}")
 async def category_ranking(request: Request, db: Session = Depends(get_db), category: str = "overall"):
     # 카테고리 유효성 검사 ('participation', 'legislation', 'speech', 'voting', 'cooperation')
