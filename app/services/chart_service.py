@@ -1,5 +1,6 @@
 from typing import List, Dict, Any, Optional
 
+
 def generate_top_score_chart_data(legislators: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
     상위 의원들의 점수를 chart.js에서 사용 가능한 형식으로 변환하는 함수
@@ -187,10 +188,58 @@ def generate_speech_chart_data(speeches: List[Dict[str, Any]]) -> Dict[str, Any]
     
     return chart_data
 
-def generate_ranking_chart_data(top: List[Dict[str, Any]], bottom: List[Dict[str, Any]]) -> Dict[str, Any]:
+def generate_ranking_chart_data(top_legislators: List[Dict[str, Any]], bottom_legislators: List[Dict[str, Any]]) -> Dict[str, Any]:
     # 상위/하위 의원 데이터를 차트 데이터로 변환
     # 반환: 차트 데이터 딕셔너리
-    pass
+    """
+
+    기존에 변수 이름이 이거였는데 오류나서 바꿈.    
+    Args:
+        top_legislators: 상위 의원 리스트
+        bottom_legislators: 하위 의원 리스트
+    
+    """
+    # 상위 의원 차트 데이터
+    top_names = []
+    top_scores = []
+    
+    for leg in top_legislators:
+        top_names.append(leg["name"])
+        top_scores.append(leg["overall_score"])
+    
+    # 하위 의원 차트 데이터
+    bottom_names = []
+    bottom_scores = []
+    
+    for leg in bottom_legislators:
+        bottom_names.append(leg["name"])
+        bottom_scores.append(leg["overall_score"])
+    
+    # 차트 데이터 구성
+    chart_data = {
+        "top": {
+            "labels": top_names,
+            "datasets": [{
+                "label": "종합 점수",
+                "data": top_scores,
+                "backgroundColor": "rgba(75, 192, 192, 0.6)",
+                "borderColor": "rgba(75, 192, 192, 1)",
+                "borderWidth": 1
+            }]
+        },
+        "bottom": {
+            "labels": bottom_names,
+            "datasets": [{
+                "label": "종합 점수",
+                "data": bottom_scores,
+                "backgroundColor": "rgba(255, 99, 132, 0.6)",
+                "borderColor": "rgba(255, 99, 132, 1)",
+                "borderWidth": 1
+            }]
+        }
+    }
+    
+    return chart_data
 
 ### 잡다한 랭킹 - 홈 ###
 def generate_party_asset_chart_data(party_stats: Dict[str, Any]) -> Dict[str, Any]:
