@@ -94,7 +94,18 @@
                                         </a>
                                     </td>
                                     <td>{{ legislator.party }}</td>
-                                    <td>{{ legislator.tier }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if legislator.tier == 'Challenger' %}bg-danger{% 
+                                            elif legislator.tier == 'Master' %}bg-warning{% 
+                                            elif legislator.tier == 'Diamond' %}bg-info{% 
+                                            elif legislator.tier == 'Platinum' %}bg-success{% 
+                                            elif legislator.tier == 'Gold' %}bg-warning text-dark{% 
+                                            elif legislator.tier == 'Silver' %}bg-secondary{% 
+                                            else %}bg-dark{% endif %}">
+                                            {{ legislator.tier }}
+                                        </span>
+                                    </td>
                                     <td>{{ legislator.current_score }}</td>
                                 </tr>
                                 {% endfor %}
@@ -151,7 +162,18 @@
                                         </a>
                                     </td>
                                     <td>{{ legislator.party }}</td>
-                                    <td>{{ legislator.tier }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if legislator.tier == 'Challenger' %}bg-danger{% 
+                                            elif legislator.tier == 'Master' %}bg-warning{% 
+                                            elif legislator.tier == 'Diamond' %}bg-info{% 
+                                            elif legislator.tier == 'Platinum' %}bg-success{% 
+                                            elif legislator.tier == 'Gold' %}bg-warning text-dark{% 
+                                            elif legislator.tier == 'Silver' %}bg-secondary{% 
+                                            else %}bg-dark{% endif %}">
+                                            {{ legislator.tier }}
+                                        </span>
+                                    </td>
                                     <td>{{ legislator.current_score }}</td>
                                 </tr>
                                 {% endfor %}
@@ -287,7 +309,18 @@
                                 </a>
                             </td>
                             <td>{{ legislator.party }}</td>
-                            <td>{{ legislator.tier }}</td>
+                            <td>
+                                <span class="badge 
+                                    {% if legislator.tier == 'Challenger' %}bg-danger{% 
+                                    elif legislator.tier == 'Master' %}bg-warning{% 
+                                    elif legislator.tier == 'Diamond' %}bg-info{% 
+                                    elif legislator.tier == 'Platinum' %}bg-success{% 
+                                    elif legislator.tier == 'Gold' %}bg-warning text-dark{% 
+                                    elif legislator.tier == 'Silver' %}bg-secondary{% 
+                                    else %}bg-dark{% endif %}">
+                                    {{ legislator.tier }}
+                                </span>
+                            </td>
                             <td class="{{ 'font-weight-bold' if current_category == 'participation' else '' }}">{{ legislator.participation_score }}</td>
                             <td class="{{ 'font-weight-bold' if current_category == 'legislation' else '' }}">{{ legislator.legislation_score }}</td>
                             <td class="{{ 'font-weight-bold' if current_category == 'speech' else '' }}">{{ legislator.speech_score }}</td>
