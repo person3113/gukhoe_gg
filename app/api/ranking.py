@@ -169,16 +169,30 @@ async def category_ranking(
         }
     )
 
-@router.get("/ranking/{category}")
-async def category_ranking(request: Request, db: Session = Depends(get_db), category: str = "overall"):
-    # 카테고리 유효성 검사 ('participation', 'legislation', 'speech', 'voting', 'cooperation')
+@router.get("/api/ranking/{category}")
+async def filter_ranking(
+    category: str, 
+    request: Request, 
+    db: Session = Depends(get_db),
+    party: Optional[str] = None,
+    committee: Optional[str] = None,
+    term: Optional[str] = None,
+    gender: Optional[str] = None
+):
+    # 카테고리 유효성 검사
     valid_categories = ["overall", "participation", "legislation", "speech", "voting", "cooperation"]
     if category not in valid_categories:
         raise HTTPException(status_code=404, detail="Category not found")
     
-    # 호출: ranking_service.get_top_legislators(category=category)로 상위 의원 조회
-    # 호출: ranking_service.get_bottom_legislators(category=category)로 하위 의원 조회
-    # 호출: ranking_service.get_legislators_by_filter(category=category)로 전체 의원 랭킹 조회
-    # 호출: chart_service.generate_ranking_chart_data()로 차트 데이터 생성
-    # 반환: 템플릿 렌더링(ranking/category.html)
-    pass
+    # 필터 적용하여 의원 목록 조회
+    legislators = ranking_service.get_legislators_by_filter(
+        db, 
+        category=category,
+        party=party,
+        committee=committee,
+        term=term,
+        gender=gender
+    )
+    
+    # JSON 응답 반환
+    return legislators

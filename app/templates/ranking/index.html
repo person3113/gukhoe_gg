@@ -24,28 +24,6 @@
 <div class="container">
     <h1 class="mb-4">활동 랭킹 {% if current_category != 'overall' %}- {{ title }}{% endif %}</h1>
     
-    <!-- 카테고리 탭 -->
-    <ul class="nav nav-tabs mb-4">
-        <li class="nav-item">
-            <a class="nav-link {{ 'active' if current_category == 'overall' else '' }}" href="/ranking">종합</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link {{ 'active' if current_category == 'participation' else '' }}" href="/ranking/participation">참여</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link {{ 'active' if current_category == 'legislation' else '' }}" href="/ranking/legislation">입법활동</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link {{ 'active' if current_category == 'speech' else '' }}" href="/ranking/speech">의정발언</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link {{ 'active' if current_category == 'voting' else '' }}" href="/ranking/voting">표결 책임성</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link {{ 'active' if current_category == 'cooperation' else '' }}" href="/ranking/cooperation">협치/초당적 활동</a>
-        </li>
-    </ul>
-    
     <!-- TOP 5 & BOTTOM 5 영역 -->
     <div class="row mb-5">
         <!-- 상위 5명 -->
@@ -194,7 +172,7 @@
             <!-- 필터 영역 -->
             <div class="row mb-3">
                 <div class="col-md-12">
-                    <form action="/ranking/{{ current_category }}" method="get" class="row g-3">
+                    <form id="filter-form" class="row g-3">
                         <!-- 정당 필터 -->
                         <div class="col-md-3">
                             <label for="party" class="form-label">정당</label>
@@ -240,8 +218,8 @@
                         
                         <!-- 필터 버튼 -->
                         <div class="col-12">
-                            <button type="submit" class="btn btn-primary">필터 적용</button>
-                            <a href="/ranking/{{ current_category }}" class="btn btn-secondary">필터 초기화</a>
+                            <button type="button" id="apply-filter-btn" class="btn btn-primary">필터 적용</button>
+                            <button type="button" id="reset-filter-btn" class="btn btn-secondary">필터 초기화</button>
                         </div>
                     </form>
                 </div>
@@ -457,6 +435,121 @@ function sortTableByColumn(columnIndex) {
     rows.forEach(function(row, index) {
         // 순위 업데이트
         row.cells[0].textContent = index + 1;
+        tableBody.appendChild(row);
+    });
+}
+
+
+// 필터 적용 버튼 클릭 이벤트
+document.getElementById("apply-filter-btn").addEventListener("click", function() {
+    applyFilters();
+});
+
+// 필터 초기화 버튼 클릭 이벤트
+document.getElementById("reset-filter-btn").addEventListener("click", function() {
+    // 필터 폼 초기화
+    document.getElementById("party").value = "";
+    document.getElementById("committee").value = "";
+    document.getElementById("term").value = "";
+    document.getElementById("gender").value = "";
+    
+    // 필터 적용
+    applyFilters();
+});
+
+// 필터 적용 함수
+function applyFilters() {
+    // 현재 스크롤 위치 저장
+    const scrollPosition = window.scrollY;
+    
+    // 필터 값 가져오기
+    const party = document.getElementById("party").value;
+    const committee = document.getElementById("committee").value;
+    const term = document.getElementById("term").value;
+    const gender = document.getElementById("gender").value;
+    
+    // 현재 카테고리
+    const currentCategory = "{{ current_category }}";
+    
+    // 로딩 표시
+    const tableBody = document.getElementById("ranking-table-body");
+    tableBody.innerHTML = '<tr><td colspan="11" class="text-center">데이터를 불러오는 중...</td></tr>';
+    
+    // API 요청 URL 구성
+    let url = `/api/ranking/${currentCategory}?`;
+    if (party) url += `&party=${encodeURIComponent(party)}`;
+    if (committee) url += `&committee=${encodeURIComponent(committee)}`;
+    if (term) url += `&term=${encodeURIComponent(term)}`;
+    if (gender) url += `&gender=${encodeURIComponent(gender)}`;
+    
+    // AJAX 요청
+    fetch(url)
+        .then(response => response.json())
+        .then(legislators => {
+            // 테이블 업데이트
+            updateRankingTable(legislators);
+            
+            // 원래 스크롤 위치로 복원
+            window.scrollTo(0, scrollPosition);
+        })
+        .catch(error => {
+            console.error('Error fetching data:', error);
+            tableBody.innerHTML = '<tr><td colspan="11" class="text-center text-danger">데이터를 불러오는 중 오류가 발생했습니다.</td></tr>';
+        });
+}
+
+// 테이블 업데이트 함수
+function updateRankingTable(legislators) {
+    const tableBody = document.getElementById("ranking-table-body");
+    tableBody.innerHTML = "";
+    
+    legislators.forEach((legislator, index) => {
+        const row = document.createElement("tr");
+        
+        // 티어에 따른 배지 클래스 결정
+        let badgeClass = "bg-dark";
+        if (legislator.tier === "Challenger") badgeClass = "bg-danger";
+        else if (legislator.tier === "Master") badgeClass = "bg-warning";
+        else if (legislator.tier === "Diamond") badgeClass = "bg-info";
+        else if (legislator.tier === "Platinum") badgeClass = "bg-success";
+        else if (legislator.tier === "Gold") badgeClass = "bg-warning text-dark";
+        else if (legislator.tier === "Silver") badgeClass = "bg-secondary";
+        
+        // 현재 카테고리에 따른 강조
+        const currentCategory = "{{ current_category }}";
+        const participationClass = currentCategory === "participation" ? "font-weight-bold" : "";
+        const legislationClass = currentCategory === "legislation" ? "font-weight-bold" : "";
+        const speechClass = currentCategory === "speech" ? "font-weight-bold" : "";
+        const votingClass = currentCategory === "voting" ? "font-weight-bold" : "";
+        const cooperationClass = currentCategory === "cooperation" ? "font-weight-bold" : "";
+        const overallClass = currentCategory === "overall" ? "font-weight-bold" : "";
+        
+        // 행 내용 구성
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>
+                <img src="${legislator.profile_image_url}" alt="${legislator.name}" 
+                     class="rounded-circle" width="40" height="40">
+            </td>
+            <td>
+                <a href="/champions/${legislator.id}">
+                    ${legislator.name}
+                </a>
+            </td>
+            <td>${legislator.party}</td>
+            <td>
+                <span class="badge ${badgeClass}">
+                    ${legislator.tier}
+                </span>
+            </td>
+            <td class="${participationClass}">${legislator.participation_score}</td>
+            <td class="${legislationClass}">${legislator.legislation_score}</td>
+            <td class="${speechClass}">${legislator.speech_score}</td>
+            <td class="${votingClass}">${legislator.voting_score}</td>
+            <td class="${cooperationClass}">${legislator.cooperation_score}</td>
+            <td class="${overallClass}">${legislator.overall_score}</td>
+        `;
+        
         tableBody.appendChild(row);
     });
 }
