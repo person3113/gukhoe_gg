@@ -231,7 +231,7 @@ def generate_ranking_chart_data(top_legislators: list, bottom_legislators: list,
         "top": {
             "labels": top_names,
             "datasets": [{
-                "label": "종합 점수",
+                "label": score_label,
                 "data": top_scores,
                 "backgroundColor": "rgba(75, 192, 192, 0.6)",
                 "borderColor": "rgba(75, 192, 192, 1)",
@@ -241,7 +241,7 @@ def generate_ranking_chart_data(top_legislators: list, bottom_legislators: list,
         "bottom": {
             "labels": bottom_names,
             "datasets": [{
-                "label": "종합 점수",
+                "label": score_label,
                 "data": bottom_scores,
                 "backgroundColor": "rgba(255, 99, 132, 0.6)",
                 "borderColor": "rgba(255, 99, 132, 1)",
