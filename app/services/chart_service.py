@@ -188,7 +188,7 @@ def generate_speech_chart_data(speeches: List[Dict[str, Any]]) -> Dict[str, Any]
     
     return chart_data
 
-def generate_ranking_chart_data(top_legislators: List[Dict[str, Any]], bottom_legislators: List[Dict[str, Any]]) -> Dict[str, Any]:
+def generate_ranking_chart_data(top_legislators: list, bottom_legislators: list, category: str = 'overall') -> dict:
     # 상위/하위 의원 데이터를 차트 데이터로 변환
     # 반환: 차트 데이터 딕셔너리
     """
@@ -199,22 +199,33 @@ def generate_ranking_chart_data(top_legislators: List[Dict[str, Any]], bottom_le
         bottom_legislators: 하위 의원 리스트
     
     """
-    # 상위 의원 차트 데이터
-    top_names = []
-    top_scores = []
+    # 선택한 카테고리에 따라 점수 필드 결정
+    if category == 'participation':
+        score_field = 'participation_score'
+        score_label = '참여 점수'
+    elif category == 'legislation':
+        score_field = 'legislation_score'
+        score_label = '입법활동 점수'
+    elif category == 'speech':
+        score_field = 'speech_score'
+        score_label = '의정발언 점수'
+    elif category == 'voting':
+        score_field = 'voting_score'
+        score_label = '표결 책임성 점수'
+    elif category == 'cooperation':
+        score_field = 'cooperation_score'
+        score_label = '협치/초당적 활동 점수'
+    else:  # 'overall'
+        score_field = 'overall_score'
+        score_label = '종합 점수'
     
-    for leg in top_legislators:
-        top_names.append(leg["name"])
-        top_scores.append(leg["overall_score"])
+    # 상위 의원 이름과 점수
+    top_names = [leg["name"] for leg in top_legislators]
+    top_scores = [leg[score_field] for leg in top_legislators]
     
-    # 하위 의원 차트 데이터
-    bottom_names = []
-    bottom_scores = []
-    
-    for leg in bottom_legislators:
-        bottom_names.append(leg["name"])
-        bottom_scores.append(leg["overall_score"])
-    
+    # 하위 의원 이름과 점수
+    bottom_names = [leg["name"] for leg in bottom_legislators]
+    bottom_scores = [leg[score_field] for leg in bottom_legislators]
     # 차트 데이터 구성
     chart_data = {
         "top": {
