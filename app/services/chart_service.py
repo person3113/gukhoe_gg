@@ -265,103 +265,27 @@ def generate_term_score_chart_data(term_stats: Dict[str, Any]) -> Dict[str, Any]
 
 ### 잡다한 랭킹 - 정당 ###
 
-def generate_party_scores_chart_data(party_scores: Dict[str, float]) -> Dict[str, Any]:
-    """
-    정당별 평균 종합점수 데이터를 차트 데이터로 변환
-    
-    Args:
-        party_scores: 정당별 평균 종합점수 딕셔너리
-        
-    Returns:
-        차트 데이터 딕셔너리
-    """
-    # 차트에 표시할 라벨(정당명) 추출
-    labels = list(party_scores.keys())
-    
-    # 데이터값(평균 점수) 추출
-    scores = [party_scores[party] for party in labels]
-    
-    # 색상 목록 생성
-    colors = [
-        'rgba(54, 162, 235, 0.6)',
-        'rgba(255, 99, 132, 0.6)',
-        'rgba(255, 206, 86, 0.6)',
-        'rgba(75, 192, 192, 0.6)',
-        'rgba(153, 102, 255, 0.6)',
-        'rgba(255, 159, 64, 0.6)',
-        'rgba(199, 199, 199, 0.6)',
-        'rgba(83, 102, 255, 0.6)'
-    ]
-    
-    # 색상이 부족한 경우 반복 사용
-    if len(labels) > len(colors):
-        colors = colors * (len(labels) // len(colors) + 1)
-    
-    # 테두리 색상 생성
-    border_colors = [color.replace('0.6', '1') for color in colors[:len(labels)]]
-    
-    # 차트 데이터 구성
-    chart_data = {
-        "labels": labels,
-        "datasets": [{
-            "label": "평균 종합점수",
-            "data": scores,
-            "backgroundColor": colors[:len(labels)],
-            "borderColor": border_colors,
-            "borderWidth": 1
+def generate_party_scores_chart_data(party_scores):
+    """정당별 평균 점수 차트 데이터 생성"""
+    return {
+        'labels': [score.party for score in party_scores],
+        'datasets': [{
+            'label': '평균 종합점수',
+            'data': [float(score.avg_score) for score in party_scores],
+            'backgroundColor': 'rgba(54, 162, 235, 0.5)'
         }]
     }
-    
-    return chart_data
 
-def generate_party_bills_chart_data(party_bills: Dict[str, float]) -> Dict[str, Any]:
-    """
-    정당별 평균 대표발의안수 데이터를 차트 데이터로 변환
-    
-    Args:
-        party_bills: 정당별 평균 대표발의안수 딕셔너리
-        
-    Returns:
-        차트 데이터 딕셔너리
-    """
-    # 차트에 표시할 라벨(정당명) 추출
-    labels = list(party_bills.keys())
-    
-    # 데이터값(평균 발의안수) 추출
-    counts = [party_bills[party] for party in labels]
-    
-    # 색상 목록 생성
-    colors = [
-        'rgba(75, 192, 192, 0.6)',
-        'rgba(153, 102, 255, 0.6)',
-        'rgba(255, 159, 64, 0.6)',
-        'rgba(54, 162, 235, 0.6)',
-        'rgba(255, 99, 132, 0.6)',
-        'rgba(255, 206, 86, 0.6)',
-        'rgba(199, 199, 199, 0.6)',
-        'rgba(83, 102, 255, 0.6)'
-    ]
-    
-    # 색상이 부족한 경우 반복 사용
-    if len(labels) > len(colors):
-        colors = colors * (len(labels) // len(colors) + 1)
-    
-    # 테두리 색상 생성
-    border_colors = [color.replace('0.6', '1') for color in colors[:len(labels)]]
-    
-    # 차트 데이터 구성
-    chart_data = {
-        "labels": labels,
-        "datasets": [{
-            "label": "평균 대표발의안수",
-            "data": counts,
-            "backgroundColor": colors[:len(labels)],
-            "borderColor": border_colors,
-            "borderWidth": 1
+def generate_party_bills_chart_data(party_bills):
+    """정당별 평균 발의안수 차트 데이터 생성"""
+    return {
+        'labels': [bills.party for bills in party_bills],
+        'datasets': [{
+            'label': '평균 발의안수',
+            'data': [float(bills.avg_bills) for bills in party_bills],
+            'backgroundColor': 'rgba(255, 99, 132, 0.5)'
         }]
     }
-    
-    return chart_data
 
 ### 잡다한 랭킹 - 위원회 ###
 def generate_committee_processing_chart_data(ratios: Dict[str, Any]) -> Dict[str, Any]:
