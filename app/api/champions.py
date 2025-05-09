@@ -97,8 +97,8 @@ async def champion_detail(
         # 본회의 표결 결과 조회
         tab_data["vote_results"] = vote_service.get_vote_results(db, legislator_id)
     elif tab == "bills":
-        # 현재는 구현하지 않음 - 향후 구현
-        pass
+        from app.services import bill_service
+        tab_data["representative_bills"] = bill_service.get_representative_bills(db, legislator_id)
     elif tab == "co_bills":
         # 현재는 구현하지 않음 - 향후 구현
         pass
