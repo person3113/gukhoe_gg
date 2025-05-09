@@ -353,6 +353,63 @@
         </div>
     </div>
     {% endif %}
+
+    <!-- 공동발의안 탭 컨텐츠 -->
+    {% if tab == 'co_bills' %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>공동발의안 목록</h5>
+                </div>
+                <div class="card-body">
+                    {% if tab_data.co_bills %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>법률명</th>
+                                    <th>제안자</th>
+                                    <th>소관위원회</th>
+                                    <th>날짜</th>
+                                    <th>상태</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for bill in tab_data.co_bills %}
+                                <tr>
+                                    <td>
+                                        {% if bill.detail_link %}
+                                        <a href="{{ bill.detail_link }}" target="_blank" title="{{ bill.bill_name }}">{{ bill.law_title }}</a>
+                                        {% else %}
+                                        <span title="{{ bill.bill_name }}">{{ bill.law_title }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ bill.proposer }}</td>
+                                    <td>{{ bill.committee }}</td>
+                                    <td>{{ bill.propose_dt }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if bill.status == '원안가결' or bill.status == '수정가결' %}bg-success{% 
+                                            elif bill.status == '대안반영' %}bg-primary{% 
+                                            elif bill.status == '계류중' %}bg-warning{% 
+                                            else %}bg-secondary{% endif %}">
+                                            {{ bill.status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">공동발의한 법안이 없습니다.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
     
 </div>
 {% endblock %}
