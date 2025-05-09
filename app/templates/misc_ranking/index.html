@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}국회.gg - 잡다한 랭킹{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">잡다한 랭킹</h1>
+    
+    <div class="row mb-5">
+        <!-- 정당별 평균 재산 차트 -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5>정당별 평균 재산</h5>
+                </div>
+                <div class="card-body">
+                    {% if party_asset_chart is defined and party_asset_chart %}
+                    <div style="height: 300px;">
+                        <canvas id="partyAssetChart"></canvas>
+                    </div>
+                    {% else %}
+                    <p class="text-center text-muted">데이터가 없습니다.</p>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <a href="/misc-ranking/party" class="btn btn-outline-primary">정당별 상세보기</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 초선/재선별 평균 점수 차트 -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5>초선/재선별 평균 점수</h5>
+                </div>
+                <div class="card-body">
+                    {% if term_score_chart is defined and term_score_chart %}
+                    <div style="height: 300px;">
+                        <canvas id="termScoreChart"></canvas>
+                    </div>
+                    {% else %}
+                    <p class="text-center text-muted">데이터가 없습니다.</p>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <a href="/misc-ranking/term" class="btn btn-outline-primary">초선/재선별 상세보기</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 카테고리 링크 카드 -->
+    <h2 class="mb-4">카테고리</h2>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
+        <!-- 정당별 랭킹 카드 -->
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">정당별 랭킹</h5>
+                    <p class="card-text">정당별 평균 종합점수, 평균 발의안수 등 정당별 비교 통계</p>
+                </div>
+                <div class="card-footer">
+                    <a href="/misc-ranking/party" class="btn btn-primary">보기</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 위원회별 랭킹 카드 -->
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">위원회별 랭킹</h5>
+                    <p class="card-text">위원회별 법안 접수/처리 비율, 평균 종합점수 등 위원회별 비교 통계</p>
+                </div>
+                <div class="card-footer">
+                    <a href="/misc-ranking/committee" class="btn btn-primary">보기</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 초선/재선별 랭킹 카드 -->
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">초선/재선별 랭킹</h5>
+                    <p class="card-text">초선/재선별 티어 분포, 평균 재산 등 선수별 비교 통계</p>
+                </div>
+                <div class="card-footer">
+                    <a href="/misc-ranking/term" class="btn btn-primary">보기</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 나이별 랭킹 카드 -->
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">나이별 랭킹</h5>
+                    <p class="card-text">나이대별 평균 종합점수, 평균 재산 등 나이대별 비교 통계</p>
+                </div>
+                <div class="card-footer">
+                    <a href="/misc-ranking/age" class="btn btn-primary">보기</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 성별 랭킹 카드 -->
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">성별 랭킹</h5>
+                    <p class="card-text">성별 티어 분포, 평균 재산 등 성별 비교 통계</p>
+                </div>
+                <div class="card-footer">
+                    <a href="/misc-ranking/gender" class="btn btn-primary">보기</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 재산 랭킹 카드 -->
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">재산 랭킹</h5>
+                    <p class="card-text">재산과 활동점수 상관관계, 정당별 재산 비율 등 재산 관련 통계</p>
+                </div>
+                <div class="card-footer">
+                    <a href="/misc-ranking/asset" class="btn btn-primary">보기</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 정당별 평균 재산 차트
+    var partyAssetCtx = document.getElementById('partyAssetChart');
+    if(partyAssetCtx) {
+        {% if party_asset_chart is defined and party_asset_chart %}
+        var partyAssetData = {{ party_asset_chart|tojson }};
+        if(partyAssetData && partyAssetData.labels) {
+            new Chart(partyAssetCtx, {
+                type: 'bar',
+                data: partyAssetData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '평균 재산 (백만원)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString() + '만원';
+                                }
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '정당'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.raw.toLocaleString() + '만원';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        {% endif %}
+    }
+    
+    // 초선/재선별 평균 점수 차트
+    var termScoreCtx = document.getElementById('termScoreChart');
+    if(termScoreCtx) {
+        {% if term_score_chart is defined and term_score_chart %}
+        var termScoreData = {{ term_score_chart|tojson }};
+        if(termScoreData && termScoreData.labels) {
+            new Chart(termScoreCtx, {
+                type: 'bar',
+                data: termScoreData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: '평균 점수'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '선수'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        {% endif %}
+    }
+});
+</script>
+{% endblock %}
