@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block title %}국회.gg - 잡다한 랭킹{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">잡다한 랭킹</h1>
+    
+    <!-- 카테고리 선택 영역 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>랭킹 카테고리</h5>
+        </div>
+        <div class="card-body">
+            <div class="row row-cols-2 row-cols-md-3 g-4">
+                <div class="col">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">정당별</h5>
+                            <p class="card-text">정당별 활동 점수와 법안 발의 수 비교</p>
+                            <a href="/misc-ranking/party" class="btn btn-primary">보기</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">위원회별</h5>
+                            <p class="card-text">위원회별 법안 처리 비율 및 점수 비교</p>
+                            <a href="/misc-ranking/committee" class="btn btn-primary">보기</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">초선/재선+</h5>
+                            <p class="card-text">초선/재선별 티어 분포 및 재산 비교</p>
+                            <a href="/misc-ranking/term" class="btn btn-primary">보기</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">나이별</h5>
+                            <p class="card-text">나이대별 평균 점수 및 재산 비교</p>
+                            <a href="/misc-ranking/age" class="btn btn-primary">보기</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">성별</h5>
+                            <p class="card-text">성별 티어 분포 및 재산 비교</p>
+                            <a href="/misc-ranking/gender" class="btn btn-primary">보기</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">재산</h5>
+                            <p class="card-text">점수-재산 상관관계 및 정당별 재산 비율</p>
+                            <a href="/misc-ranking/asset" class="btn btn-primary">보기</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-5">
+        <!-- 정당별 평균 재산 -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5>정당별 평균 재산</h5>
+                    <div class="btn-group" role="group">
+                        <input type="radio" class="btn-check" name="party-asset-view" id="party-asset-chart-btn" autocomplete="off" checked>
+                        <label class="btn btn-outline-primary btn-sm" for="party-asset-chart-btn">차트</label>
+                        
+                        <input type="radio" class="btn-check" name="party-asset-view" id="party-asset-table-btn" autocomplete="off">
+                        <label class="btn btn-outline-primary btn-sm" for="party-asset-table-btn">테이블</label>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="party-asset-chart-view">
+                        <canvas id="partyAssetChart" height="300"></canvas>
+                    </div>
+                    <div id="party-asset-table-view" class="d-none">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>정당</th>
+                                    <th>평균 재산 (억원)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for party, asset in party_asset_stats.items() %}
+                                <tr>
+                                    <td>{{ party }}</td>
+                                    <td>{{ asset }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 초선/재선별 평균 점수 -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5>초선/재선별 평균 점수</h5>
+                    <div class="btn-group" role="group">
+                        <input type="radio" class="btn-check" name="term-score-view" id="term-score-chart-btn" autocomplete="off" checked>
+                        <label class="btn btn-outline-primary btn-sm" for="term-score-chart-btn">차트</label>
+                        
+                        <input type="radio" class="btn-check" name="term-score-view" id="term-score-table-btn" autocomplete="off">
+                        <label class="btn btn-outline-primary btn-sm" for="term-score-table-btn">테이블</label>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="term-score-chart-view">
+                        <canvas id="termScoreChart" height="300"></canvas>
+                    </div>
+                    <div id="term-score-table-view" class="d-none">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>선수</th>
+                                    <th>평균 종합점수</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for term, score in term_score_stats.items() %}
+                                <tr>
+                                    <td>{{ term }}</td>
+                                    <td>{{ score }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 정당별 평균 재산 차트
+    var partyAssetCtx = document.getElementById('partyAssetChart').getContext('2d');
+    var partyAssetData = {{ party_asset_chart|tojson }};
+    
+    var partyAssetChart = new Chart(partyAssetCtx, {
+        type: 'bar',
+        data: partyAssetData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: '평균 재산 (억원)'
+                    }
+                }
+            }
+        }
+    });
+    
+    // 초선/재선별 평균 점수 차트
+    var termScoreCtx = document.getElementById('termScoreChart').getContext('2d');
+    var termScoreData = {{ term_score_chart|tojson }};
+    
+    var termScoreChart = new Chart(termScoreCtx, {
+        type: 'bar',
+        data: termScoreData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: '평균 종합점수'
+                    }
+                }
+            }
+        }
+    });
+    
+    // 차트-테이블 토글 버튼 이벤트 - 정당별 평균 재산
+    document.getElementById('party-asset-chart-btn').addEventListener('change', function() {
+        document.getElementById('party-asset-chart-view').classList.remove('d-none');
+        document.getElementById('party-asset-table-view').classList.add('d-none');
+    });
+    
+    document.getElementById('party-asset-table-btn').addEventListener('change', function() {
+        document.getElementById('party-asset-chart-view').classList.add('d-none');
+        document.getElementById('party-asset-table-view').classList.remove('d-none');
+    });
+    
+    // 차트-테이블 토글 버튼 이벤트 - 초선/재선별 평균 점수
+    document.getElementById('term-score-chart-btn').addEventListener('change', function() {
+        document.getElementById('term-score-chart-view').classList.remove('d-none');
+        document.getElementById('term-score-table-view').classList.add('d-none');
+    });
+    
+    document.getElementById('term-score-table-btn').addEventListener('change', function() {
+        document.getElementById('term-score-chart-view').classList.add('d-none');
+        document.getElementById('term-score-table-view').classList.remove('d-none');
+    });
+});
+</script>
+{% endblock %}

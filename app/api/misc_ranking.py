@@ -5,6 +5,7 @@ from fastapi.templating import Jinja2Templates
 
 from app.db.database import get_db
 from app.models.legislator import Legislator
+from app.models.committee import Committee
 from app.services import stats_service, chart_service
 
 templates = Jinja2Templates(directory="app/templates")
@@ -12,12 +13,37 @@ router = APIRouter()
 
 @router.get("/misc-ranking")
 async def misc_ranking_home(request: Request, db: Session = Depends(get_db)):
-    # 호출: stats_service.get_party_average_stats(stat='asset')로 정당별 평균 재산 조회
-    # 호출: stats_service.get_term_average_stats(stat='overall_score')로 초선/재선별 평균 점수 조회
-    # 호출: chart_service.generate_party_asset_chart_data()로 정당별 평균 재산 차트 데이터 생성
-    # 호출: chart_service.generate_term_score_chart_data()로 초선/재선별 평균 점수 차트 데이터 생성
-    # 반환: 템플릿 렌더링(misc_ranking/index.html)
-    pass
+    """
+    잡다한 랭킹 홈 화면 처리
+    
+    Args:
+        request: FastAPI 요청 객체
+        db: 데이터베이스 세션
+    
+    Returns:
+        템플릿 렌더링 응답
+    """
+    # 정당별 평균 재산 조회
+    party_asset_stats = stats_service.get_party_average_stats(db, stat='asset')
+    
+    # 초선/재선별 평균 점수 조회
+    term_score_stats = stats_service.get_term_average_stats(db, stat='overall_score')
+    
+    # 차트 데이터 생성
+    party_asset_chart = chart_service.generate_party_asset_chart_data(party_asset_stats)
+    term_score_chart = chart_service.generate_term_score_chart_data(term_score_stats)
+    
+    # 템플릿 렌더링
+    return templates.TemplateResponse(
+        "misc_ranking/index.html", 
+        {
+            "request": request,
+            "party_asset_stats": party_asset_stats,
+            "term_score_stats": term_score_stats,
+            "party_asset_chart": party_asset_chart,
+            "term_score_chart": term_score_chart
+        }
+    )
 
 @router.get("/misc-ranking/party")
 async def party_ranking(request: Request, db: Session = Depends(get_db), party_name: Optional[str] = None):
@@ -90,85 +116,443 @@ async def party_ranking(request: Request, db: Session = Depends(get_db), party_n
 
 @router.get("/misc-ranking/committee")
 async def committee_ranking(request: Request, db: Session = Depends(get_db), committee_name: Optional[str] = None):
+    """
+    위원회별 랭킹 화면 처리
+    
+    Args:
+        request: FastAPI 요청 객체
+        db: 데이터베이스 세션
+        committee_name: 선택한 위원회명 (None인 경우 위원회 비교 홈 화면)
+    
+    Returns:
+        템플릿 렌더링 응답
+    """
+    # 위원회 목록 미리 조회 (공통)
+    committee_query = db.query(Committee.dept_nm).distinct().all()
+    committees = [committee[0] for committee in committee_query]
+    
     # committee_name이 None인 경우 - 위원회 비교 홈 화면
     if committee_name is None:
-        # 호출: stats_service.get_committee_processing_ratio()로 위원회별 처리 비율 조회
-        # 호출: stats_service.get_committee_average_scores()로 위원회별 평균 점수 조회
-        # 호출: chart_service.generate_committee_processing_chart_data()로 차트 데이터 생성
-        # 호출: chart_service.generate_committee_scores_chart_data()로 차트 데이터 생성
-        pass
+        # 위원회별 처리 비율 조회
+        processing_ratios = stats_service.get_committee_processing_ratio(db)
+        
+        # 위원회별 평균 점수 조회
+        committee_scores = stats_service.get_committee_average_scores(db)
+        
+        # 차트 데이터 생성
+        processing_chart = chart_service.generate_committee_processing_chart_data(processing_ratios)
+        scores_chart = chart_service.generate_committee_scores_chart_data(committee_scores)
+        
+        # 템플릿 렌더링
+        return templates.TemplateResponse(
+            "misc_ranking/committee.html", 
+            {
+                "request": request,
+                "committees": committees,
+                "committee_name": None,
+                "processing_ratios": processing_ratios,
+                "committee_scores": committee_scores,
+                "processing_chart": processing_chart,
+                "scores_chart": scores_chart
+            }
+        )
     else:
-        # 호출: stats_service.get_committee_stats_summary(committee_name)로 위원회 통계 요약 조회
-        # 호출: stats_service.get_legislators_by_committee(committee_name)로 위원회 소속 의원 목록 조회
-        pass
-
-    # 반환: 템플릿 렌더링(misc_ranking/committee.html)
-    pass
+        # 위원회명이 유효한지 확인
+        if committee_name not in committees:
+            # 유효하지 않은 경우 404 에러
+            return templates.TemplateResponse(
+                "404.html", 
+                {"request": request, "message": f"'{committee_name}'라는 위원회를 찾을 수 없습니다."}
+            )
+        
+        # 위원회 통계 요약 조회
+        committee_stats = stats_service.get_committee_stats_summary(db, committee_name)
+        
+        # 위원회 소속 의원 목록 조회
+        legislators = stats_service.get_legislators_by_committee(db, committee_name)
+        
+        # 템플릿 렌더링
+        return templates.TemplateResponse(
+            "misc_ranking/committee.html", 
+            {
+                "request": request,
+                "committees": committees,
+                "committee_name": committee_name,
+                "committee_stats": committee_stats,
+                "legislators": legislators
+            }
+        )
 
 @router.get("/misc-ranking/term")
 async def term_ranking(request: Request, db: Session = Depends(get_db), term: Optional[str] = None):
+    """
+    초선/재선 랭킹 화면 처리
+    
+    Args:
+        request: FastAPI 요청 객체
+        db: 데이터베이스 세션
+        term: 선택한 선수 (None인 경우 초선/재선 비교 홈 화면)
+    
+    Returns:
+        템플릿 렌더링 응답
+    """
+    # 초선/재선 목록 미리 조회 (공통)
+    term_query = db.query(Legislator.reele_gbn_nm).distinct().all()
+    terms = [term[0] for term in term_query if term[0]]
+    
     # term이 None인 경우 - 초선/재선 비교 홈 화면
     if term is None:
-        # 호출: stats_service.get_tier_distribution_by_term()로 선수별 티어 분포 조회
-        # 호출: stats_service.get_term_average_assets()로 선수별 평균 재산 조회
-        # 호출: chart_service.generate_term_tier_chart_data()로 차트 데이터 생성
-        # 호출: chart_service.generate_term_asset_chart_data()로 차트 데이터 생성
-        pass
+        # 선수별 티어 분포 조회
+        tier_distribution = stats_service.get_tier_distribution_by_term(db)
+        
+        # 선수별 평균 재산 조회
+        term_assets = stats_service.get_term_average_assets(db)
+        
+        # 차트 데이터 생성
+        tier_chart = chart_service.generate_term_tier_chart_data(tier_distribution)
+        asset_chart = chart_service.generate_term_asset_chart_data(term_assets)
+        
+        # 템플릿 렌더링
+        return templates.TemplateResponse(
+            "misc_ranking/term.html", 
+            {
+                "request": request,
+                "terms": terms,
+                "term": None,
+                "tier_distribution": tier_distribution,
+                "term_assets": term_assets,
+                "tier_chart": tier_chart,
+                "asset_chart": asset_chart
+            }
+        )
     else:
-        # 호출: stats_service.get_term_stats_summary(term)로 선수별 통계 요약 조회
-        # 호출: stats_service.get_legislators_by_term(term)로 특정 선수 의원 목록 조회
-        pass
-
-    # 반환: 템플릿 렌더링(misc_ranking/term.html)
-    pass
+        # 선수가 유효한지 확인
+        if term not in terms:
+            # 유효하지 않은 경우 404 에러
+            return templates.TemplateResponse(
+                "404.html", 
+                {"request": request, "message": f"'{term}'(이)라는 선수를 찾을 수 없습니다."}
+            )
+        
+        # 선수별 통계 요약 조회
+        term_stats = stats_service.get_term_stats_summary(db, term)
+        
+        # 해당 선수 의원 목록 조회
+        legislators = stats_service.get_legislators_by_term(db, term)
+        
+        # 템플릿 렌더링
+        return templates.TemplateResponse(
+            "misc_ranking/term.html", 
+            {
+                "request": request,
+                "terms": terms,
+                "term": term,
+                "term_stats": term_stats,
+                "legislators": legislators
+            }
+        )
 
 @router.get("/misc-ranking/age")
 async def age_ranking(request: Request, db: Session = Depends(get_db), age_group: Optional[str] = None):
-    # age_group이 None인 경우 - 나이별 비교 홈 화면
+    """
+    나이별 랭킹 화면 처리
+    
+    Args:
+        request: FastAPI 요청 객체
+        db: 데이터베이스 세션
+        age_group: 선택한 나이대 (None인 경우 나이대별 비교 홈 화면)
+    
+    Returns:
+        템플릿 렌더링 응답
+    """
+    # 나이대 목록 정의
+    age_groups = ["30대 이하", "40대", "50대", "60대", "70대 이상"]
+    
+    # age_group이 None인 경우 - 나이대별 비교 홈 화면
     if age_group is None:
-        # 호출: stats_service.get_age_average_scores()로 나이대별 평균 점수 조회
-        # 호출: stats_service.get_age_average_assets()로 나이대별 평균 재산 조회
-        # 호출: chart_service.generate_age_score_chart_data()로 차트 데이터 생성
-        # 호출: chart_service.generate_age_asset_chart_data()로 차트 데이터 생성
-        pass
+        # 나이대별 평균 점수 조회
+        age_scores = stats_service.get_age_average_scores(db)
+        
+        # 나이대별 평균 재산 조회
+        age_assets = stats_service.get_age_average_assets(db)
+        
+        # 차트 데이터 생성
+        # 나이대별 평균 점수 차트
+        score_chart_data = {
+            "labels": list(age_scores.keys()),
+            "datasets": [{
+                "label": "평균 종합점수",
+                "data": list(age_scores.values()),
+                "backgroundColor": 'rgba(75, 192, 192, 0.6)',
+                "borderColor": 'rgba(75, 192, 192, 1)',
+                "borderWidth": 1
+            }]
+        }
+        
+        # 나이대별 평균 재산 차트
+        asset_chart_data = {
+            "labels": list(age_assets.keys()),
+            "datasets": [{
+                "label": "평균 재산 (억원)",
+                "data": list(age_assets.values()),
+                "backgroundColor": 'rgba(153, 102, 255, 0.6)',
+                "borderColor": 'rgba(153, 102, 255, 1)',
+                "borderWidth": 1
+            }]
+        }
+        
+        # 템플릿 렌더링
+        return templates.TemplateResponse(
+            "misc_ranking/age.html", 
+            {
+                "request": request,
+                "age_groups": age_groups,
+                "age_group": None,
+                "age_scores": age_scores,
+                "age_assets": age_assets,
+                "score_chart": score_chart_data,
+                "asset_chart": asset_chart_data
+            }
+        )
     else:
-        # 호출: stats_service.get_age_stats_summary(age_group)로 나이대별 통계 요약 조회
-        # 호출: stats_service.get_legislators_by_age_group(age_group)로 특정 나이대 의원 목록 조회
-        pass
-
-    # 반환: 템플릿 렌더링(misc_ranking/age.html)
-    pass
+        # 나이대가 유효한지 확인
+        if age_group not in age_groups:
+            # 유효하지 않은 경우 404 에러
+            return templates.TemplateResponse(
+                "404.html", 
+                {"request": request, "message": f"'{age_group}'(이)라는 나이대를 찾을 수 없습니다."}
+            )
+        
+        # 나이대별 통계 요약 조회
+        age_stats = stats_service.get_age_stats_summary(db, age_group)
+        
+        # 해당 나이대 의원 목록 조회
+        legislators = stats_service.get_legislators_by_age_group(db, age_group)
+        
+        # 템플릿 렌더링
+        return templates.TemplateResponse(
+            "misc_ranking/age.html", 
+            {
+                "request": request,
+                "age_groups": age_groups,
+                "age_group": age_group,
+                "age_stats": age_stats,
+                "legislators": legislators
+            }
+        )
 
 @router.get("/misc-ranking/gender")
 async def gender_ranking(request: Request, db: Session = Depends(get_db), gender: Optional[str] = None):
+    """
+    성별 랭킹 화면 처리
+    
+    Args:
+        request: FastAPI 요청 객체
+        db: 데이터베이스 세션
+        gender: 선택한 성별 (None인 경우 성별 비교 홈 화면)
+    
+    Returns:
+        템플릿 렌더링 응답
+    """
+    # 성별 목록 미리 조회 (공통)
+    gender_query = db.query(Legislator.sex_gbn_nm).distinct().all()
+    genders = [gender[0] for gender in gender_query if gender[0]]
+    
     # gender가 None인 경우 - 성별 비교 홈 화면
     if gender is None:
-        # 호출: stats_service.get_tier_distribution_by_gender()로 성별 티어 분포 조회
-        # 호출: stats_service.get_gender_average_assets()로 성별 평균 재산 조회
-        # 호출: chart_service.generate_gender_tier_chart_data()로 차트 데이터 생성
-        # 호출: chart_service.generate_gender_asset_chart_data()로 차트 데이터 생성
-        pass
+        # 성별 티어 분포 조회
+        tier_distribution = stats_service.get_tier_distribution_by_gender(db)
+        
+        # 성별 평균 재산 조회
+        gender_assets = stats_service.get_gender_average_assets(db)
+        
+        # 차트 데이터 생성
+        # 티어 분포 데이터 가공
+        tier_order = ["Challenger", "Master", "Diamond", "Platinum", "Gold", "Silver", "Bronze", "Iron"]
+        tier_colors = {
+            "Challenger": 'rgba(255, 0, 0, 0.6)',       # 빨강
+            "Master": 'rgba(255, 165, 0, 0.6)',         # 주황
+            "Diamond": 'rgba(0, 191, 255, 0.6)',        # 하늘
+            "Platinum": 'rgba(50, 205, 50, 0.6)',       # 연두
+            "Gold": 'rgba(255, 215, 0, 0.6)',           # 금색
+            "Silver": 'rgba(192, 192, 192, 0.6)',       # 은색
+            "Bronze": 'rgba(205, 127, 50, 0.6)',        # 동색
+            "Iron": 'rgba(169, 169, 169, 0.6)'          # 회색
+        }
+        
+        datasets = []
+        for sex in genders:
+            # 성별별 티어 분포
+            data = []
+            sex_tiers = tier_distribution.get(sex, {})
+            for tier in tier_order:
+                data.append(sex_tiers.get(tier, 0))
+                
+            # 데이터셋 추가
+            datasets.append({
+                "label": sex,
+                "data": data,
+                "backgroundColor": 'rgba(75, 192, 192, 0.6)' if sex == "남" else 'rgba(255, 99, 132, 0.6)',
+                "borderColor": 'rgba(75, 192, 192, 1)' if sex == "남" else 'rgba(255, 99, 132, 1)',
+                "borderWidth": 1
+            })
+            
+        tier_chart_data = {
+            "labels": tier_order,
+            "datasets": datasets
+        }
+        
+        # 성별 평균 재산 차트
+        asset_chart_data = {
+            "labels": genders,
+            "datasets": [{
+                "label": "평균 재산 (억원)",
+                "data": [gender_assets.get(g, 0) for g in genders],
+                "backgroundColor": ['rgba(75, 192, 192, 0.6)', 'rgba(255, 99, 132, 0.6)'],
+                "borderColor": ['rgba(75, 192, 192, 1)', 'rgba(255, 99, 132, 1)'],
+                "borderWidth": 1
+            }]
+        }
+        
+        # 템플릿 렌더링
+        return templates.TemplateResponse(
+            "misc_ranking/gender.html", 
+            {
+                "request": request,
+                "genders": genders,
+                "gender": None,
+                "tier_distribution": tier_distribution,
+                "gender_assets": gender_assets,
+                "tier_chart": tier_chart_data,
+                "asset_chart": asset_chart_data
+            }
+        )
     else:
-        # 호출: stats_service.get_gender_stats_summary(gender)로 성별 통계 요약 조회
-        # 호출: stats_service.get_legislators_by_gender(gender)로 특정 성별 의원 목록 조회
-        pass
-
-    # 반환: 템플릿 렌더링(misc_ranking/gender.html)
-    pass
+        # 성별이 유효한지 확인
+        if gender not in genders:
+            # 유효하지 않은 경우 404 에러
+            return templates.TemplateResponse(
+                "404.html", 
+                {"request": request, "message": f"'{gender}'(이)라는 성별을 찾을 수 없습니다."}
+            )
+        
+        # 성별 통계 요약 조회
+        gender_stats = stats_service.get_gender_stats_summary(db, gender)
+        
+        # 해당 성별 의원 목록 조회
+        legislators = stats_service.get_legislators_by_gender(db, gender)
+        
+        # 템플릿 렌더링
+        return templates.TemplateResponse(
+            "misc_ranking/gender.html", 
+            {
+                "request": request,
+                "genders": genders,
+                "gender": gender,
+                "gender_stats": gender_stats,
+                "legislators": legislators
+            }
+        )
 
 @router.get("/misc-ranking/asset")
 async def asset_ranking(request: Request, db: Session = Depends(get_db), asset_group: Optional[str] = None):
+    """
+    재산 랭킹 화면 처리
+    
+    Args:
+        request: FastAPI 요청 객체
+        db: 데이터베이스 세션
+        asset_group: 선택한 재산 구간 (None인 경우 재산 비교 홈 화면)
+    
+    Returns:
+        템플릿 렌더링 응답
+    """
+    # 재산 구간 목록 정의
+    asset_groups = ["1억 미만", "1억~10억", "10억~50억", "50억~100억", "100억 이상"]
+    
     # asset_group이 None인 경우 - 재산 비교 홈 화면
     if asset_group is None:
-        # 호출: stats_service.get_score_asset_correlation()로 점수-재산 상관관계 조회
-        # 호출: stats_service.get_party_asset_ratio()로 정당별 재산 비율 조회
-        # 호출: chart_service.generate_score_asset_correlation_chart_data()로 차트 데이터 생성
-        # 호출: chart_service.generate_party_asset_ratio_chart_data()로 차트 데이터 생성
-        pass
+        # 점수-재산 상관관계 조회
+        correlation_data = stats_service.get_score_asset_correlation(db)
+        
+        # 정당별 재산 비율 조회
+        party_asset_ratio = stats_service.get_party_asset_ratio(db)
+        
+        # 차트 데이터 생성
+        # 점수-재산 상관관계 차트 (산점도)
+        correlation_chart_data = {
+            "datasets": [{
+                "label": "의원별 점수-재산 분포",
+                "data": [
+                    {"x": point["score"], "y": point["asset"], "r": 5, "name": point["name"]}
+                    for point in correlation_data["data_points"]
+                ],
+                "backgroundColor": 'rgba(75, 192, 192, 0.6)',
+                "borderColor": 'rgba(75, 192, 192, 1)',
+                "borderWidth": 1
+            }]
+        }
+        
+        # 정당별 재산 비율 차트 (파이 차트)
+        party_colors = [
+            'rgba(54, 162, 235, 0.6)',
+            'rgba(255, 99, 132, 0.6)',
+            'rgba(255, 206, 86, 0.6)',
+            'rgba(75, 192, 192, 0.6)',
+            'rgba(153, 102, 255, 0.6)',
+            'rgba(255, 159, 64, 0.6)'
+        ]
+        
+        parties = list(party_asset_ratio.keys())
+        ratios = [party_asset_ratio[party]["ratio"] for party in parties]
+        
+        party_ratio_chart_data = {
+            "labels": parties,
+            "datasets": [{
+                "label": "정당별 재산 비율 (%)",
+                "data": ratios,
+                "backgroundColor": party_colors[:len(parties)],
+                "borderColor": [color.replace('0.6', '1') for color in party_colors[:len(parties)]],
+                "borderWidth": 1
+            }]
+        }
+        
+        # 템플릿 렌더링
+        return templates.TemplateResponse(
+            "misc_ranking/asset.html", 
+            {
+                "request": request,
+                "asset_groups": asset_groups,
+                "asset_group": None,
+                "correlation_data": correlation_data,
+                "party_asset_ratio": party_asset_ratio,
+                "correlation_chart": correlation_chart_data,
+                "party_ratio_chart": party_ratio_chart_data
+            }
+        )
     else:
-        # 호출: stats_service.get_asset_stats_summary(asset_group)로 재산 구간별 통계 요약 조회
-        # 호출: stats_service.get_legislators_by_asset_group(asset_group)로 특정 재산 구간 의원 목록 조회
-        pass
-
-    # 반환: 템플릿 렌더링(misc_ranking/asset.html)
-    pass
+        # 재산 구간이 유효한지 확인
+        if asset_group not in asset_groups:
+            # 유효하지 않은 경우 404 에러
+            return templates.TemplateResponse(
+                "404.html", 
+                {"request": request, "message": f"'{asset_group}'(이)라는 재산 구간을 찾을 수 없습니다."}
+            )
+        
+        # 재산 구간별 통계 요약 조회
+        asset_stats = stats_service.get_asset_stats_summary(db, asset_group)
+        
+        # 해당 재산 구간 의원 목록 조회
+        legislators = stats_service.get_legislators_by_asset_group(db, asset_group)
+        
+        # 템플릿 렌더링
+        return templates.TemplateResponse(
+            "misc_ranking/asset.html", 
+            {
+                "request": request,
+                "asset_groups": asset_groups,
+                "asset_group": asset_group,
+                "asset_stats": asset_stats,
+                "legislators": legislators
+            }
+        )

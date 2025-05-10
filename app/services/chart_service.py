@@ -254,14 +254,100 @@ def generate_ranking_chart_data(top_legislators: list, bottom_legislators: list,
 
 ### 잡다한 랭킹 - 홈 ###
 def generate_party_asset_chart_data(party_stats: Dict[str, Any]) -> Dict[str, Any]:
-    # 정당별 평균 재산 데이터를 차트 데이터로 변환
-    # 반환: 차트 데이터 딕셔너리
-    pass
+    """
+    정당별 평균 재산 데이터를 차트 데이터로 변환
+    
+    Args:
+        party_stats: 정당별 평균 재산 딕셔너리
+        
+    Returns:
+        차트 데이터 딕셔너리
+    """
+    # 차트에 표시할 라벨(정당명) 추출
+    labels = list(party_stats.keys())
+    
+    # 데이터값(평균 재산) 추출
+    values = [party_stats[party] for party in labels]
+    
+    # 색상 목록 생성
+    colors = [
+        'rgba(54, 162, 235, 0.6)',
+        'rgba(255, 99, 132, 0.6)',
+        'rgba(255, 206, 86, 0.6)',
+        'rgba(75, 192, 192, 0.6)',
+        'rgba(153, 102, 255, 0.6)',
+        'rgba(255, 159, 64, 0.6)',
+        'rgba(199, 199, 199, 0.6)',
+        'rgba(83, 102, 255, 0.6)'
+    ]
+    
+    # 색상이 부족한 경우 반복 사용
+    if len(labels) > len(colors):
+        colors = colors * (len(labels) // len(colors) + 1)
+    
+    # 테두리 색상 생성
+    border_colors = [color.replace('0.6', '1') for color in colors[:len(labels)]]
+    
+    # 차트 데이터 구성
+    chart_data = {
+        "labels": labels,
+        "datasets": [{
+            "label": "평균 재산 (억원)",
+            "data": values,
+            "backgroundColor": colors[:len(labels)],
+            "borderColor": border_colors,
+            "borderWidth": 1
+        }]
+    }
+    
+    return chart_data
 
 def generate_term_score_chart_data(term_stats: Dict[str, Any]) -> Dict[str, Any]:
-    # 초선/재선별 평균 점수 데이터를 차트 데이터로 변환
-    # 반환: 차트 데이터 딕셔너리
-    pass
+    """
+    초선/재선별 평균 점수 데이터를 차트 데이터로 변환
+    
+    Args:
+        term_stats: 초선/재선별 평균 점수 딕셔너리
+        
+    Returns:
+        차트 데이터 딕셔너리
+    """
+    # 차트에 표시할 라벨(선수) 추출
+    labels = list(term_stats.keys())
+    
+    # 데이터값(평균 점수) 추출
+    values = [term_stats[term] for term in labels]
+    
+    # 색상 목록 생성
+    colors = [
+        'rgba(75, 192, 192, 0.6)',
+        'rgba(153, 102, 255, 0.6)',
+        'rgba(255, 159, 64, 0.6)',
+        'rgba(54, 162, 235, 0.6)',
+        'rgba(255, 99, 132, 0.6)',
+        'rgba(255, 206, 86, 0.6)'
+    ]
+    
+    # 색상이 부족한 경우 반복 사용
+    if len(labels) > len(colors):
+        colors = colors * (len(labels) // len(colors) + 1)
+    
+    # 테두리 색상 생성
+    border_colors = [color.replace('0.6', '1') for color in colors[:len(labels)]]
+    
+    # 차트 데이터 구성
+    chart_data = {
+        "labels": labels,
+        "datasets": [{
+            "label": "평균 종합점수",
+            "data": values,
+            "backgroundColor": colors[:len(labels)],
+            "borderColor": border_colors,
+            "borderWidth": 1
+        }]
+    }
+    
+    return chart_data
 
 ### 잡다한 랭킹 - 정당 ###
 
@@ -365,25 +451,203 @@ def generate_party_bills_chart_data(party_bills: Dict[str, float]) -> Dict[str, 
 
 ### 잡다한 랭킹 - 위원회 ###
 def generate_committee_processing_chart_data(ratios: Dict[str, Any]) -> Dict[str, Any]:
-    # 위원회별 접수/처리 비율 데이터를 차트 데이터로 변환
-    # 반환: 차트 데이터 딕셔너리
-    pass
+    """
+    위원회별 법안 처리 비율 데이터를 차트 데이터로 변환
+    
+    Args:
+        ratios: 위원회별 처리 비율 딕셔너리
+        
+    Returns:
+        차트 데이터 딕셔너리
+    """
+    # 차트에 표시할 라벨(위원회명) 추출
+    labels = list(ratios.keys())
+    
+    # 데이터값(처리 비율) 추출
+    values = [ratios[committee]['ratio'] for committee in labels]
+    
+    # 색상 목록 생성 (처리 비율에 따라 색상 변경)
+    colors = []
+    for committee in labels:
+        ratio = ratios[committee]['ratio']
+        if ratio >= 80:
+            colors.append('rgba(75, 192, 192, 0.6)')  # 높은 비율: 초록색
+        elif ratio >= 50:
+            colors.append('rgba(255, 206, 86, 0.6)')  # 중간 비율: 노란색
+        else:
+            colors.append('rgba(255, 99, 132, 0.6)')  # 낮은 비율: 빨간색
+    
+    # 테두리 색상 생성
+    border_colors = [color.replace('0.6', '1') for color in colors]
+    
+    # 차트 데이터 구성
+    chart_data = {
+        "labels": labels,
+        "datasets": [{
+            "label": "처리 비율 (%)",
+            "data": values,
+            "backgroundColor": colors,
+            "borderColor": border_colors,
+            "borderWidth": 1
+        }]
+    }
+    
+    return chart_data
 
-def generate_committee_scores_chart_data(scores: Dict[str, Any]) -> Dict[str, Any]:
-    # 위원회별 평균 종합점수 데이터를 차트 데이터로 변환
-    # 반환: 차트 데이터 딕셔너리
-    pass
+def generate_committee_scores_chart_data(scores: Dict[str, float]) -> Dict[str, Any]:
+    """
+    위원회별 평균 종합점수 데이터를 차트 데이터로 변환
+    
+    Args:
+        scores: 위원회별 평균 종합점수 딕셔너리
+        
+    Returns:
+        차트 데이터 딕셔너리
+    """
+    # 차트에 표시할 라벨(위원회명) 추출
+    labels = list(scores.keys())
+    
+    # 데이터값(평균 종합점수) 추출
+    values = [scores[committee] for committee in labels]
+    
+    # 색상 목록 생성
+    colors = [
+        'rgba(54, 162, 235, 0.6)',
+        'rgba(255, 99, 132, 0.6)',
+        'rgba(255, 206, 86, 0.6)',
+        'rgba(75, 192, 192, 0.6)',
+        'rgba(153, 102, 255, 0.6)',
+        'rgba(255, 159, 64, 0.6)',
+        'rgba(199, 199, 199, 0.6)',
+        'rgba(83, 102, 255, 0.6)'
+    ]
+    
+    # 색상이 부족한 경우 반복 사용
+    if len(labels) > len(colors):
+        colors = colors * (len(labels) // len(colors) + 1)
+    
+    # 테두리 색상 생성
+    border_colors = [color.replace('0.6', '1') for color in colors[:len(labels)]]
+    
+    # 차트 데이터 구성
+    chart_data = {
+        "labels": labels,
+        "datasets": [{
+            "label": "평균 종합점수",
+            "data": values,
+            "backgroundColor": colors[:len(labels)],
+            "borderColor": border_colors,
+            "borderWidth": 1
+        }]
+    }
+    
+    return chart_data
 
 ### 잡다한 랭킹 - 초선/재선+ ###
-def generate_term_tier_chart_data(term_tier_data: Dict[str, Any]) -> Dict[str, Any]:
-    # 초선/재선별 티어 분포 데이터를 차트 데이터로 변환
-    # 반환: 차트 데이터 딕셔너리
-    pass
+def generate_term_tier_chart_data(term_tier_data: Dict[str, Dict[str, int]]) -> Dict[str, Any]:
+    """
+    초선/재선별 티어 분포 데이터를 차트 데이터로 변환
+    
+    Args:
+        term_tier_data: 초선/재선별 티어 분포 딕셔너리
+        
+    Returns:
+        차트 데이터 딕셔너리
+    """
+    # 차트에 표시할 라벨(선수) 추출
+    labels = list(term_tier_data.keys())
+    
+    # 티어 목록 (모든 가능한 티어)
+    all_tiers = ["Challenger", "Master", "Diamond", "Platinum", "Gold", "Silver", "Bronze", "Iron"]
+    
+    # 티어별 색상 매핑
+    tier_colors = {
+        "Challenger": 'rgba(255, 0, 0, 0.6)',       # 빨강
+        "Master": 'rgba(255, 165, 0, 0.6)',         # 주황
+        "Diamond": 'rgba(0, 191, 255, 0.6)',        # 하늘
+        "Platinum": 'rgba(50, 205, 50, 0.6)',       # 연두
+        "Gold": 'rgba(255, 215, 0, 0.6)',           # 금색
+        "Silver": 'rgba(192, 192, 192, 0.6)',       # 은색
+        "Bronze": 'rgba(205, 127, 50, 0.6)',        # 동색
+        "Iron": 'rgba(169, 169, 169, 0.6)'          # 회색
+    }
+    
+    # 데이터셋 생성
+    datasets = []
+    for tier in all_tiers:
+        # 해당 티어의 데이터 추출
+        data = []
+        for term in labels:
+            term_data = term_tier_data.get(term, {})
+            data.append(term_data.get(tier, 0))
+        
+        # 데이터가 모두 0인 경우 스킵
+        if sum(data) == 0:
+            continue
+        
+        # 데이터셋 추가
+        datasets.append({
+            "label": tier,
+            "data": data,
+            "backgroundColor": tier_colors.get(tier, 'rgba(200, 200, 200, 0.6)'),
+            "borderColor": tier_colors.get(tier, 'rgba(200, 200, 200, 1)').replace('0.6', '1'),
+            "borderWidth": 1
+        })
+    
+    # 차트 데이터 구성
+    chart_data = {
+        "labels": labels,
+        "datasets": datasets
+    }
+    
+    return chart_data
 
-def generate_term_asset_chart_data(term_asset_data: Dict[str, Any]) -> Dict[str, Any]:
-    # 초선/재선별 평균 재산 데이터를 차트 데이터로 변환
-    # 반환: 차트 데이터 딕셔너리
-    pass
+def generate_term_asset_chart_data(term_asset_data: Dict[str, float]) -> Dict[str, Any]:
+    """
+    초선/재선별 평균 재산 데이터를 차트 데이터로 변환
+    
+    Args:
+        term_asset_data: 초선/재선별 평균 재산 딕셔너리
+        
+    Returns:
+        차트 데이터 딕셔너리
+    """
+    # 차트에 표시할 라벨(선수) 추출
+    labels = list(term_asset_data.keys())
+    
+    # 데이터값(평균 재산) 추출
+    values = [term_asset_data[term] for term in labels]
+    
+    # 색상 목록 생성
+    colors = [
+        'rgba(153, 102, 255, 0.6)',
+        'rgba(75, 192, 192, 0.6)',
+        'rgba(255, 159, 64, 0.6)',
+        'rgba(54, 162, 235, 0.6)',
+        'rgba(255, 99, 132, 0.6)',
+        'rgba(255, 206, 86, 0.6)'
+    ]
+    
+    # 색상이 부족한 경우 반복 사용
+    if len(labels) > len(colors):
+        colors = colors * (len(labels) // len(colors) + 1)
+    
+    # 테두리 색상 생성
+    border_colors = [color.replace('0.6', '1') for color in colors[:len(labels)]]
+    
+    # 차트 데이터 구성
+    chart_data = {
+        "labels": labels,
+        "datasets": [{
+            "label": "평균 재산 (억원)",
+            "data": values,
+            "backgroundColor": colors[:len(labels)],
+            "borderColor": border_colors,
+            "borderWidth": 1
+        }]
+    }
+    
+    return chart_data
 
 ### 잡다한 랭킹 - 성별 ###
 def generate_gender_tier_chart_data(gender_tier_data: Dict[str, Any]) -> Dict[str, Any]:
