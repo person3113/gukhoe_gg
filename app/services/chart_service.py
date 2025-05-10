@@ -256,12 +256,93 @@ def generate_ranking_chart_data(top_legislators: list, bottom_legislators: list,
 def generate_party_asset_chart_data(party_stats: Dict[str, Any]) -> Dict[str, Any]:
     # 정당별 평균 재산 데이터를 차트 데이터로 변환
     # 반환: 차트 데이터 딕셔너리
-    pass
+    """
+    정당별 평균 재산 데이터를 차트 데이터로 변환
+    
+    Args:
+        party_stats: 정당별 평균 재산 통계
+        
+    Returns:
+        차트 데이터 딕셔너리
+    """
+    # 차트에 표시할 라벨(정당) 추출
+    labels = party_stats['labels']
+    
+    # 데이터값(평균 재산) 추출
+    values = party_stats['values']
+    
+    # 색상 목록 생성
+    colors = [
+        'rgba(54, 162, 235, 0.6)',  # 파란색
+        'rgba(255, 99, 132, 0.6)',  # 빨간색
+        'rgba(255, 206, 86, 0.6)',  # 노란색
+        'rgba(75, 192, 192, 0.6)',  # 청록색
+        'rgba(153, 102, 255, 0.6)',  # 보라색
+        'rgba(255, 159, 64, 0.6)',  # 주황색
+        'rgba(199, 199, 199, 0.6)'  # 회색
+    ]
+    
+    # 색상 목록 생성 (테두리)
+    border_colors = [color.replace('0.6', '1') for color in colors]
+    
+    # 차트 데이터 구성
+    chart_data = {
+        "labels": labels,
+        "datasets": [{
+            "label": "평균 재산 (억원)",
+            "data": values,
+            "backgroundColor": colors[:len(labels)],
+            "borderColor": border_colors[:len(labels)],
+            "borderWidth": 1
+        }]
+    }
+    
+    return chart_data
 
 def generate_term_score_chart_data(term_stats: Dict[str, Any]) -> Dict[str, Any]:
     # 초선/재선별 평균 점수 데이터를 차트 데이터로 변환
     # 반환: 차트 데이터 딕셔너리
-    pass
+    """
+    초선/재선별 평균 점수 데이터를 차트 데이터로 변환
+    
+    Args:
+        term_stats: 초선/재선별 평균 점수 통계
+        
+    Returns:
+        차트 데이터 딕셔너리
+    """
+    # 차트에 표시할 라벨(초선/재선) 추출
+    labels = term_stats['labels']
+    
+    # 데이터값(평균 점수) 추출
+    values = term_stats['values']
+    
+    # 색상 목록 생성
+    colors = [
+        'rgba(54, 162, 235, 0.6)',  # 파란색
+        'rgba(255, 99, 132, 0.6)',  # 빨간색
+        'rgba(255, 206, 86, 0.6)',  # 노란색
+        'rgba(75, 192, 192, 0.6)',  # 청록색
+        'rgba(153, 102, 255, 0.6)',  # 보라색
+        'rgba(255, 159, 64, 0.6)'   # 주황색
+    ]
+    
+    # 색상 목록 생성 (테두리)
+    border_colors = [color.replace('0.6', '1') for color in colors]
+    
+    # 차트 데이터 구성
+    chart_data = {
+        "labels": labels,
+        "datasets": [{
+            "label": "평균 종합점수",
+            "data": values,
+            "backgroundColor": colors[:len(labels)],
+            "borderColor": border_colors[:len(labels)],
+            "borderWidth": 1
+        }]
+    }
+    
+    return chart_data
 
 ### 잡다한 랭킹 - 정당 ###
 

@@ -17,7 +17,30 @@ async def misc_ranking_home(request: Request, db: Session = Depends(get_db)):
     # 호출: chart_service.generate_party_asset_chart_data()로 정당별 평균 재산 차트 데이터 생성
     # 호출: chart_service.generate_term_score_chart_data()로 초선/재선별 평균 점수 차트 데이터 생성
     # 반환: 템플릿 렌더링(misc_ranking/index.html)
-    pass
+    """
+    잡다한 랭킹 홈 화면
+    """
+    # 정당별 평균 재산 조회
+    party_asset_stats = stats_service.get_party_average_stats(db, stat='asset')
+    
+    # 초선/재선별 평균 점수 조회
+    term_score_stats = stats_service.get_term_average_stats(db, stat='overall_score')
+    
+    # 차트 데이터 생성
+    party_asset_chart = chart_service.generate_party_asset_chart_data(party_asset_stats)
+    term_score_chart = chart_service.generate_term_score_chart_data(term_score_stats)
+    
+    return templates.TemplateResponse(
+        "misc_ranking/index.html", 
+        {
+            "request": request,
+            "party_asset_stats": party_asset_stats,
+            "term_score_stats": term_score_stats,
+            "party_asset_chart": party_asset_chart,
+            "term_score_chart": term_score_chart,
+            "active_tab": "misc_ranking"
+        }
+    )
 
 @router.get("/misc-ranking/party")
 async def party_ranking(request: Request, db: Session = Depends(get_db), party_name: Optional[str] = None):

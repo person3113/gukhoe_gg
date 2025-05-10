@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
-from sqlalchemy.sql import func
+from sqlalchemy.sql import func, case
+from sqlalchemy import func
 from typing import List, Dict, Any, Optional
 
 from app.models.bill import Bill
@@ -43,13 +44,134 @@ def get_party_average_stats(db: Session, stat: str = 'asset') -> Dict[str, Any]:
     # 호출: db.query(Legislator)로 정당별 의원 그룹화
     # 정당별 특정 통계 평균 계산
     # 반환: 정당별 평균 통계 딕셔너리
-    pass
+    """
+    정당별 평균 통계 조회
+    
+    Args:
+        db: 데이터베이스 세션
+        stat: 통계 유형 (asset, overall_score 등)
+    
+    Returns:
+        정당별 평균 통계 딕셔너리
+    """
+    # 어떤 컬럼을 조회할지 결정
+    if stat == 'asset':
+        stat_column = Legislator.asset
+    elif stat == 'overall_score':
+        stat_column = Legislator.overall_score
+    elif stat == 'participation_score':
+        stat_column = Legislator.participation_score
+    elif stat == 'legislation_score':
+        stat_column = Legislator.legislation_score
+    elif stat == 'speech_score':
+        stat_column = Legislator.speech_score
+    elif stat == 'voting_score':
+        stat_column = Legislator.voting_score
+    elif stat == 'cooperation_score':
+        stat_column = Legislator.cooperation_score
+    else:
+        stat_column = Legislator.overall_score
+    
+    # 정당별 평균값 쿼리
+    query_result = db.query(
+        Legislator.poly_nm.label('party'),
+        func.avg(stat_column).label('average_value'),
+        func.count(Legislator.id).label('count')
+    ).group_by(
+        Legislator.poly_nm
+    ).order_by(
+        func.avg(stat_column).desc()
+    ).all()
+    
+    # 결과 포맷팅
+    result = {
+        'labels': [],
+        'values': [],
+        'counts': [],
+        'stat_type': stat
+    }
+    
+    for row in query_result:
+        result['labels'].append(row.party)
+        # 재산의 경우 단위를 억 원으로 변환하여 표시
+        if stat == 'asset':
+            result['values'].append(round(row.average_value / 100000000, 1))  # 억 원 단위로 변환
+        else:
+            result['values'].append(round(row.average_value, 1))
+        result['counts'].append(row.count)
+    
+    return result
 
 def get_term_average_stats(db: Session, stat: str = 'overall_score') -> Dict[str, Any]:
     # 호출: db.query(Legislator)로 초선/재선별 의원 그룹화
     # 초선/재선별 특정 통계 평균 계산
     # 반환: 초선/재선별 평균 통계 딕셔너리
-    pass
+    """
+    초선/재선별 평균 통계 조회
+    
+    Args:
+        db: 데이터베이스 세션
+        stat: 통계 유형 (asset, overall_score 등)
+    
+    Returns:
+        초선/재선별 평균 통계 딕셔너리
+    """
+    # 어떤 컬럼을 조회할지 결정
+    if stat == 'asset':
+        stat_column = Legislator.asset
+    elif stat == 'overall_score':
+        stat_column = Legislator.overall_score
+    elif stat == 'participation_score':
+        stat_column = Legislator.participation_score
+    elif stat == 'legislation_score':
+        stat_column = Legislator.legislation_score
+    elif stat == 'speech_score':
+        stat_column = Legislator.speech_score
+    elif stat == 'voting_score':
+        stat_column = Legislator.voting_score
+    elif stat == 'cooperation_score':
+        stat_column = Legislator.cooperation_score
+    else:
+        stat_column = Legislator.overall_score
+    
+    # 초선/재선별 평균값 쿼리
+    query_result = db.query(
+        Legislator.reele_gbn_nm.label('term'),
+        func.avg(stat_column).label('average_value'),
+        func.count(Legislator.id).label('count')
+    ).group_by(
+        Legislator.reele_gbn_nm
+    ).order_by(
+        # 초선, 재선, 3선, 4선 순으로 정렬
+        case(
+            (Legislator.reele_gbn_nm == '초선', 1),
+            (Legislator.reele_gbn_nm == '재선', 2),
+            (Legislator.reele_gbn_nm == '3선', 3),
+            (Legislator.reele_gbn_nm == '4선', 4),
+            (Legislator.reele_gbn_nm == '5선', 5),
+            (Legislator.reele_gbn_nm == '6선', 6),
+            else_=99
+        )
+    ).all()
+    
+    # 결과 포맷팅
+    result = {
+        'labels': [],
+        'values': [],
+        'counts': [],
+        'stat_type': stat
+    }
+    
+    for row in query_result:
+        result['labels'].append(row.term)
+        # 재산의 경우 단위를 억 원으로 변환하여 표시
+        if stat == 'asset':
+            result['values'].append(round(row.average_value / 100000000, 1))  # 억 원 단위로 변환
+        else:
+            result['values'].append(round(row.average_value, 1))
+        result['counts'].append(row.count)
+    
+    return result
 
 ### 잡다한 랭킹 - 정당 ###
 def get_party_average_scores(db: Session) -> Dict[str, float]:
