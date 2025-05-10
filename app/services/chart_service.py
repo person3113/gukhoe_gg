@@ -650,15 +650,275 @@ def generate_term_asset_chart_data(term_asset_data: Dict[str, float]) -> Dict[st
     return chart_data
 
 ### 잡다한 랭킹 - 성별 ###
-def generate_gender_tier_chart_data(gender_tier_data: Dict[str, Any]) -> Dict[str, Any]:
-    # 성별 티어 분포 데이터를 차트 데이터로 변환
-    # 반환: 차트 데이터 딕셔너리
-    pass
+### 잡다한 랭킹 - 성별 ###
+def generate_gender_tier_chart_data(gender_tier_data: Dict[str, Dict[str, int]]) -> Dict[str, Any]:
+    """
+    성별 티어 분포 데이터를 차트 데이터로 변환
+    
+    Args:
+        gender_tier_data: 성별 티어 분포 딕셔너리
+        
+    Returns:
+        차트 데이터 딕셔너리
+    """
+    # 차트에 표시할 라벨(성별) 추출
+    labels = list(gender_tier_data.keys())
+    
+    # 티어 목록 (모든 가능한 티어)
+    all_tiers = ["Challenger", "Master", "Diamond", "Platinum", "Gold", "Silver", "Bronze", "Iron"]
+    
+    # 티어별 색상 매핑
+    tier_colors = {
+        "Challenger": 'rgba(255, 0, 0, 0.6)',       # 빨강
+        "Master": 'rgba(255, 165, 0, 0.6)',         # 주황
+        "Diamond": 'rgba(0, 191, 255, 0.6)',        # 하늘
+        "Platinum": 'rgba(50, 205, 50, 0.6)',       # 연두
+        "Gold": 'rgba(255, 215, 0, 0.6)',           # 금색
+        "Silver": 'rgba(192, 192, 192, 0.6)',       # 은색
+        "Bronze": 'rgba(205, 127, 50, 0.6)',        # 동색
+        "Iron": 'rgba(169, 169, 169, 0.6)'          # 회색
+    }
+    
+    # 데이터셋 생성
+    datasets = []
+    for tier in all_tiers:
+        # 해당 티어의 데이터 추출
+        data = []
+        for gender in labels:
+            gender_data = gender_tier_data.get(gender, {})
+            data.append(gender_data.get(tier, 0))
+        
+        # 데이터가 모두 0인 경우 스킵
+        if sum(data) == 0:
+            continue
+        
+        # 데이터셋 추가
+        datasets.append({
+            "label": tier,
+            "data": data,
+            "backgroundColor": tier_colors.get(tier, 'rgba(200, 200, 200, 0.6)'),
+            "borderColor": tier_colors.get(tier, 'rgba(200, 200, 200, 1)').replace('0.6', '1'),
+            "borderWidth": 1
+        })
+    
+    # 차트 데이터 구성
+    chart_data = {
+        "labels": labels,
+        "datasets": datasets
+    }
+    
+    return chart_data
 
-def generate_gender_asset_chart_data(gender_asset_data: Dict[str, Any]) -> Dict[str, Any]:
-    # 성별 평균 재산 데이터를 차트 데이터로 변환
-    # 반환: 차트 데이터 딕셔너리
-    pass
+def generate_gender_asset_chart_data(gender_asset_data: Dict[str, float]) -> Dict[str, Any]:
+    """
+    성별 평균 재산 데이터를 차트 데이터로 변환
+    
+    Args:
+        gender_asset_data: 성별 평균 재산 딕셔너리
+        
+    Returns:
+        차트 데이터 딕셔너리
+    """
+    # 차트에 표시할 라벨(성별) 추출
+    labels = list(gender_asset_data.keys())
+    
+    # 데이터값(평균 재산) 추출
+    values = [gender_asset_data[gender] for gender in labels]
+    
+    # 색상 목록 생성 (성별에 따라 다른 색상 사용)
+    colors = []
+    for gender in labels:
+        if gender == "남":
+            colors.append('rgba(54, 162, 235, 0.6)')  # 파란색
+        else:
+            colors.append('rgba(255, 99, 132, 0.6)')  # 분홍색
+    
+    # 테두리 색상 생성
+    border_colors = [color.replace('0.6', '1') for color in colors]
+    
+    # 차트 데이터 구성
+    chart_data = {
+        "labels": labels,
+        "datasets": [{
+            "label": "평균 재산 (억원)",
+            "data": values,
+            "backgroundColor": colors,
+            "borderColor": border_colors,
+            "borderWidth": 1
+        }]
+    }
+    
+    return chart_data
+
+### 잡다한 랭킹 - 나이별 ###
+def generate_age_score_chart_data(age_score_data: Dict[str, float]) -> Dict[str, Any]:
+    """
+    나이대별 평균 종합점수 데이터를 차트 데이터로 변환
+    
+    Args:
+        age_score_data: 나이대별 평균 종합점수 딕셔너리
+        
+    Returns:
+        차트 데이터 딕셔너리
+    """
+    # 차트에 표시할 라벨(나이대) 추출
+    labels = list(age_score_data.keys())
+    
+    # 데이터값(평균 점수) 추출
+    values = [age_score_data[age] for age in labels]
+    
+    # 색상 목록 생성
+    colors = [
+        'rgba(54, 162, 235, 0.6)',
+        'rgba(255, 99, 132, 0.6)',
+        'rgba(255, 206, 86, 0.6)',
+        'rgba(75, 192, 192, 0.6)',
+        'rgba(153, 102, 255, 0.6)'
+    ]
+    
+    # 색상이 부족한 경우 반복 사용
+    if len(labels) > len(colors):
+        colors = colors * (len(labels) // len(colors) + 1)
+    
+    # 테두리 색상 생성
+    border_colors = [color.replace('0.6', '1') for color in colors[:len(labels)]]
+    
+    # 차트 데이터 구성
+    chart_data = {
+        "labels": labels,
+        "datasets": [{
+            "label": "평균 종합점수",
+            "data": values,
+            "backgroundColor": colors[:len(labels)],
+            "borderColor": border_colors,
+            "borderWidth": 1
+        }]
+    }
+    
+    return chart_data
+
+def generate_age_asset_chart_data(age_asset_data: Dict[str, float]) -> Dict[str, Any]:
+    """
+    나이대별 평균 재산 데이터를 차트 데이터로 변환
+    
+    Args:
+        age_asset_data: 나이대별 평균 재산 딕셔너리
+        
+    Returns:
+        차트 데이터 딕셔너리
+    """
+    # 차트에 표시할 라벨(나이대) 추출
+    labels = list(age_asset_data.keys())
+    
+    # 데이터값(평균 재산) 추출
+    values = [age_asset_data[age] for age in labels]
+    
+    # 색상 목록 생성
+    colors = [
+        'rgba(153, 102, 255, 0.6)',
+        'rgba(255, 159, 64, 0.6)',
+        'rgba(255, 99, 132, 0.6)',
+        'rgba(75, 192, 192, 0.6)',
+        'rgba(255, 206, 86, 0.6)'
+    ]
+    
+    # 색상이 부족한 경우 반복 사용
+    if len(labels) > len(colors):
+        colors = colors * (len(labels) // len(colors) + 1)
+    
+    # 테두리 색상 생성
+    border_colors = [color.replace('0.6', '1') for color in colors[:len(labels)]]
+    
+    # 차트 데이터 구성
+    chart_data = {
+        "labels": labels,
+        "datasets": [{
+            "label": "평균 재산 (억원)",
+            "data": values,
+            "backgroundColor": colors[:len(labels)],
+            "borderColor": border_colors,
+            "borderWidth": 1
+        }]
+    }
+    
+    return chart_data
+
+### 잡다한 랭킹 - 재산 ###
+def generate_score_asset_correlation_chart_data(correlation_data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    활동점수와 재산 상관관계 데이터를 차트 데이터로 변환
+    
+    Args:
+        correlation_data: 점수-재산 상관관계 데이터
+        
+    Returns:
+        차트 데이터 딕셔너리
+    """
+    # 데이터 포인트들 추출
+    data_points = correlation_data.get("data_points", [])
+    
+    # 산점도 차트 데이터 구성
+    chart_data = {
+        "datasets": [{
+            "label": "의원별 점수-재산 분포",
+            "data": [
+                {"x": point["score"], "y": point["asset"], "r": 5, "name": point["name"]}
+                for point in data_points
+            ],
+            "backgroundColor": 'rgba(75, 192, 192, 0.6)',
+            "borderColor": 'rgba(75, 192, 192, 1)',
+            "borderWidth": 1
+        }]
+    }
+    
+    return chart_data
+
+def generate_party_asset_ratio_chart_data(party_asset_data: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    정당별 재산 비율 데이터를 차트 데이터로 변환
+    
+    Args:
+        party_asset_data: 정당별 재산 비율 딕셔너리
+        
+    Returns:
+        차트 데이터 딕셔너리
+    """
+    # 차트에 표시할 라벨(정당명) 추출
+    labels = list(party_asset_data.keys())
+    
+    # 데이터값(재산 비율) 추출
+    values = [party_asset_data[party]["ratio"] for party in labels]
+    
+    # 색상 목록 생성
+    colors = [
+        'rgba(54, 162, 235, 0.6)',
+        'rgba(255, 99, 132, 0.6)',
+        'rgba(255, 206, 86, 0.6)',
+        'rgba(75, 192, 192, 0.6)',
+        'rgba(153, 102, 255, 0.6)',
+        'rgba(255, 159, 64, 0.6)'
+    ]
+    
+    # 색상이 부족한 경우 반복 사용
+    if len(labels) > len(colors):
+        colors = colors * (len(labels) // len(colors) + 1)
+    
+    # 테두리 색상 생성
+    border_colors = [color.replace('0.6', '1') for color in colors[:len(labels)]]
+    
+    # 차트 데이터 구성
+    chart_data = {
+        "labels": labels,
+        "datasets": [{
+            "label": "재산 비율 (%)",
+            "data": values,
+            "backgroundColor": colors[:len(labels)],
+            "borderColor": border_colors,
+            "borderWidth": 1
+        }]
+    }
+    
+    return chart_data
 
 ### 잡다한 랭킹 - 나이별 ###
 def generate_age_score_chart_data(age_score_data: Dict[str, Any]) -> Dict[str, Any]:
