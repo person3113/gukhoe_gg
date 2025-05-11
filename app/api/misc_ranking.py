@@ -276,30 +276,10 @@ async def age_ranking(request: Request, db: Session = Depends(get_db), age_group
         # 나이대별 평균 재산 조회
         age_assets = stats_service.get_age_average_assets(db)
         
-        # 차트 데이터 생성
-        # 나이대별 평균 점수 차트
-        score_chart_data = {
-            "labels": list(age_scores.keys()),
-            "datasets": [{
-                "label": "평균 종합점수",
-                "data": list(age_scores.values()),
-                "backgroundColor": 'rgba(75, 192, 192, 0.6)',
-                "borderColor": 'rgba(75, 192, 192, 1)',
-                "borderWidth": 1
-            }]
-        }
         
-        # 나이대별 평균 재산 차트
-        asset_chart_data = {
-            "labels": list(age_assets.keys()),
-            "datasets": [{
-                "label": "평균 재산 (억원)",
-                "data": list(age_assets.values()),
-                "backgroundColor": 'rgba(153, 102, 255, 0.6)',
-                "borderColor": 'rgba(153, 102, 255, 1)',
-                "borderWidth": 1
-            }]
-        }
+        # chart_service 함수 사용
+        score_chart = chart_service.generate_age_score_chart_data(age_scores)
+        asset_chart = chart_service.generate_age_asset_chart_data(age_assets)
         
         # 템플릿 렌더링
         return templates.TemplateResponse(
@@ -310,8 +290,8 @@ async def age_ranking(request: Request, db: Session = Depends(get_db), age_group
                 "age_group": None,
                 "age_scores": age_scores,
                 "age_assets": age_assets,
-                "score_chart": score_chart_data,
-                "asset_chart": asset_chart_data
+                "score_chart": score_chart,
+                "asset_chart": asset_chart
             }
         )
     else:
@@ -366,53 +346,10 @@ async def gender_ranking(request: Request, db: Session = Depends(get_db), gender
         # 성별 평균 재산 조회
         gender_assets = stats_service.get_gender_average_assets(db)
         
-        # 차트 데이터 생성
-        # 티어 분포 데이터 가공
-        tier_order = ["Challenger", "Master", "Diamond", "Platinum", "Gold", "Silver", "Bronze", "Iron"]
-        tier_colors = {
-            "Challenger": 'rgba(255, 0, 0, 0.6)',       # 빨강
-            "Master": 'rgba(255, 165, 0, 0.6)',         # 주황
-            "Diamond": 'rgba(0, 191, 255, 0.6)',        # 하늘
-            "Platinum": 'rgba(50, 205, 50, 0.6)',       # 연두
-            "Gold": 'rgba(255, 215, 0, 0.6)',           # 금색
-            "Silver": 'rgba(192, 192, 192, 0.6)',       # 은색
-            "Bronze": 'rgba(205, 127, 50, 0.6)',        # 동색
-            "Iron": 'rgba(169, 169, 169, 0.6)'          # 회색
-        }
         
-        datasets = []
-        for sex in genders:
-            # 성별별 티어 분포
-            data = []
-            sex_tiers = tier_distribution.get(sex, {})
-            for tier in tier_order:
-                data.append(sex_tiers.get(tier, 0))
-                
-            # 데이터셋 추가
-            datasets.append({
-                "label": sex,
-                "data": data,
-                "backgroundColor": 'rgba(75, 192, 192, 0.6)' if sex == "남" else 'rgba(255, 99, 132, 0.6)',
-                "borderColor": 'rgba(75, 192, 192, 1)' if sex == "남" else 'rgba(255, 99, 132, 1)',
-                "borderWidth": 1
-            })
-            
-        tier_chart_data = {
-            "labels": tier_order,
-            "datasets": datasets
-        }
-        
-        # 성별 평균 재산 차트
-        asset_chart_data = {
-            "labels": genders,
-            "datasets": [{
-                "label": "평균 재산 (억원)",
-                "data": [gender_assets.get(g, 0) for g in genders],
-                "backgroundColor": ['rgba(75, 192, 192, 0.6)', 'rgba(255, 99, 132, 0.6)'],
-                "borderColor": ['rgba(75, 192, 192, 1)', 'rgba(255, 99, 132, 1)'],
-                "borderWidth": 1
-            }]
-        }
+         # chart_service 함수 사용
+        tier_chart = chart_service.generate_gender_tier_chart_data(tier_distribution)
+        asset_chart = chart_service.generate_gender_asset_chart_data(gender_assets)
         
         # 템플릿 렌더링
         return templates.TemplateResponse(
@@ -423,8 +360,8 @@ async def gender_ranking(request: Request, db: Session = Depends(get_db), gender
                 "gender": None,
                 "tier_distribution": tier_distribution,
                 "gender_assets": gender_assets,
-                "tier_chart": tier_chart_data,
-                "asset_chart": asset_chart_data
+                "tier_chart": tier_chart,
+                "asset_chart": asset_chart
             }
         )
     else:
@@ -478,44 +415,10 @@ async def asset_ranking(request: Request, db: Session = Depends(get_db), asset_g
         # 정당별 재산 비율 조회
         party_asset_ratio = stats_service.get_party_asset_ratio(db)
         
-        # 차트 데이터 생성
-        # 점수-재산 상관관계 차트 (산점도)
-        correlation_chart_data = {
-            "datasets": [{
-                "label": "의원별 점수-재산 분포",
-                "data": [
-                    {"x": point["score"], "y": point["asset"], "r": 5, "name": point["name"]}
-                    for point in correlation_data["data_points"]
-                ],
-                "backgroundColor": 'rgba(75, 192, 192, 0.6)',
-                "borderColor": 'rgba(75, 192, 192, 1)',
-                "borderWidth": 1
-            }]
-        }
-        
-        # 정당별 재산 비율 차트 (파이 차트)
-        party_colors = [
-            'rgba(54, 162, 235, 0.6)',
-            'rgba(255, 99, 132, 0.6)',
-            'rgba(255, 206, 86, 0.6)',
-            'rgba(75, 192, 192, 0.6)',
-            'rgba(153, 102, 255, 0.6)',
-            'rgba(255, 159, 64, 0.6)'
-        ]
-        
-        parties = list(party_asset_ratio.keys())
-        ratios = [party_asset_ratio[party]["ratio"] for party in parties]
-        
-        party_ratio_chart_data = {
-            "labels": parties,
-            "datasets": [{
-                "label": "정당별 재산 비율 (%)",
-                "data": ratios,
-                "backgroundColor": party_colors[:len(parties)],
-                "borderColor": [color.replace('0.6', '1') for color in party_colors[:len(parties)]],
-                "borderWidth": 1
-            }]
-        }
+      
+        # chart_service 함수 사용
+        correlation_chart = chart_service.generate_score_asset_correlation_chart_data(correlation_data)
+        party_ratio_chart = chart_service.generate_party_asset_ratio_chart_data(party_asset_ratio)
         
         # 템플릿 렌더링
         return templates.TemplateResponse(
@@ -526,8 +429,8 @@ async def asset_ranking(request: Request, db: Session = Depends(get_db), asset_g
                 "asset_group": None,
                 "correlation_data": correlation_data,
                 "party_asset_ratio": party_asset_ratio,
-                "correlation_chart": correlation_chart_data,
-                "party_ratio_chart": party_ratio_chart_data
+                "correlation_chart": correlation_chart,
+                "party_ratio_chart": party_ratio_chart
             }
         )
     else:

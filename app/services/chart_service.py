@@ -920,24 +920,3 @@ def generate_party_asset_ratio_chart_data(party_asset_data: Dict[str, Dict[str, 
     
     return chart_data
 
-### 잡다한 랭킹 - 나이별 ###
-def generate_age_score_chart_data(age_score_data: Dict[str, Any]) -> Dict[str, Any]:
-    # 나이대별 평균 종합점수 데이터를 차트 데이터로 변환
-    # 반환: 차트 데이터 딕셔너리
-    pass
-
-def generate_age_asset_chart_data(age_asset_data: Dict[str, Any]) -> Dict[str, Any]:
-    # 나이대별 평균 재산 데이터를 차트 데이터로 변환
-    # 반환: 차트 데이터 딕셔너리
-    pass
-
-### 잡다한 랭킹 - 재산 ###
-def generate_score_asset_correlation_chart_data(correlation_data: Dict[str, Any]) -> Dict[str, Any]:
-    # 활동점수와 재산 상관관계 데이터를 차트 데이터로 변환
-    # 반환: 차트 데이터 딕셔너리
-    pass
-
-def generate_party_asset_ratio_chart_data(party_asset_data: Dict[str, Any]) -> Dict[str, Any]:
-    # 정당별 재산 비율 데이터를 차트 데이터로 변환
-    # 반환: 차트 데이터 딕셔너리
-    pass
