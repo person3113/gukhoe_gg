@@ -4,8 +4,18 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 import os
 
-from app.db.database import engine, Base, get_db
+from app.db.database import SessionLocal, engine, Base, get_db
 from app.api import home, search, champions, ranking, misc_ranking
+from app.models.legislator import Legislator
+
+# 모든 모델을 명시적으로 임포트
+from app.models.legislator import Legislator
+from app.models.committee import Committee, CommitteeHistory, CommitteeMember
+from app.models.sns import LegislatorSNS
+from app.models.speech import SpeechKeyword, SpeechByMeeting
+from app.models.attendance import Attendance
+from app.models.bill import Bill, BillCoProposer
+from app.models.vote import Vote, VoteResult
 
 def create_app():
     # FastAPI 앱 객체 생성
@@ -49,16 +59,21 @@ async def startup_event():
     init_db()
     
     # DB_MODE 환경변수에 따라 데이터 초기화 방법 결정
-    db_mode = os.getenv("DB_MODE")
-    if db_mode == "memory":
-        # 더미 데이터를 사용하는 경우
-        from scripts.create_dummy_data import create_dummy_data
-        create_dummy_data()
-    elif db_mode == "real_test":
-        # 실제 데이터를 메모리 DB에 로드하는 경우
-        from scripts.fetch_data import fetch_all_data
-        fetch_all_data()
+    db_mode = os.getenv("DB_MODE", "persistent")  # 기본값을 "persistent"로 설정
     
-    # API 키와 기타 설정 로드
-    # 필요시 백그라운드 작업 시작
-    pass
+    # DB 세션 생성
+    db = SessionLocal()
+    try:
+        # 기존 데이터 체크
+        existing_data = db.query(Legislator).first()
+        
+        if db_mode == "memory":
+            # 메모리 DB 모드일 때만 더미 데이터 생성
+            from scripts.create_dummy_data import create_dummy_data
+            create_dummy_data()
+        elif db_mode == "real_test" or (db_mode == "persistent" and not existing_data):
+            # real_test 모드이거나, persistent 모드이면서 데이터가 없는 경우에만 API 호출
+            from scripts.fetch_data import fetch_all_data
+            fetch_all_data()
+    finally:
+        db.close()

@@ -4,7 +4,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     # 데이터베이스 설정
-    DATABASE_URL: str = "sqlite:///:memory:" if os.getenv("DB_MODE") == "memory" else "sqlite:///./data/db.sqlite"
+    DATABASE_URL: str = "sqlite:///./data/db.sqlite" # 기본값은 영구 DB
+    if os.getenv("DB_MODE") == "memory":
+        DATABASE_URL = "sqlite:///:memory:"
     
     # API 키 설정
     API_KEY: str = os.getenv("ASSEMBLY_API_KEY", "sample")

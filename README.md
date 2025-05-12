@@ -3,6 +3,7 @@
 1. venv\Scripts\activate (가상환경 활성화)
 2. python scripts/run_real_server.py (실제 데이터 대상으로 테스트용 서버 실행)
 3. python scripts/run_dummy_server.py (더미 데이터 생성 후 테스트용 서버 실행)
+4. uvicorn app.main:app --reload (서버 실행)
 
 <br> 
 

@@ -62,6 +62,12 @@ def fetch_legislators(db: Session):
     # 의원 정보에 사진 URL 추가 (이미지 없는 경우 기본 이미지 경로 설정)
     # 국회의원 및 SNS 정보 DB에 저장
     """
+    # 기존 데이터 확인
+    existing_data = db.query(Legislator).count()
+    if existing_data > 0:
+        print(f"이미 {existing_data}명의 의원 정보가 있습니다. 스킵합니다.")
+        return
+    
     # API 서비스 인스턴스 생성
     api_service = ApiService()
     
