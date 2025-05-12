@@ -14,82 +14,204 @@ class ApiService:
         self.default_args = settings.DEFAULT_API_ARGS
         self.required_args = settings.API_REQUIRED_ARGS
     
-    async def _make_api_call(self, endpoint_key: str, additional_params: Optional[Dict[str, str]] = None) -> str:
-      """
-      공통 API 호출 메서드
-      
-      Args:
-          endpoint_key: API 엔드포인트 키 (config에 정의된 키)
-          additional_params: 추가 요청 인자
-              
-      Returns:
-          str: API 응답 (XML 문자열)
-      """
-      # 1. 엔드포인트 URL 구성 (base_url + endpoint)
-      
-      # 2. 기본 인자 설정 (Key, Type, pIndex, pSize)
-      
-      # 3. API별 필수 인자 확인 및 추가
-      
-      # 4. 추가 인자 병합
-      
-      # 5. API 호출 및 응답 받기
-      
-      # 6. 응답 반환 (XML 문자열)
-      
-      pass  
+    def _make_api_call(self, endpoint_key: str, additional_params: Optional[Dict[str, str]] = None) -> str:
+        """
+        공통 API 호출 메서드
+        
+        Args:
+            endpoint_key: API 엔드포인트 키 (config에 정의된 키)
+            additional_params: 추가 요청 인자
+                
+        Returns:
+            str: API 응답 (XML 문자열)
+        """
+        # 1. 엔드포인트 URL 구성
+        endpoint = self.endpoints.get(endpoint_key)
+        if not endpoint:
+            raise ValueError(f"Invalid endpoint key: {endpoint_key}")
+        
+        url = f"{self.base_url}{endpoint}"
+        
+        # 2. 기본 인자 설정
+        params = {
+            "Key": self.api_key,
+            **self.default_args
+        }
+        
+        # 3. API별 필수 인자 확인 및 추가
+        required_args = self.required_args.get(endpoint_key, {})
+        for key, value in required_args.items():
+            if value is not None:
+                params[key] = value
+        
+        # 4. 추가 인자 병합
+        if additional_params:
+            params.update(additional_params)
+        
+        # 5. API 호출 및 응답 받기
+        try:
+            response = requests.get(url, params=params)
+            response.raise_for_status()  # HTTP 오류 발생시 예외 발생
+            
+            # 6. 응답 반환 (XML 문자열)
+            return response.text
+        except requests.exceptions.RequestException as e:
+            print(f"API 호출 오류 ({endpoint_key}): {str(e)}")
+            return ""
 
-    async def fetch_legislators_info(self) -> List[Dict[str, Any]]:
-        # 호출: requests.get()로 국회의원 인적사항 API 호출
-        # 호출: utils.xml_parser.parse_xml_to_dict()로 XML 응답 파싱
-        # 반환: 의원 정보 리스트
-        pass
+    def fetch_legislators_info(self) -> List[Dict[str, Any]]:
+        """
+        국회의원 인적사항 API 호출
+        
+        Returns:
+            List[Dict[str, Any]]: 의원 정보 리스트
+        """
+        try:
+            # API 호출
+            response_text = self._make_api_call("legislator_info")
+            if not response_text:
+                return []
+            
+            # XML 응답 파싱
+            data_dict = parse_xml_to_dict(response_text)
+            
+            # 응답에서 의원 정보 추출
+            items = data_dict.get("response", {}).get("body", {}).get("items", {}).get("item", [])
+            
+            # 단일 항목인 경우 리스트로 변환
+            if not isinstance(items, list):
+                items = [items]
+            
+            # 결과 리스트 구성
+            result = []
+            for item in items:
+                legislator = {
+                    "mona_cd": item.get("MONA_CD", ""),
+                    "hg_nm": item.get("HG_NM", ""),
+                    "eng_nm": item.get("ENG_NM", ""),
+                    "bth_date": item.get("BTH_DATE", ""),
+                    "job_res_nm": item.get("JOB_RES_NM", ""),
+                    "poly_nm": item.get("POLY_NM", ""),
+                    "orig_nm": item.get("ORIG_NM", ""),
+                    "cmit_nm": item.get("CMIT_NM", ""),
+                    "reele_gbn_nm": item.get("REELE_GBN_NM", ""),
+                    "sex_gbn_nm": item.get("SEX_GBN_NM", ""),
+                    "tel_no": item.get("TEL_NO", ""),
+                    "e_mail": item.get("E_MAIL", ""),
+                    "mem_title": item.get("MEM_TITLE", "")
+                }
+                result.append(legislator)
+            
+            return result
+        except Exception as e:
+            print(f"국회의원 정보 가져오기 오류: {str(e)}")
+            return []
 
-    async def fetch_legislators_sns(self) -> List[Dict[str, Any]]:
-        # 호출: requests.get()로 국회의원 SNS정보 API 호출
-        # 호출: utils.xml_parser.parse_xml_to_dict()로 XML 응답 파싱
-        # 반환: 의원 SNS 정보 리스트
-        pass
+    def fetch_legislators_sns(self) -> List[Dict[str, Any]]:
+        """
+        국회의원 SNS정보 API 호출
+        
+        Returns:
+            List[Dict[str, Any]]: 의원 SNS 정보 리스트
+        """
+        try:
+            # API 호출
+            response_text = self._make_api_call("legislator_sns")
+            if not response_text:
+                return []
+            
+            # XML 응답 파싱
+            data_dict = parse_xml_to_dict(response_text)
+            
+            # 응답에서 SNS 정보 추출
+            items = data_dict.get("response", {}).get("body", {}).get("items", {}).get("item", [])
+            
+            # 단일 항목인 경우 리스트로 변환
+            if not isinstance(items, list):
+                items = [items]
+            
+            # 결과 리스트 구성
+            result = []
+            for item in items:
+                sns = {
+                    "mona_cd": item.get("MONA_CD", ""),
+                    "t_url": item.get("T_URL", ""),
+                    "f_url": item.get("F_URL", ""),
+                    "y_url": item.get("Y_URL", ""),
+                    "b_url": item.get("B_URL", "")
+                }
+                result.append(sns)
+            
+            return result
+        except Exception as e:
+            print(f"국회의원 SNS 정보 가져오기 오류: {str(e)}")
+            return []
 
-    async def fetch_legislator_images(self) -> List[Dict[str, Any]]:
+    def fetch_legislator_images(self) -> List[Dict[str, Any]]:
         """
         국회의원 사진 정보 API 호출
         
         Returns:
             List[Dict[str, Any]]: 의원 사진 정보 리스트
         """
-        # 호출: self._make_api_call("legislator_integrated")로 국회의원 정보 통합 API 호출
-        # 호출: parse_xml_to_dict()로 XML 응답 파싱
-        # 국회의원코드(NAAS_CD)와 사진 URL(NAAS_PIC) 추출
-        # 결과 리스트 구성: [{"mona_cd": "...", "profile_image_url": "..."}]
-        # 반환: 사진 정보 리스트
-        pass
+        try:
+            # API 호출
+            response_text = self._make_api_call("legislator_integrated")
+            if not response_text:
+                return []
+            
+            # XML 응답 파싱
+            data_dict = parse_xml_to_dict(response_text)
+            
+            # 응답에서 의원 정보 추출
+            items = data_dict.get("response", {}).get("body", {}).get("items", {}).get("item", [])
+            
+            # 단일 항목인 경우 리스트로 변환
+            if not isinstance(items, list):
+                items = [items]
+            
+            # 결과 리스트 구성
+            result = []
+            for item in items:
+                # 국회의원코드와 사진 URL만 추출
+                image_info = {
+                    "mona_cd": item.get("NAAS_CD", ""),  # 통합API는 NAAS_CD를 사용
+                    "profile_image_url": item.get("NAAS_PIC", "")
+                }
+                # 사진 URL이 있는 경우만 결과에 추가
+                if image_info["profile_image_url"]:
+                    result.append(image_info)
+            
+            return result
+        except Exception as e:
+            print(f"국회의원 사진 정보 가져오기 오류: {str(e)}")
+            return []
 
-    async def fetch_committee_members(self) -> List[Dict[str, Any]]:
+    def fetch_committee_members(self) -> List[Dict[str, Any]]:
         # 호출: requests.get()로 위원회 위원 명단 API 호출
         # 호출: utils.xml_parser.parse_xml_to_dict()로 XML 응답 파싱
         # 반환: 위원회 멤버십 정보 리스트
         pass
         
-    async def fetch_committee_info(self) -> List[Dict[str, Any]]:
+    def fetch_committee_info(self) -> List[Dict[str, Any]]:
         # 호출: requests.get()로 위원회 현황 정보 API 호출
         # 호출: utils.xml_parser.parse_xml_to_dict()로 XML 응답 파싱
         # 반환: 위원회 정보 리스트 (위원회명, 현원, 위원정수, 위원장 등)
         pass
 
-    async def fetch_bills(self) -> List[Dict[str, Any]]:
+    def fetch_bills(self) -> List[Dict[str, Any]]:
         # 호출: requests.get()로 국회의원 발의법률안 API 호출
         # 호출: utils.xml_parser.parse_xml_to_dict()로 XML 응답 파싱
         # 반환: 법안 정보 리스트
         pass
         
-    async def fetch_processed_bills_stats(self) -> List[Dict[str, Any]]:
+    def fetch_processed_bills_stats(self) -> List[Dict[str, Any]]:
         # 호출: requests.get()로 처리 의안통계(위원회별) API 호출
         # 호출: utils.xml_parser.parse_xml_to_dict()로 XML 응답 파싱
         # 반환: 위원회별 처리 의안 통계 리스트 (위원회명, 접수건수, 처리건수, 보류건수)
         pass
 
-    async def fetch_processed_bill_ids(self, age='22') -> List[str]:
+    def fetch_processed_bill_ids(self, age='22') -> List[str]:
         # 1. "법률안 심사 및 처리(처리의안)" API 호출
         # 2. "본회의 처리안건_법률안" API 호출
         # 3. 두 API에서 얻은 BILL_ID 추출
@@ -97,7 +219,7 @@ class ApiService:
         # 반환: 중복 제거된 처리된 법률안 ID 목록
         pass
 
-    async def fetch_vote_results(self, legislator_id=None, age='22') -> List[Dict[str, Any]]:
+    def fetch_vote_results(self, legislator_id=None, age='22') -> List[Dict[str, Any]]:
         # 호출: self.fetch_processed_bill_ids()로 처리된 법안 ID 목록 가져오기
         # 각 법안 ID에 대해 본회의 표결 찬반 목록 API 호출
         # 특정 의원 ID가 제공되면 해당 의원의 표결 결과만 필터링
