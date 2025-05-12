@@ -171,76 +171,179 @@ class ApiService:
             List[Dict[str, Any]]: 의원 SNS 정보 리스트
         """
         try:
-            # API 호출
-            response_text = self._make_api_call("legislator_sns")
-            if not response_text:
-                return []
+            print("API 호출 시작: legislator_sns")
             
-            # XML 응답 파싱
-            data_dict = parse_xml_to_dict(response_text)
+            # 결과 리스트 초기화
+            all_sns_info = []
             
-            # 응답에서 SNS 정보 추출
-            items = data_dict.get("response", {}).get("body", {}).get("items", {}).get("item", [])
+            # 페이지 정보
+            page_index = 1
+            page_size = 100  # API 기본값
+            total_count = None
             
-            # 단일 항목인 경우 리스트로 변환
-            if not isinstance(items, list):
-                items = [items]
-            
-            # 결과 리스트 구성
-            result = []
-            for item in items:
-                sns = {
-                    "mona_cd": item.get("MONA_CD", ""),
-                    "t_url": item.get("T_URL", ""),
-                    "f_url": item.get("F_URL", ""),
-                    "y_url": item.get("Y_URL", ""),
-                    "b_url": item.get("B_URL", "")
+            # 전체 데이터를 가져올 때까지 반복
+            while True:
+                # 페이지 정보를 포함한 API 호출
+                additional_params = {
+                    "pIndex": str(page_index),
+                    "pSize": str(page_size)
                 }
-                result.append(sns)
+                
+                print(f"SNS 정보 페이지 {page_index} 요청 중...")
+                response_text = self._make_api_call("legislator_sns", additional_params)
+                
+                if not response_text:
+                    print(f"페이지 {page_index} 응답이 없습니다!")
+                    break
+                
+                # XML 응답 파싱
+                data_dict = parse_xml_to_dict(response_text)
+                
+                # 오류 체크
+                if data_dict.get('error'):
+                    print(f"API 오류: {data_dict.get('message')}")
+                    break
+                
+                # 'negnlnyvatsjwocar' 구조 처리 (SNS 정보 API의 응답 구조)
+                if 'negnlnyvatsjwocar' in data_dict:
+                    root = data_dict['negnlnyvatsjwocar']
+                    
+                    # 첫 페이지에서만 총 개수 정보 확인
+                    if total_count is None and 'head' in root:
+                        head = root['head']
+                        total_count = int(head.get('list_total_count', 0))
+                        print(f"총 SNS 정보 수: {total_count}")
+                    
+                    # 'row' 태그에서 SNS 정보 추출
+                    items = root.get('row', [])
+                    
+                    # 단일 항목인 경우 리스트로 변환
+                    if isinstance(items, dict):
+                        items = [items]
+                    
+                    # 페이지에 항목이 없으면 종료
+                    if not items:
+                        print(f"페이지 {page_index}에 항목이 없습니다. 종료합니다.")
+                        break
+                    
+                    print(f"페이지 {page_index}에서 {len(items)}개의 SNS 정보 추출")
+                    
+                    # SNS 정보 매핑
+                    for item in items:
+                        sns_info = {
+                            "mona_cd": item.get("MONA_CD", ""),
+                            "t_url": item.get("T_URL", ""),
+                            "f_url": item.get("F_URL", ""),
+                            "y_url": item.get("Y_URL", ""),
+                            "b_url": item.get("B_URL", "")
+                        }
+                        all_sns_info.append(sns_info)
+                    
+                    # 다음 페이지로 이동
+                    page_index += 1
+                    
+                    # 모든 데이터를 가져왔는지 확인
+                    if total_count and len(all_sns_info) >= total_count:
+                        print(f"모든 SNS 데이터({total_count}개)를 가져왔습니다.")
+                        break
+                else:
+                    print(f"예상한 구조(negnlnyvatsjwocar)를 찾지 못했습니다.")
+                    break
             
-            return result
+            print(f"최종 처리된 SNS 정보 수: {len(all_sns_info)}")
+            return all_sns_info
+            
         except Exception as e:
             print(f"국회의원 SNS 정보 가져오기 오류: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return []
 
-    def fetch_legislator_images(self) -> List[Dict[str, Any]]:
+    def fetch_legislator_images(self, legislators_info: List[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         """
-        국회의원 사진 정보 API 호출
+        국회의원 사진 정보 API 호출 - 이미 수집된 의원 정보(mona_cd)를 활용하여 필요한 의원의 사진만 가져옴
+        
+        Args:
+            legislators_info: 이미 수집된 의원 정보 목록 (None인 경우 내부에서 수집)
         
         Returns:
             List[Dict[str, Any]]: 의원 사진 정보 리스트
         """
         try:
-            # API 호출
-            response_text = self._make_api_call("legislator_integrated")
-            if not response_text:
-                return []
+            print("국회의원 사진 정보 수집 시작")
             
-            # XML 응답 파싱
-            data_dict = parse_xml_to_dict(response_text)
+            # 의원 정보가 제공되지 않은 경우 내부에서 수집
+            if not legislators_info:
+                legislators_info = self.fetch_legislators_info()
+                if not legislators_info:
+                    print("의원 정보를 가져올 수 없습니다.")
+                    return []
             
-            # 응답에서 의원 정보 추출
-            items = data_dict.get("response", {}).get("body", {}).get("items", {}).get("item", [])
+            # 결과 리스트 초기화
+            all_image_info = []
+            total_legislators = len(legislators_info)
             
-            # 단일 항목인 경우 리스트로 변환
-            if not isinstance(items, list):
-                items = [items]
+            print(f"총 {total_legislators}명의 의원 사진 정보를 수집합니다.")
             
-            # 결과 리스트 구성
-            result = []
-            for item in items:
-                # 국회의원코드와 사진 URL만 추출
-                image_info = {
-                    "mona_cd": item.get("NAAS_CD", ""),  # 통합API는 NAAS_CD를 사용
-                    "profile_image_url": item.get("NAAS_PIC", "")
+            # 각 의원별로 사진 정보 수집
+            for index, legislator in enumerate(legislators_info):
+                mona_cd = legislator.get('mona_cd', '')
+                if not mona_cd:
+                    continue
+                
+                # 진행 상황 로깅 (10명마다 출력)
+                if index % 10 == 0:
+                    print(f"의원 사진 정보 수집 중: {index+1}/{total_legislators} ({(index+1)/total_legislators*100:.1f}%)")
+                
+                # API 호출
+                additional_params = {
+                    "NAAS_CD": mona_cd
                 }
-                # 사진 URL이 있는 경우만 결과에 추가
-                if image_info["profile_image_url"]:
-                    result.append(image_info)
+                
+                response_text = self._make_api_call("legislator_integrated", additional_params)
+                
+                if not response_text:
+                    print(f"의원(ID: {mona_cd}) 사진 정보를 가져올 수 없습니다.")
+                    continue
+                
+                # XML 응답 파싱
+                data_dict = parse_xml_to_dict(response_text)
+                
+                # 오류 체크
+                if data_dict.get('error'):
+                    print(f"API 오류 (의원 ID: {mona_cd}): {data_dict.get('message')}")
+                    continue
+                
+                # 'ALLNAMEMBER' 구조 처리
+                if 'ALLNAMEMBER' in data_dict:
+                    root = data_dict['ALLNAMEMBER']
+                    
+                    # 'row' 태그에서 사진 정보 추출
+                    items = root.get('row', [])
+                    
+                    # 단일 항목인 경우 리스트로 변환
+                    if isinstance(items, dict):
+                        items = [items]
+                    
+                    # 현재 의원의 사진 정보를 찾아 추가
+                    for item in items:
+                        if item.get("NAAS_CD") == mona_cd:
+                            profile_image_url = item.get("NAAS_PIC", "")
+                            if profile_image_url:
+                                image_info = {
+                                    "mona_cd": mona_cd,
+                                    "profile_image_url": profile_image_url
+                                }
+                                all_image_info.append(image_info)
+                                break
             
-            return result
+            print(f"최종 처리된 사진 정보 수: {len(all_image_info)}")
+            return all_image_info
+        
         except Exception as e:
             print(f"국회의원 사진 정보 가져오기 오류: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return []
 
     def fetch_committee_members(self) -> List[Dict[str, Any]]:
