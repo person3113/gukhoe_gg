@@ -12,11 +12,6 @@ os.environ["DB_MODE"] = "memory"
 from scripts.create_dummy_data import init_db, create_dummy_data
 
 if __name__ == "__main__":
-    # 더미 데이터 생성
-    print("더미 데이터를 생성합니다...")
-    init_db()
-    create_dummy_data()
-    
     # 서버 실행
     print("서버를 실행합니다...")
     uvicorn.run("app.main:app", host="127.0.0.1", port=8000, reload=True)

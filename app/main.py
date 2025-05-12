@@ -48,10 +48,16 @@ async def startup_event():
     # 애플리케이션 시작 시 실행할 작업
     init_db()
     
-    # 메모리 DB를 사용하는 경우에만 더미 데이터 생성
-    if os.getenv("DB_MODE") == "memory":
+    # DB_MODE 환경변수에 따라 데이터 초기화 방법 결정
+    db_mode = os.getenv("DB_MODE")
+    if db_mode == "memory":
+        # 더미 데이터를 사용하는 경우
         from scripts.create_dummy_data import create_dummy_data
         create_dummy_data()
+    elif db_mode == "real_test":
+        # 실제 데이터를 메모리 DB에 로드하는 경우
+        from scripts.fetch_data import fetch_all_data
+        fetch_all_data()
     
     # API 키와 기타 설정 로드
     # 필요시 백그라운드 작업 시작

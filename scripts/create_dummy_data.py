@@ -775,9 +775,3 @@ def create_dummy_data():
         raise
     finally:
         db.close()
-
-if __name__ == "__main__":
-    print("데이터베이스 초기화 중...")
-    init_db()
-    print("더미 데이터 생성 중...")
-    create_dummy_data()

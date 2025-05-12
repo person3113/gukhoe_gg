@@ -1,3 +1,5 @@
+from sqlalchemy.orm import Session
+
 def process_attendance_data(raw_data):
     # 출석 데이터 정리 및 가공
     # 출석률 계산
