@@ -61,50 +61,106 @@ class ApiService:
 
     def fetch_legislators_info(self) -> List[Dict[str, Any]]:
         """
-        국회의원 인적사항 API 호출
+        국회의원 인적사항 API 호출 - 페이징 처리 추가
         
         Returns:
             List[Dict[str, Any]]: 의원 정보 리스트
         """
         try:
-            # API 호출
-            response_text = self._make_api_call("legislator_info")
-            if not response_text:
-                return []
+            print("API 호출 시작: legislator_info")
             
-            # XML 응답 파싱
-            data_dict = parse_xml_to_dict(response_text)
+            # 결과 리스트 초기화
+            all_legislators = []
             
-            # 응답에서 의원 정보 추출
-            items = data_dict.get("response", {}).get("body", {}).get("items", {}).get("item", [])
+            # 페이지 정보
+            page_index = 1
+            page_size = 100  # API 기본값
+            total_count = None
             
-            # 단일 항목인 경우 리스트로 변환
-            if not isinstance(items, list):
-                items = [items]
-            
-            # 결과 리스트 구성
-            result = []
-            for item in items:
-                legislator = {
-                    "mona_cd": item.get("MONA_CD", ""),
-                    "hg_nm": item.get("HG_NM", ""),
-                    "eng_nm": item.get("ENG_NM", ""),
-                    "bth_date": item.get("BTH_DATE", ""),
-                    "job_res_nm": item.get("JOB_RES_NM", ""),
-                    "poly_nm": item.get("POLY_NM", ""),
-                    "orig_nm": item.get("ORIG_NM", ""),
-                    "cmit_nm": item.get("CMIT_NM", ""),
-                    "reele_gbn_nm": item.get("REELE_GBN_NM", ""),
-                    "sex_gbn_nm": item.get("SEX_GBN_NM", ""),
-                    "tel_no": item.get("TEL_NO", ""),
-                    "e_mail": item.get("E_MAIL", ""),
-                    "mem_title": item.get("MEM_TITLE", "")
+            # 전체 데이터를 가져올 때까지 반복
+            while True:
+                # 페이지 정보를 포함한 API 호출
+                additional_params = {
+                    "pIndex": str(page_index),
+                    "pSize": str(page_size)
                 }
-                result.append(legislator)
+                
+                print(f"페이지 {page_index} 요청 중...")
+                response_text = self._make_api_call("legislator_info", additional_params)
+                
+                if not response_text:
+                    print(f"페이지 {page_index} 응답이 없습니다!")
+                    break
+                
+                # XML 응답 파싱
+                data_dict = parse_xml_to_dict(response_text)
+                
+                # 오류 체크
+                if data_dict.get('error'):
+                    print(f"API 오류: {data_dict.get('message')}")
+                    break
+                
+                # 'nwvrqwxyaytdsfvhu' 구조 처리
+                if 'nwvrqwxyaytdsfvhu' in data_dict:
+                    root = data_dict['nwvrqwxyaytdsfvhu']
+                    
+                    # 첫 페이지에서만 총 개수 정보 확인
+                    if total_count is None and 'head' in root:
+                        head = root['head']
+                        total_count = int(head.get('list_total_count', 0))
+                        print(f"총 의원 수: {total_count}")
+                    
+                    # 'row' 태그에서 의원 정보 추출
+                    items = root.get('row', [])
+                    
+                    # 단일 항목인 경우 리스트로 변환
+                    if isinstance(items, dict):
+                        items = [items]
+                    
+                    # 페이지에 항목이 없으면 종료
+                    if not items:
+                        print(f"페이지 {page_index}에 항목이 없습니다. 종료합니다.")
+                        break
+                    
+                    print(f"페이지 {page_index}에서 {len(items)}명의 의원 정보 추출")
+                    
+                    # 의원 정보 매핑 (모델에 있는 필드만 포함)
+                    for item in items:
+                        legislator = {
+                            "mona_cd": item.get("MONA_CD", ""),
+                            "hg_nm": item.get("HG_NM", ""),
+                            "eng_nm": item.get("ENG_NM", ""),
+                            "bth_date": item.get("BTH_DATE", ""),
+                            "job_res_nm": item.get("JOB_RES_NM", ""),
+                            "poly_nm": item.get("POLY_NM", ""),
+                            "orig_nm": item.get("ORIG_NM", ""),
+                            "cmit_nm": item.get("CMIT_NM", ""),
+                            "reele_gbn_nm": item.get("REELE_GBN_NM", ""),
+                            "sex_gbn_nm": item.get("SEX_GBN_NM", ""),
+                            "tel_no": item.get("TEL_NO", ""),
+                            "e_mail": item.get("E_MAIL", ""),
+                            "mem_title": item.get("MEM_TITLE", "")
+                        }
+                        all_legislators.append(legislator)
+                    
+                    # 다음 페이지로 이동
+                    page_index += 1
+                    
+                    # 모든 데이터를 가져왔는지 확인
+                    if total_count and len(all_legislators) >= total_count:
+                        print(f"모든 데이터({total_count}명)를 가져왔습니다.")
+                        break
+                else:
+                    print(f"예상한 구조(nwvrqwxyaytdsfvhu)를 찾지 못했습니다.")
+                    break
             
-            return result
+            print(f"최종 처리된 의원 수: {len(all_legislators)}")
+            return all_legislators
+            
         except Exception as e:
             print(f"국회의원 정보 가져오기 오류: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return []
 
     def fetch_legislators_sns(self) -> List[Dict[str, Any]]:
