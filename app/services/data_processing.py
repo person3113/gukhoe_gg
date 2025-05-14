@@ -40,10 +40,26 @@ def process_speech_data(raw_data, db: Session):
                 
                 # 의원의 speech_score 필드가 있으면 업데이트 (Total 값 기반 점수 계산)
                 if hasattr(legislator, 'speech_score'):
-                    # 여기서는 간단히 Total 값을 그대로 사용하나, 
-                    # 실제로는 점수 계산 알고리즘에 따라 달라질 수 있음
-                    # 점수 계산 로직은 calculate_speech_scores 함수에서 처리하는 것이 좋음
+                    # 추후 계산 로직이 필요할 경우 추가
                     pass
+                
+                # Total 데이터도 DB에 저장
+                existing_speech = db.query(SpeechByMeeting).filter(
+                    SpeechByMeeting.legislator_id == legislator.id,
+                    SpeechByMeeting.meeting_type == 'Total'
+                ).first()
+                
+                if existing_speech:
+                    # 기존 데이터 업데이트
+                    existing_speech.count = data['count']
+                else:
+                    # 새 데이터 추가
+                    new_speech = SpeechByMeeting(
+                        legislator_id=legislator.id,
+                        meeting_type='Total',
+                        count=data['count']
+                    )
+                    db.add(new_speech)
                 
                 continue
             
@@ -75,6 +91,8 @@ def process_speech_data(raw_data, db: Session):
     except Exception as e:
         db.rollback()
         print(f"발언 데이터 처리 오류: {str(e)}")
+        import traceback
+        traceback.print_exc()
 
 def process_bill_data(raw_data):
     # 법안 데이터 정리 및 가공
