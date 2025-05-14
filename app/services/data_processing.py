@@ -6,7 +6,7 @@ def process_attendance_data(raw_data):
     # 반환: 처리된 출석 데이터
     pass
 
-def process_speech_data(raw_data):
+def process_speech_data(raw_data, type=None):
     # 발언 데이터 정리 및 가공
     # 발언 횟수, 키워드 분석
     # 반환: 처리된 발언 데이터

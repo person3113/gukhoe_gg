@@ -212,7 +212,19 @@ def fetch_excel_data(db: Session):
     """
     엑셀 파일에서 데이터 수집
     """
-    db = SessionLocal()
+    import os
+    from app.db.database import SessionLocal
+    from app.models.legislator import Legislator
+    from app.models.speech import SpeechByMeeting, SpeechKeyword
+    from app.models.attendance import Attendance
+    from app.utils.excel_parser import parse_attendance_excel, parse_speech_keywords_excel, parse_speech_by_meeting_excel
+    from app.services.data_processing import process_attendance_data, process_speech_data
+    
+    
+    # db가 제공되지 않으면 새 세션 생성
+    if db is None:
+        db = SessionLocal()
+    
     try:
         print("엑셀 파일에서 데이터 수집 중...")
         
@@ -230,7 +242,7 @@ def fetch_excel_data(db: Session):
         if os.path.exists(excel_dir):
             for filename in os.listdir(excel_dir):
                 # 회의 구분별 발언 회의록 수 패턴 확인
-                if "회의+구분별+발언+회의록" in filename.replace(" ", "+") and filename.endswith((".xlsx", ".xls")):
+                if "회의" in filename and "구분별" in filename and "발언" in filename and filename.endswith((".xlsx", ".xls")):
                     file_path = os.path.join(excel_dir, filename)
                     print(f"회의별 발언 파일 발견: {filename}")
                     
@@ -239,11 +251,28 @@ def fetch_excel_data(db: Session):
                     if file_speech_data:
                         speech_data.extend(file_speech_data)
                         print(f"파일 {filename}에서 {len(file_speech_data)}개 데이터 추출")
+                    else:
+                        print(f"파일 {filename}에서 데이터를 추출할 수 없습니다.")
+        else:
+            print(f"엑셀 디렉토리를 찾을 수 없습니다: {excel_dir}")
         
         # 회의별 발언 데이터 처리 및 저장
         if speech_data:
-            # 데이터 처리
-            speech_processed = process_speech_data(speech_data, type="by_meeting")
+            # 데이터 처리 - process_speech_data 함수 확인
+            try:
+                # 먼저 process_speech_data 함수가 'type' 매개변수를 받는지 확인
+                import inspect
+                speech_process_sig = inspect.signature(process_speech_data)
+                has_type_param = 'type' in speech_process_sig.parameters
+                
+                # 해당 함수의 매개변수에 따라 호출
+                if has_type_param:
+                    speech_processed = process_speech_data(speech_data, type="by_meeting")
+                else:
+                    speech_processed = process_speech_data(speech_data)
+            except Exception as e:
+                print(f"데이터 처리 중 오류 발생, 원본 데이터 사용: {str(e)}")
+                speech_processed = speech_data
             
             # 의원명과 ID 매핑 가져오기
             legislator_map = {}
@@ -280,6 +309,8 @@ def fetch_excel_data(db: Session):
             
             db.commit()
             print(f"회의별 발언 데이터 {saved_count}개 DB 저장 완료 (총 {len(speech_processed)}개 중)")
+        else:
+            print("저장할 회의별 발언 데이터가 없습니다.")
     
     except Exception as e:
         print(f"엑셀 데이터 수집 중 오류 발생: {str(e)}")
@@ -287,7 +318,9 @@ def fetch_excel_data(db: Session):
         traceback.print_exc()
         db.rollback()
     finally:
-        db.close()
+        # 외부에서 제공된 DB 세션이 아닌 경우에만 닫음
+        if db is not None and db != SessionLocal():
+            db.close()
 
 if __name__ == "__main__":
     fetch_all_data()
