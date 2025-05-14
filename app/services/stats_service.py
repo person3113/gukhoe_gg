@@ -1025,7 +1025,7 @@ def get_party_asset_ratio(db: Session) -> Dict[str, Any]:
     # 결과 구성
     result = {}
     for party, asset, count in party_assets:
-        if party:  # None이 아닌 경우만 처리
+        if party and asset is not None:  # None이 아닌 경우만 처리
             ratio = (asset / total_asset) * 100
             result[party] = {
                 "total_asset": round(asset / 100000000, 1),  # 억 단위
