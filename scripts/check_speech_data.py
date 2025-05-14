@@ -47,6 +47,8 @@ def check_speech_data():
             print(f"\nTotal 발언수: {total_speech.count}")
         else:
             print("\nTotal 발언수가 없습니다.")
+
+        print(f"\nspeech_score: {legislator.speech_score}")
             
     finally:
         db.close()

@@ -6,6 +6,8 @@ from sqlalchemy.orm import Session
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from app.db.database import SessionLocal
+from app.models.legislator import Legislator
+from app.models.speech import SpeechByMeeting
 from app.services.ranking_service import RankingService
 from app.services.tier_service import TierService
 
@@ -58,72 +60,44 @@ def calculate_speech_scores(db: Session):
     # 점수 산출 알고리즘 적용
     # DB 업데이트
     """
-    의정발언 점수 계산
+    의정발언 점수 계산 - Total 값을 그대로 speech_score에 저장
     """
     from app.models.speech import SpeechByMeeting
     from app.models.legislator import Legislator
-    from sqlalchemy import func
     
     try:
-        # SpeechByMeeting 테이블에서 회의 구분이 'Total'인 데이터 조회
-        # (이미 DB에 저장되어 있는 경우)
-        total_speeches_query = db.query(
-            SpeechByMeeting.legislator_id,
-            SpeechByMeeting.count
-        ).filter(
-            SpeechByMeeting.meeting_type == 'Total'
-        ).all()
-        
-        total_speeches = {item[0]: item[1] for item in total_speeches_query}
-        
-        # 만약 Total 데이터가 SpeechByMeeting 테이블에 저장되어 있지 않다면, 
-        # 다른 회의 구분의 합으로 계산
-        if not total_speeches:
-            # 의원별 전체 발언 수 합계 계산
-            speech_sum_query = db.query(
-                SpeechByMeeting.legislator_id,
-                func.sum(SpeechByMeeting.count).label('total_count')
-            ).group_by(
-                SpeechByMeeting.legislator_id
-            ).all()
-            
-            total_speeches = {item[0]: item[1] for item in speech_sum_query}
-        
         # 모든 의원 조회
         legislators = db.query(Legislator).all()
+        print(f"총 {len(legislators)}명의 의원 점수 계산 시작")
         
-        # 점수 분포 계산을 위한 준비
-        all_counts = list(total_speeches.values())
-        if not all_counts:
-            print("발언 데이터가 없습니다.")
-            return
-            
-        max_count = max(all_counts)
-        
-        # 각 의원별 점수 계산
+        # 각 의원의 Total 발언수를 그대로 speech_score에 저장
+        updated_count = 0
         for legislator in legislators:
-            total_count = total_speeches.get(legislator.id, 0)
+            # Total 발언수 조회
+            total_speech = db.query(SpeechByMeeting).filter(
+                SpeechByMeeting.legislator_id == legislator.id,
+                SpeechByMeeting.meeting_type == "Total"
+            ).first()
             
-            # 발언 점수 계산 (0-100 점 사이로 정규화)
-            # 예: 가장 많이 발언한 의원이 100점, 나머지는 비례적으로 계산
-            if max_count > 0:
-                speech_score = (total_count / max_count) * 100
+            if total_speech:
+                # Total 값을 그대로 speech_score에 저장
+                legislator.speech_score = float(total_speech.count)
+                updated_count += 1
+                print(f"{legislator.hg_nm}: Total={total_speech.count} -> speech_score={legislator.speech_score}")
             else:
-                speech_score = 0
-                
-            # 최종 점수는 0-100 사이로 조정
-            speech_score = min(100, max(0, speech_score))
-            
-            # 의원 점수 업데이트
-            legislator.speech_score = round(speech_score, 1)  # 소수점 첫째 자리까지
+                # Total 값이 없으면 0으로 설정
+                legislator.speech_score = 0.0
+                print(f"{legislator.hg_nm}: Total 없음 -> speech_score=0")
         
         # 변경사항 저장
         db.commit()
-        print(f"의정발언 점수 계산 완료: {len(legislators)}명")
+        print(f"의정발언 점수 계산 완료: {updated_count}명 업데이트")
         
     except Exception as e:
         db.rollback()
         print(f"의정발언 점수 계산 오류: {str(e)}")
+        import traceback
+        traceback.print_exc()
 
 def calculate_voting_scores(db: Session):
     """
@@ -176,3 +150,4 @@ def update_rankings(db: Session):
 
 if __name__ == "__main__":
     calculate_all_scores()
+   

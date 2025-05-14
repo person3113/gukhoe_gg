@@ -4,6 +4,8 @@ from typing import List, Dict, Any, Optional
 from app.models.legislator import Legislator
 from app.models.committee import Committee, CommitteeMember
 
+
+
 def get_top_legislators(db: Session, count: int = 5, category: str = 'overall') -> List[Dict[str, Any]]:
     """
     특정 카테고리 기준 상위 N명의 국회의원을 조회하는 함수
