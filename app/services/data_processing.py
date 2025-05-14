@@ -20,34 +20,78 @@ def process_speech_data(raw_data):
     Returns:
         처리된 발언 데이터
     """
-    if not raw_data:
+    """
+    발언 데이터 정리 및 가공
+    
+    Args:
+        raw_data: 파싱된 회의별 발언 데이터
+        db: 데이터베이스 세션 (None인 경우 새 세션 생성)
+    
+    Returns:
+        처리된 발언 데이터
+    """
+    from app.db.database import SessionLocal
+    from app.models.speech import SpeechByMeeting
+    from app.models.legislator import Legislator
+    
+    # DB 세션 생성 (인자로 받지 않은 경우)
+    if db is None:
+        db = SessionLocal()
+        should_close_db = True
+    else:
+        should_close_db = False
+    
+    try:
+        print(f"발언 데이터 처리 시작: {len(raw_data)}개 항목")
+        
+        # 의원 이름별 ID 매핑 생성
+        legislator_map = {}
+        legislators = db.query(Legislator.id, Legislator.hg_nm).all()
+        for leg_id, leg_name in legislators:
+            legislator_map[leg_name] = leg_id
+        
+        print(f"의원 매핑 생성 완료: {len(legislator_map)}명")
+        
+        # 기존 발언 데이터 삭제 (중복 방지)
+        deleted_count = db.query(SpeechByMeeting).delete()
+        print(f"기존 발언 데이터 삭제: {deleted_count}개")
+        
+        # 새 데이터 추가
+        added_count = 0
+        for item in raw_data:
+            legislator_name = item['legislator_name']
+            meeting_type = item['meeting_type']
+            count = item['count']
+            
+            legislator_id = legislator_map.get(legislator_name)
+            if legislator_id:
+                speech = SpeechByMeeting(
+                    legislator_id=legislator_id,
+                    meeting_type=meeting_type,
+                    count=count
+                )
+                db.add(speech)
+                added_count += 1
+            else:
+                print(f"의원을 찾을 수 없음: {legislator_name}")
+        
+        # 변경사항 커밋
+        if added_count > 0:
+            db.commit()
+            print(f"{added_count}개의 발언 데이터 저장 완료")
+        
+        return raw_data
+    
+    except Exception as e:
+        db.rollback()
+        print(f"발언 데이터 처리 중 오류 발생: {e}")
+        import traceback
+        traceback.print_exc()
         return []
     
-    result = []
-    
-    if type == "keywords":
-        # 키워드 데이터 처리 로직...
-        pass
-    
-    elif type == "by_meeting":
-        # 회의별 발언 데이터 처리
-        for item in raw_data:
-            legislator_name = item.get("legislator_name")
-            meeting_type = item.get("meeting_type")
-            count = item.get("count", 0)
-            
-            # 데이터 검증
-            if not legislator_name or not meeting_type:
-                continue
-            
-            # 결과에 추가 (Total 포함)
-            result.append({
-                "legislator_name": legislator_name,
-                "meeting_type": meeting_type,
-                "count": count
-            })
-    
-    return result
+    finally:
+        if should_close_db:
+            db.close()
 
 def process_bill_data(raw_data):
     # 법안 데이터 정리 및 가공

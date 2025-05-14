@@ -3,7 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 import os
-
+from app.models.speech import SpeechByMeeting
 from app.db.database import SessionLocal, engine, Base, get_db
 from app.api import home, search, champions, ranking, misc_ranking
 from app.models.legislator import Legislator
@@ -75,5 +75,36 @@ async def startup_event():
             # real_test 모드이거나, persistent 모드이면서 데이터가 없는 경우에만 API 호출
             from scripts.fetch_data import fetch_all_data
             fetch_all_data()
+
+        # 데이터 확인 - SpeechByMeeting 데이터가 있는지 확인
+        speech_data_count = db.query(SpeechByMeeting).count()
+        print(f"회의별 발언 데이터: {speech_data_count}개")
+        
+        # 데이터가 없는 경우 엑셀 파일 파싱 실행
+        if speech_data_count == 0:
+            print("회의별 발언 데이터가 없습니다. 엑셀 파일 파싱을 시작합니다...")
+            from app.utils.excel_parser import parse_speech_by_meeting_excel
+            from app.services.data_processing import process_speech_data
+            
+            try:
+                # 엑셀 파일 파싱
+                speech_data = parse_speech_by_meeting_excel()
+                # 데이터 처리 및 DB 저장
+                process_speech_data(speech_data, db)
+                db.commit()
+                
+                # 저장 후 데이터 확인
+                new_speech_data_count = db.query(SpeechByMeeting).count()
+                print(f"엑셀 파싱 후 회의별 발언 데이터: {new_speech_data_count}개")
+                
+                # 샘플 데이터 출력
+                sample_data = db.query(SpeechByMeeting).limit(3).all()
+                for data in sample_data:
+                    print(f"의원ID: {data.legislator_id}, 회의구분: {data.meeting_type}, 횟수: {data.count}")
+            except Exception as e:
+                print(f"엑셀 파싱 중 오류 발생: {e}")
+                db.rollback()  # 오류 발생 시 롤백
+    except Exception as e:
+        print(f"시작 이벤트 처리 중 오류 발생: {e}")
     finally:
         db.close()

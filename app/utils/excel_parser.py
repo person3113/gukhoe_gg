@@ -71,15 +71,35 @@ def parse_speech_by_meeting_excel(file_path: str) -> List[Dict[str, Any]]:
         print("파일 구조 샘플:")
         print(df.head())
         
-        # 2행(인덱스 1)을 헤더로 사용
+        # 2행(인덱스 1)을 헤더로 사용 - 실제 파일에서 확인
         header_row = df.iloc[1]
-        headers = ['발언자', '대수', '회의구분', '회의록수']
+        print("헤더 행:", header_row.tolist())
+        
+        # 헤더 정의 - 파일에서 추출 또는 고정된 헤더 사용
+        # 파일 구조가 변경될 경우 대비하여 컬럼 위치 확인
+        expected_headers = ['발언자', '대수', '회의구분', '회의록수']
+        actual_headers = [str(col) for col in header_row.tolist() if not pd.isna(col)]
+        
+        # 헤더 일치 여부 확인
+        print(f"예상 헤더: {expected_headers}")
+        print(f"실제 헤더: {actual_headers}")
+        
+        # 헤더 매핑 (인덱스 기반으로 헤더 이름 매핑)
+        headers = []
+        for i, header in enumerate(header_row):
+            if i < len(expected_headers) and not pd.isna(header):
+                headers.append(expected_headers[i])
+            else:
+                headers.append(f"Unnamed: {i}")
         
         # 실제 데이터만 추출 (2행 이후)
         data_df = df.iloc[2:].reset_index(drop=True)
         
         # 컬럼명 설정
         data_df.columns = headers
+        
+        print("헤더 적용 후 데이터:")
+        print(data_df.head())
         
         # 결과 리스트 초기화
         result = []
@@ -93,7 +113,7 @@ def parse_speech_by_meeting_excel(file_path: str) -> List[Dict[str, Any]]:
             # 값이 비어있거나 NaN인 경우 건너뛰기
             if pd.isna(legislator_name) or pd.isna(meeting_type) or pd.isna(count):
                 continue
-                
+            
             # 의원 이름에서 한자 부분 제거 (예: "강경숙 (姜景淑)" -> "강경숙")
             if '(' in legislator_name:
                 legislator_name = legislator_name.split('(')[0].strip()
@@ -104,15 +124,25 @@ def parse_speech_by_meeting_excel(file_path: str) -> List[Dict[str, Any]]:
             except (ValueError, TypeError):
                 count = 0
             
-            # 결과 딕셔너리에 추가
-            result.append({
-                "legislator_name": legislator_name,
-                "meeting_type": meeting_type,
-                "count": count
-            })
+            # Total이 아닌 경우만 저장 (Total은 합계이므로 개별 저장 불필요)
+            if str(meeting_type) != 'Total':
+                # 결과 딕셔너리에 추가
+                result.append({
+                    "legislator_name": legislator_name,
+                    "meeting_type": meeting_type,
+                    "count": count
+                })
         
         print(f"처리된 데이터 수: {len(result)}")
+        
+        # 데이터 샘플 출력
+        if result:
+            print("데이터 샘플:")
+            for i, item in enumerate(result[:3]):
+                print(f"  {i+1}. {item['legislator_name']} - {item['meeting_type']}: {item['count']}회")
+        
         return result
+    
     except Exception as e:
         print(f"회의별 발언 엑셀 파일 파싱 중 오류 발생: {str(e)}")
         import traceback
