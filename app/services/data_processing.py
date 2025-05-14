@@ -24,46 +24,32 @@ def process_speech_data(raw_data, db: Session):
     try:
         # 결과 저장용 딕셔너리: {의원ID: Total 값}
         total_speeches = {}
+        processed_count = 0
+        skipped_count = 0
+        
+        # 의원 이름 목록 - 각 의원 정보를 한 번만 조회하기 위함
+        legislator_name_map = {}
         
         # 각 발언 데이터를 처리
         for data in raw_data:
-            # 의원 이름으로 의원 ID 조회
-            legislator = db.query(Legislator).filter(Legislator.hg_nm == data['legislator_name']).first()
+            legislator_name = data['legislator_name']
+            
+            # 의원 정보가 캐시에 없으면 DB에서 조회
+            if legislator_name not in legislator_name_map:
+                legislator = db.query(Legislator).filter(Legislator.hg_nm == legislator_name).first()
+                legislator_name_map[legislator_name] = legislator
+            else:
+                legislator = legislator_name_map[legislator_name]
             
             if not legislator:
-                print(f"의원을 찾을 수 없음: {data['legislator_name']}")
+                skipped_count += 1
                 continue
                 
             # 'Total'은 따로 저장해두고, speech_score 계산에 사용
             if data['meeting_type'] == 'Total':
                 total_speeches[legislator.id] = data['count']
                 
-                # 의원의 speech_score 필드가 있으면 업데이트 (Total 값 기반 점수 계산)
-                if hasattr(legislator, 'speech_score'):
-                    # 추후 계산 로직이 필요할 경우 추가
-                    pass
-                
-                # Total 데이터도 DB에 저장
-                existing_speech = db.query(SpeechByMeeting).filter(
-                    SpeechByMeeting.legislator_id == legislator.id,
-                    SpeechByMeeting.meeting_type == 'Total'
-                ).first()
-                
-                if existing_speech:
-                    # 기존 데이터 업데이트
-                    existing_speech.count = data['count']
-                else:
-                    # 새 데이터 추가
-                    new_speech = SpeechByMeeting(
-                        legislator_id=legislator.id,
-                        meeting_type='Total',
-                        count=data['count']
-                    )
-                    db.add(new_speech)
-                
-                continue
-            
-            # 일반 회의 구분별 발언 수는 SpeechByMeeting 테이블에 저장
+            # DB에 저장 (Total 포함)
             existing_speech = db.query(SpeechByMeeting).filter(
                 SpeechByMeeting.legislator_id == legislator.id,
                 SpeechByMeeting.meeting_type == data['meeting_type']
@@ -80,10 +66,12 @@ def process_speech_data(raw_data, db: Session):
                     count=data['count']
                 )
                 db.add(new_speech)
+                
+            processed_count += 1
         
         # 변경사항 커밋
         db.commit()
-        print(f"{len(raw_data)}개의 발언 데이터 처리 완료 (Total 포함)")
+        print(f"{processed_count}개의 발언 데이터 처리 완료, {skipped_count}개 건너뜀")
         
         # 추가 정보 출력
         print(f"의원별 Total 발언 수: {len(total_speeches)}명")

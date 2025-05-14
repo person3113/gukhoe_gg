@@ -1,0 +1,13 @@
+국회gg_project/
+├── scripts/
+│   ├── test_speech_parser.py     회의록별 발언 수 파싱 및 db저장 테스트
+│   ├── check_speech_data.py      회의록별 발언 수 출력 테스트
+│   ├── fetch_data.py
+│   └── calculate_scores.py
+
+
+
+python scripts/test_speech_parser.py
+
+python scripts/check_speech_data.py
+이렇게 하면 DB에 저장된 발언 데이터를 확인할 수 있습니다.
