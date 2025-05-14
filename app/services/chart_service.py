@@ -153,6 +153,9 @@ def generate_speech_chart_data(speeches: List[Dict[str, Any]]) -> Dict[str, Any]
     Returns:
         차트 데이터 딕셔너리
     """
+    # Total을 제외한 실제 회의유형 데이터만 필터링
+    filtered_speeches = [speech for speech in speeches if speech["meeting_type"] != "Total"]
+
     # 차트에 표시할 라벨(회의 구분) 추출
     labels = [speech["meeting_type"] for speech in speeches]
     

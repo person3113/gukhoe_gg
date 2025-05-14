@@ -10,7 +10,44 @@ def process_speech_data(raw_data):
     # 발언 데이터 정리 및 가공
     # 발언 횟수, 키워드 분석
     # 반환: 처리된 발언 데이터
-    pass
+    """
+    발언 데이터 정리 및 가공
+    
+    Args:
+        raw_data: 원시 데이터
+        type: 데이터 유형 ("keywords" 또는 "by_meeting")
+    
+    Returns:
+        처리된 발언 데이터
+    """
+    if not raw_data:
+        return []
+    
+    result = []
+    
+    if type == "keywords":
+        # 키워드 데이터 처리 로직...
+        pass
+    
+    elif type == "by_meeting":
+        # 회의별 발언 데이터 처리
+        for item in raw_data:
+            legislator_name = item.get("legislator_name")
+            meeting_type = item.get("meeting_type")
+            count = item.get("count", 0)
+            
+            # 데이터 검증
+            if not legislator_name or not meeting_type:
+                continue
+            
+            # 결과에 추가 (Total 포함)
+            result.append({
+                "legislator_name": legislator_name,
+                "meeting_type": meeting_type,
+                "count": count
+            })
+    
+    return result
 
 def process_bill_data(raw_data):
     # 법안 데이터 정리 및 가공

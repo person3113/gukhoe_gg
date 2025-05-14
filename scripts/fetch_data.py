@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.db.database import SessionLocal
 from app.models.sns import LegislatorSNS
+from app.models.speech import SpeechByMeeting, SpeechKeyword
 
 # 프로젝트 루트 디렉토리 추가
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -208,7 +209,85 @@ def fetch_excel_data(db: Session):
     # 호출: excel_parser.parse_speech_by_meeting_excel()로 회의별 발언 데이터 수집
     # 호출: process_attendance_data(), process_speech_data()로 데이터 처리
     # DB에 저장
-    pass
+    """
+    엑셀 파일에서 데이터 수집
+    """
+    db = SessionLocal()
+    try:
+        print("엑셀 파일에서 데이터 수집 중...")
+        
+        # 출석 데이터 수집
+        # (기존 코드 유지)
+        
+        # 발언 키워드 데이터 수집
+        # (기존 코드 유지)
+        
+        # 회의별 발언 데이터 수집 - 다양한 파일명 패턴 처리
+        speech_data = []
+        excel_dir = "data/excel"
+        
+        # 디렉토리 내 모든 파일 검사
+        if os.path.exists(excel_dir):
+            for filename in os.listdir(excel_dir):
+                # 회의 구분별 발언 회의록 수 패턴 확인
+                if "회의+구분별+발언+회의록" in filename.replace(" ", "+") and filename.endswith((".xlsx", ".xls")):
+                    file_path = os.path.join(excel_dir, filename)
+                    print(f"회의별 발언 파일 발견: {filename}")
+                    
+                    # 파일 파싱
+                    file_speech_data = parse_speech_by_meeting_excel(file_path)
+                    if file_speech_data:
+                        speech_data.extend(file_speech_data)
+                        print(f"파일 {filename}에서 {len(file_speech_data)}개 데이터 추출")
+        
+        # 회의별 발언 데이터 처리 및 저장
+        if speech_data:
+            # 데이터 처리
+            speech_processed = process_speech_data(speech_data, type="by_meeting")
+            
+            # 의원명과 ID 매핑 가져오기
+            legislator_map = {}
+            legislators = db.query(Legislator.id, Legislator.hg_nm).all()
+            for leg_id, leg_name in legislators:
+                legislator_map[leg_name] = leg_id
+            
+            # DB에 저장
+            saved_count = 0
+            for speech_item in speech_processed:
+                legislator_name = speech_item.get("legislator_name")
+                legislator_id = legislator_map.get(legislator_name)
+                
+                if legislator_id:
+                    # 기존 데이터 확인
+                    existing = db.query(SpeechByMeeting).filter(
+                        SpeechByMeeting.legislator_id == legislator_id,
+                        SpeechByMeeting.meeting_type == speech_item["meeting_type"]
+                    ).first()
+                    
+                    if existing:
+                        # 기존 데이터 업데이트
+                        existing.count = speech_item["count"]
+                    else:
+                        # 새 데이터 추가
+                        db.add(SpeechByMeeting(
+                            legislator_id=legislator_id,
+                            meeting_type=speech_item["meeting_type"],
+                            count=speech_item["count"]
+                        ))
+                    saved_count += 1
+                else:
+                    print(f"의원 '{legislator_name}'의 ID를 찾을 수 없습니다.")
+            
+            db.commit()
+            print(f"회의별 발언 데이터 {saved_count}개 DB 저장 완료 (총 {len(speech_processed)}개 중)")
+    
+    except Exception as e:
+        print(f"엑셀 데이터 수집 중 오류 발생: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        db.rollback()
+    finally:
+        db.close()
 
 if __name__ == "__main__":
     fetch_all_data()
