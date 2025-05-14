@@ -8,8 +8,8 @@ class Settings(BaseSettings):
     if os.getenv("DB_MODE") == "memory":
         DATABASE_URL = "sqlite:///:memory:"
     
-    # API 키 설정
-    API_KEY: str = os.getenv("ASSEMBLY_API_KEY", "sample")
+    # API 키 설정 (수정된 부분)
+    ASSEMBLY_API_KEY: str = "sample"
     
     # API 기본 URL
     BASE_API_URL: str = "https://open.assembly.go.kr/portal/openapi/"
@@ -49,5 +49,10 @@ class Settings(BaseSettings):
         env_file=".env",
         extra="ignore"  # 추가 필드 허용 (assembly_api_key 등)
     )
+
+  # 호환성을 위한 property (추가된 부분)
+    @property
+    def API_KEY(self) -> str:
+        return self.ASSEMBLY_API_KEY
 
 settings = Settings()
