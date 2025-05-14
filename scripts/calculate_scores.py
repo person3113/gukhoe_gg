@@ -62,9 +62,6 @@ def calculate_speech_scores(db: Session):
     """
     의정발언 점수 계산 - Total 값을 그대로 speech_score에 저장
     """
-    from app.models.speech import SpeechByMeeting
-    from app.models.legislator import Legislator
-    
     try:
         # 모든 의원 조회
         legislators = db.query(Legislator).all()
@@ -98,6 +95,7 @@ def calculate_speech_scores(db: Session):
         print(f"의정발언 점수 계산 오류: {str(e)}")
         import traceback
         traceback.print_exc()
+
 
 def calculate_voting_scores(db: Session):
     """
