@@ -208,7 +208,42 @@ def fetch_excel_data(db: Session):
     # 호출: excel_parser.parse_speech_by_meeting_excel()로 회의별 발언 데이터 수집
     # 호출: process_attendance_data(), process_speech_data()로 데이터 처리
     # DB에 저장
-    pass
+    """
+    엑셀 파일에서 데이터 수집
+    """
+    import os
+    from app.utils.excel_parser import parse_attendance_excel, parse_speech_by_meeting_excel
+    from app.services.data_processing import process_attendance_data, process_speech_data
+    
+    print("엑셀 데이터 수집 시작...")
+    
+    # 엑셀 파일 경로 설정
+    speech_by_meeting_dir = "data/excel/speech/speech_by_meeting"
+    
+    # 폴더가 존재하는지 확인하고 없으면 생성
+    if not os.path.exists(speech_by_meeting_dir):
+        print(f"폴더가 존재하지 않습니다: {speech_by_meeting_dir}")
+        return
+    
+    # 회의별 발언 엑셀 파일 처리
+    processed_count = 0
+    for filename in os.listdir(speech_by_meeting_dir):
+        if filename.endswith("_speech_by_meeting.xlsx"):
+            file_path = os.path.join(speech_by_meeting_dir, filename)
+            print(f"파일 처리 중: {filename}")
+            
+            try:
+                # 회의별 발언 데이터 파싱
+                speech_data = parse_speech_by_meeting_excel(file_path)
+                
+                # 데이터 처리 및 DB 저장
+                if speech_data:
+                    process_speech_data(speech_data, db)
+                    processed_count += 1
+            except Exception as e:
+                print(f"파일 처리 오류: {filename}, 오류: {str(e)}")
+    
+    print(f"회의별 발언 데이터 처리 완료: {processed_count}개 파일")
 
 if __name__ == "__main__":
     fetch_all_data()
