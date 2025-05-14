@@ -208,7 +208,75 @@ def fetch_excel_data(db: Session):
     # 호출: excel_parser.parse_speech_by_meeting_excel()로 회의별 발언 데이터 수집
     # 호출: process_attendance_data(), process_speech_data()로 데이터 처리
     # DB에 저장
-    pass
+    """
+    엑셀 파일에서 데이터 수집
+    """
+    import os
+    from app.models.speech import SpeechByMeeting
+    from app.utils.excel_parser import parse_speech_by_meeting_excel
+    
+    # 의원 전체 조회
+    legislators = db.query(Legislator).all()
+    
+    # 엑셀 파일 디렉토리
+    excel_dir = "data/excel/speech"
+    
+    print(f"엑셀 데이터 수집 시작 - 총 {len(legislators)}명의 의원")
+    
+    for legislator in legislators:
+        # 파일명 패턴: "통합검색_국회회의록_발언자목록_{이름}+...xlsx"
+        matching_files = []
+        for filename in os.listdir(excel_dir):
+            if filename.endswith('.xlsx') and legislator.hg_nm in filename:
+                matching_files.append(filename)
+        
+        if not matching_files:
+            print(f"의원 {legislator.hg_nm}의 엑셀 파일을 찾을 수 없습니다.")
+            continue
+        
+        # 첫 번째 매칭 파일 사용
+        file_path = os.path.join(excel_dir, matching_files[0])
+        
+        # 엑셀 파일 파싱
+        speech_data = parse_speech_by_meeting_excel(file_path)
+        
+        # Total 값을 먼저 저장
+        total_speech = db.query(SpeechByMeeting).filter(
+            SpeechByMeeting.legislator_id == legislator.id,
+            SpeechByMeeting.meeting_type == 'Total'
+        ).first()
+        
+        if total_speech:
+            total_speech.count = speech_data['total']
+        else:
+            new_total = SpeechByMeeting(
+                legislator_id=legislator.id,
+                meeting_type='Total',
+                count=speech_data['total']
+            )
+            db.add(new_total)
+        
+        # 나머지 회의별 발언수 저장
+        for meeting_data in speech_data['by_meeting']:
+            existing = db.query(SpeechByMeeting).filter(
+                SpeechByMeeting.legislator_id == legislator.id,
+                SpeechByMeeting.meeting_type == meeting_data['meeting_type']
+            ).first()
+            
+            if existing:
+                existing.count = meeting_data['count']
+            else:
+                new_speech = SpeechByMeeting(
+                    legislator_id=legislator.id,
+                    meeting_type=meeting_data['meeting_type'],
+                    count=meeting_data['count']
+                )
+                db.add(new_speech)
+        
+        print(f"의원 {legislator.hg_nm}의 발언 데이터 처리 완료")
+    
+    db.commit()
+    print("엑셀 데이터 수집 완료!")
 
 if __name__ == "__main__":
     fetch_all_data()

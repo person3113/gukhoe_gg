@@ -57,3 +57,22 @@ def get_speech_by_meeting_type(db: Session, legislator_id: int) -> List[Dict[str
         })
     
     return result
+
+# 의정발언 수 받아오는 함수
+def get_total_speech_count(db: Session, legislator_id: int) -> int:
+    """
+    특정 의원의 총 발언수(Total) 조회
+    
+    Args:
+        db: 데이터베이스 세션
+        legislator_id: 국회의원 ID
+    
+    Returns:
+        총 발언수
+    """
+    total_speech = db.query(SpeechByMeeting).filter(
+        SpeechByMeeting.legislator_id == legislator_id,
+        SpeechByMeeting.meeting_type == 'Total'
+    ).first()
+    
+    return total_speech.count if total_speech else 0
