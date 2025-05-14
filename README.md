@@ -13,8 +13,9 @@
 > - python -m venv venv (venv 폴더 생성)
 > - venv\Scripts\activate (가상환경 활성화)
 > - pip install -r requirements.txt (의존성 설치)
+> - pip install xmltodict
 > - 처음 클론했다면 .env 파일을 만들어야 함 (.env 파일에 open api에서 발급받은 키를 넣어야 함.)
-
+> - ASSEMBLY_API_KEY=your_api_key_here
 </details>
 
 <details>
