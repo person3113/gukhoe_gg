@@ -14,12 +14,13 @@ from app.models.speech import SpeechKeyword, SpeechByMeeting
 from app.models.attendance import Attendance
 from app.models.sns import LegislatorSNS
 
-def reset_selected_tables(preserve_legislators=True):
+def reset_selected_tables(preserve_legislators=True, preserve_bills=False):
     """
-    국회의원 정보를 제외한 특정 테이블만 초기화
+    선택적 테이블 초기화
     
     Args:
         preserve_legislators: 국회의원 정보를 보존할지 여부 (기본: True)
+        preserve_bills: 법안 정보를 보존할지 여부 (기본: False)
     """
     db = SessionLocal()
     inspector = inspect(engine)
@@ -33,8 +34,6 @@ def reset_selected_tables(preserve_legislators=True):
             # 의원 정보와 관련 없는 테이블 또는 의원 정보에 의존하는 테이블
             VoteResult.__tablename__,  # 표결 결과
             Vote.__tablename__,  # 표결
-            BillCoProposer.__tablename__,  # 법안 공동발의자
-            Bill.__tablename__,  # 법안
             Attendance.__tablename__,  # 출석
             SpeechKeyword.__tablename__,  # 발언 키워드
             SpeechByMeeting.__tablename__,  # 회의별 발언
@@ -42,6 +41,11 @@ def reset_selected_tables(preserve_legislators=True):
             CommitteeHistory.__tablename__,  # 위원회 경력
             Committee.__tablename__,  # 위원회
         ]
+        
+        # 법안 정보를 보존하지 않을 경우 법안 관련 테이블도 초기화 대상에 추가
+        if not preserve_bills:
+            tables_to_reset.append(BillCoProposer.__tablename__)  # 법안 공동발의자
+            tables_to_reset.append(Bill.__tablename__)  # 법안
         
         # 국회의원 정보도 초기화하려면 LegislatorSNS와 Legislator 테이블도 포함
         if not preserve_legislators:
@@ -58,9 +62,15 @@ def reset_selected_tables(preserve_legislators=True):
         db.commit()
         print("선택적 테이블 초기화가 완료되었습니다.")
         
+        # 보존된 정보 출력
         if preserve_legislators:
             legislator_count = db.query(Legislator).count()
             print(f"국회의원 정보 {legislator_count}건이 보존되었습니다.")
+        
+        if preserve_bills:
+            bill_count = db.query(Bill).count()
+            co_proposer_count = db.query(BillCoProposer).count()
+            print(f"법안 정보 {bill_count}건과 공동발의자 정보 {co_proposer_count}건이 보존되었습니다.")
     
     except Exception as e:
         print(f"초기화 중 오류가 발생했습니다: {e}")
@@ -72,13 +82,16 @@ if __name__ == "__main__":
     # 사용자 입력에 따라 동작 결정
     print("선택적 테이블 초기화 스크립트")
     print("1. 국회의원 정보는 유지하고 다른 테이블만 초기화")
-    print("2. 모든 테이블 초기화 (기존 reset_db.py와 동일)")
+    print("2. 국회의원 정보와 법안 정보는 유지하고 다른 테이블만 초기화")
+    print("3. 모든 테이블 초기화 (기존 reset_db.py와 동일)")
     
-    choice = input("선택하세요 (1 또는 2): ")
+    choice = input("선택하세요 (1, 2 또는 3): ")
     
     if choice == '1':
-        reset_selected_tables(preserve_legislators=True)
+        reset_selected_tables(preserve_legislators=True, preserve_bills=False)
     elif choice == '2':
-        reset_selected_tables(preserve_legislators=False)
+        reset_selected_tables(preserve_legislators=True, preserve_bills=True)
+    elif choice == '3':
+        reset_selected_tables(preserve_legislators=False, preserve_bills=False)
     else:
         print("잘못된 선택입니다. 작업이 취소되었습니다.")
