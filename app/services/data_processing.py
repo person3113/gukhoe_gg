@@ -26,6 +26,7 @@ def process_speech_data(raw_data, db: Session):
         total_speeches = {}
         processed_count = 0
         skipped_count = 0
+        duplicated_count = 0
         
         # 의원 이름 목록 - 각 의원 정보를 한 번만 조회하기 위함
         legislator_name_map = {}
@@ -37,6 +38,10 @@ def process_speech_data(raw_data, db: Session):
             # 의원 정보가 캐시에 없으면 DB에서 조회
             if legislator_name not in legislator_name_map:
                 legislator = db.query(Legislator).filter(Legislator.hg_nm == legislator_name).first()
+                if not legislator:
+                    print(f"경고: {legislator_name} 의원을 DB에서 찾을 수 없습니다.")
+                    skipped_count += 1
+                    continue
                 legislator_name_map[legislator_name] = legislator
             else:
                 legislator = legislator_name_map[legislator_name]
@@ -56,8 +61,18 @@ def process_speech_data(raw_data, db: Session):
             ).first()
             
             if existing_speech:
-                # 기존 데이터 업데이트
-                existing_speech.count = data['count']
+                # 기존 데이터가 있으면 값을 더해주거나 최대값을 선택
+                print(f"중복 데이터 발견: {legislator.hg_nm} - {data['meeting_type']} (기존: {existing_speech.count}, 새로운: {data['count']})")
+                
+                # 더 큰 값을 선택하거나, 합산하거나, 최신 값으로 업데이트
+                # 여기서는 더 큰 값을 선택하는 방식으로 처리
+                if data['count'] > existing_speech.count:
+                    existing_speech.count = data['count']
+                    print(f"  -> 더 큰 값으로 업데이트: {data['count']}")
+                else:
+                    print(f"  -> 기존 값 유지: {existing_speech.count}")
+                    
+                duplicated_count += 1
             else:
                 # 새 데이터 추가
                 new_speech = SpeechByMeeting(
@@ -66,14 +81,16 @@ def process_speech_data(raw_data, db: Session):
                     count=data['count']
                 )
                 db.add(new_speech)
+                print(f"새 데이터 추가: {legislator.hg_nm} - {data['meeting_type']}: {data['count']}")
                 
             processed_count += 1
         
         # 변경사항 커밋
         db.commit()
-        print(f"{processed_count}개의 발언 데이터 처리 완료, {skipped_count}개 건너뜀")
-        
-        # 추가 정보 출력
+        print(f"\n=== 처리 결과 ===")
+        print(f"처리 완료: {processed_count}개")
+        print(f"건너뜀: {skipped_count}개")
+        print(f"중복 업데이트: {duplicated_count}개")
         print(f"의원별 Total 발언 수: {len(total_speeches)}명")
         
     except Exception as e:

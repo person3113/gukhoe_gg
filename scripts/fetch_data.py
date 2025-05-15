@@ -2,11 +2,13 @@ import sys
 import os
 from sqlalchemy.orm import Session
 
-from app.db.database import SessionLocal
-from app.models.sns import LegislatorSNS
+
 
 # 프로젝트 루트 디렉토리 추가
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from app.db.database import SessionLocal
+from app.models.sns import LegislatorSNS
 
 from app.models.legislator import Legislator
 from app.services.api_service import ApiService
