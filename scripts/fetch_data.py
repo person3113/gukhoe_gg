@@ -3,6 +3,7 @@ import os
 from sqlalchemy.orm import Session
 
 from app.db.database import SessionLocal
+from app.models.bill import Bill
 from app.models.sns import LegislatorSNS
 
 # 프로젝트 루트 디렉토리 추가
@@ -153,12 +154,33 @@ def fetch_legislators(db: Session):
 def fetch_bills(db: Session):
     """
     법안 정보 수집
-    """
+    
     # ApiService 인스턴스 생성
     # 호출: api_service.fetch_bills()로 법안 정보 수집
     # 호출: process_bill_data()로 데이터 처리
     # DB에 저장
-    pass
+    """
+    # 기존 데이터 확인
+    existing_data = db.query(Bill).count()
+    if existing_data > 0:
+        print(f"이미 {existing_data}개의 법안 정보가 있습니다. 스킵합니다.")
+        return
+    
+    # ApiService 인스턴스 생성
+    api_service = ApiService()
+    
+    # 법안 정보 수집
+    print("법안 정보 수집 시작...")
+    bills_data = api_service.fetch_bills()
+    
+    if not bills_data:
+        print("수집된 법안 정보가 없습니다.")
+        return
+    
+    # 처리된 법안 정보를 DB에 저장
+    processed_bills = process_bill_data(bills_data, db)
+    
+    print(f"법안 정보 수집 완료: {len(processed_bills)}개")
 
 def fetch_votes(db: Session):
     """

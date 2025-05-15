@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Boolean, Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 
 from app.db.database import Base
@@ -32,6 +32,7 @@ class BillCoProposer(Base):
     id = Column(Integer, primary_key=True, index=True)
     bill_id = Column(Integer, ForeignKey("bills.id"), index=True)
     legislator_id = Column(Integer, ForeignKey("legislators.id"), index=True)
+    is_representative = Column(Boolean, default=False)  # 대표발의자 여부
     
     # 관계 정의 - 단방향으로 변경하기 위해 제거
     # bill = relationship("Bill", back_populates="co_proposers")

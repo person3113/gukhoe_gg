@@ -98,11 +98,15 @@ async def champion_detail(
         tab_data["vote_results"] = vote_service.get_vote_results(db, legislator_id)
     elif tab == "bills":
         from app.services import bill_service
-        tab_data["representative_bills"] = bill_service.get_representative_bills(db, legislator_id)
+        bills_data = bill_service.get_representative_bills(db, legislator_id)
+        tab_data["representative_bills"] = bills_data["bills"]
+        tab_data["representative_bills_count"] = bills_data["total_count"]
     elif tab == "co_bills":
         # 공동발의안 목록 조회
         from app.services import bill_service
-        tab_data["co_bills"] = bill_service.get_co_sponsored_bills(db, legislator_id)
+        co_bills_data = bill_service.get_co_sponsored_bills(db, legislator_id)
+        tab_data["co_bills"] = co_bills_data["bills"]
+        tab_data["co_bills_count"] = co_bills_data["total_count"]
     
     # 템플릿 렌더링
     return templates.TemplateResponse(

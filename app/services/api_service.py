@@ -359,10 +359,106 @@ class ApiService:
         pass
 
     def fetch_bills(self) -> List[Dict[str, Any]]:
-        # 호출: requests.get()로 국회의원 발의법률안 API 호출
-        # 호출: utils.xml_parser.parse_xml_to_dict()로 XML 응답 파싱
-        # 반환: 법안 정보 리스트
-        pass
+        """
+        국회의원 발의법률안 API 호출
+        
+        Returns:
+            List[Dict[str, Any]]: 법안 정보 리스트
+        """
+        try:
+            print("API 호출 시작: bills")
+            
+            # 결과 리스트 초기화
+            all_bills = []
+            
+            # 페이지 정보
+            page_index = 1
+            page_size = 100  # API 기본값
+            total_count = None
+            
+            # 전체 데이터를 가져올 때까지 반복
+            while True:
+                # 페이지 정보를 포함한 API 호출
+                additional_params = {
+                    "pIndex": str(page_index),
+                    "pSize": str(page_size),
+                    "AGE": "22"  # 22대 국회 기준
+                }
+                
+                print(f"법안 정보 페이지 {page_index} 요청 중...")
+                response_text = self._make_api_call("bills", additional_params)
+                
+                if not response_text:
+                    print(f"페이지 {page_index} 응답이 없습니다!")
+                    break
+                
+                # XML 응답 파싱
+                data_dict = parse_xml_to_dict(response_text)
+                
+                # 오류 체크
+                if data_dict.get('error'):
+                    print(f"API 오류: {data_dict.get('message')}")
+                    break
+                
+                # 'nzmimeepazxkubdpn' 구조 처리 (법안 정보 API의 응답 구조)
+                if 'nzmimeepazxkubdpn' in data_dict:
+                    root = data_dict['nzmimeepazxkubdpn']
+                    
+                    # 첫 페이지에서만 총 개수 정보 확인
+                    if total_count is None and 'head' in root:
+                        head = root['head']
+                        total_count = int(head.get('list_total_count', 0))
+                        print(f"총 법안 수: {total_count}")
+                    
+                    # 'row' 태그에서 법안 정보 추출
+                    items = root.get('row', [])
+                    
+                    # 단일 항목인 경우 리스트로 변환
+                    if isinstance(items, dict):
+                        items = [items]
+                    
+                    # 페이지에 항목이 없으면 종료
+                    if not items:
+                        print(f"페이지 {page_index}에 항목이 없습니다. 종료합니다.")
+                        break
+                    
+                    print(f"페이지 {page_index}에서 {len(items)}개의 법안 정보 추출")
+                    
+                    # 법안 정보 매핑
+                    for item in items:
+                        bill_info = {
+                            "bill_id": item.get("BILL_ID", ""),
+                            "bill_no": item.get("BILL_NO", ""),
+                            "bill_name": item.get("BILL_NAME", ""),
+                            "propose_dt": item.get("PROPOSE_DT", ""),
+                            "detail_link": item.get("DETAIL_LINK", ""),
+                            "proposer": item.get("PROPOSER", ""),
+                            "committee": item.get("COMMITTEE", ""),
+                            "proc_result": item.get("PROC_RESULT", ""),
+                            "main_proposer": item.get("RST_PROPOSER", ""),
+                            "co_proposers": item.get("PUBL_PROPOSER", "")
+                        }
+                        all_bills.append(bill_info)
+                    
+                    # 다음 페이지로 이동
+                    page_index += 1
+                    
+                    # 모든 데이터를 가져왔는지 확인
+                    if total_count and len(all_bills) >= total_count:
+                        print(f"모든 데이터({total_count}개)를 가져왔습니다.")
+                        break
+                else:
+                    print(f"예상한 구조(nzmimeepazxkubdpn)를 찾지 못했습니다.")
+                    break
+            
+            print(f"최종 처리된 법안 수: {len(all_bills)}")
+            return all_bills
+            
+        except Exception as e:
+            print(f"국회의원 법안 정보 가져오기 오류: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return []
         
     def fetch_processed_bills_stats(self) -> List[Dict[str, Any]]:
         # 호출: requests.get()로 처리 의안통계(위원회별) API 호출
