@@ -26,7 +26,8 @@ class Settings(BaseSettings):
         "processed_bills": "nzpltgfqabtcpsmai",   # 법률안 심사 및 처리(처리의안)
         "processed_assembly_bills": "nwbpacrgavhjryiph", # 본회의 처리안건_법률안
         "vote_results": "nojepdqqaweusdfbi",      # 국회의원 본회의 표결정보
-        "committee_history": "nyzrglyvagmrypezq"  # 국회의원 위원회 경력
+        "committee_history": "nyzrglyvagmrypezq",  # 국회의원 위원회 경력
+        "tvbpmbill11": "TVBPMBILL11"                # 법률안 심사 및 처리(의안검색) - 추가됨
     }
     
     # 공통 API 요청 인자

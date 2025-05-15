@@ -9,6 +9,7 @@ class Bill(Base):
     
     # 기본 컬럼 정의
     id = Column(Integer, primary_key=True, index=True)
+    bill_id = Column(String)  # 의안ID (BILL_ID)
     bill_no = Column(String, unique=True, index=True)  # 의안번호
     bill_name = Column(String)  # 법률안명
     propose_dt = Column(String)  # 제안일

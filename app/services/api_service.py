@@ -502,17 +502,243 @@ class ApiService:
         # 반환: 위원회별 처리 의안 통계 리스트 (위원회명, 접수건수, 처리건수, 보류건수)
         pass
 
-    def fetch_processed_bill_ids(self, age='22') -> List[str]:
-        # 1. "법률안 심사 및 처리(처리의안)" API 호출
-        # 2. "본회의 처리안건_법률안" API 호출
-        # 3. 두 API에서 얻은 BILL_ID 추출
-        # 4. 중복 제거를 위해 집합(set)으로 변환 후 다시 리스트로
-        # 반환: 중복 제거된 처리된 법률안 ID 목록
-        pass
+    def fetch_bills_with_votes(self, age='22') -> List[str]:
+        """
+        표결이 이루어진 법안 ID 목록 조회 (수정가결, 원안가결, 부결인 법안)
+        
+        Args:
+            age: 국회 대수 (기본값: '22')
+        
+        Returns:
+            표결이 이루어진 법안 ID 목록
+        """
+        try:
+            from app.db.database import SessionLocal
+            from app.models.bill import Bill
+            from app.models.vote import Vote
+            
+            db = SessionLocal()
+            
+            # 가장 최근 표결 조회
+            latest_vote = db.query(Vote).order_by(Vote.vote_date.desc()).first()
+            latest_date = latest_vote.vote_date if latest_vote else None
+            
+            print(f"최근 표결일: {latest_date}")
+            
+            # 결과 리스트 초기화
+            voted_bill_ids = []
+            
+            # 페이지 정보
+            page_index = 1
+            page_size = 100  # API 기본값
+            total_count = None
+            
+            # 전체 데이터를 가져올 때까지 반복
+            while True:
+                # 페이지 정보를 포함한 API 호출
+                additional_params = {
+                    "pIndex": str(page_index),
+                    "pSize": str(page_size),
+                    "AGE": age
+                }
+                
+                print(f"법률안 심사 및 처리(의안검색) 페이지 {page_index} 요청 중...")
+                response_text = self._make_api_call("tvbpmbill11", additional_params)
+                
+                if not response_text:
+                    print(f"페이지 {page_index} 응답이 없습니다!")
+                    break
+                
+                # XML 응답 파싱
+                data_dict = parse_xml_to_dict(response_text)
+                
+                # 오류 체크
+                if data_dict.get('error'):
+                    print(f"API 오류: {data_dict.get('message')}")
+                    break
+                
+                # 'TVBPMBILL11' 구조 처리
+                if 'TVBPMBILL11' in data_dict:
+                    root = data_dict['TVBPMBILL11']
+                    
+                    # 첫 페이지에서만 총 개수 정보 확인
+                    if total_count is None and 'head' in root:
+                        head = root['head']
+                        total_count = int(head.get('list_total_count', 0))
+                        print(f"총 법안 수: {total_count}")
+                    
+                    # 'row' 태그에서 법안 정보 추출
+                    items = root.get('row', [])
+                    
+                    # 단일 항목인 경우 리스트로 변환
+                    if isinstance(items, dict):
+                        items = [items]
+                    
+                    # 페이지에 항목이 없으면 종료
+                    if not items:
+                        print(f"페이지 {page_index}에 항목이 없습니다. 종료합니다.")
+                        break
+                    
+                    print(f"페이지 {page_index}에서 {len(items)}개의 법안 정보 추출")
+                    
+                    # 표결이 있는 법안만 필터링
+                    found_all_existing = False
+                    for item in items:
+                        # 표결 결과 확인
+                        proc_result = item.get("PROC_RESULT_CD", "")
+                        proc_date = item.get("PROC_DT", "")
+                        bill_id = item.get("BILL_ID", "")
+                        
+                        # 수정가결, 원안가결, 부결인 법안만 선택
+                        if proc_result in ["수정가결", "원안가결", "부결"] and bill_id:
+                            # 기존 표결 확인
+                            if latest_date and proc_date <= latest_date:
+                                # 이미 처리된 표결이면 스킵
+                                found_all_existing = True
+                                print(f"이미 처리된 표결 발견 (날짜: {proc_date}), 검색 종료")
+                                break
+                            
+                            # 기존 법안 DB에 없는 경우, 법안 정보 추가
+                            existing_bill = db.query(Bill).filter(Bill.bill_no == item.get("BILL_NO", "")).first()
 
-    def fetch_vote_results(self, legislator_id=None, age='22') -> List[Dict[str, Any]]:
-        # 호출: self.fetch_processed_bill_ids()로 처리된 법안 ID 목록 가져오기
-        # 각 법안 ID에 대해 본회의 표결 찬반 목록 API 호출
-        # 특정 의원 ID가 제공되면 해당 의원의 표결 결과만 필터링
-        # 반환: 표결 결과 리스트
-        pass
+                            if existing_bill:
+                                # 기존 법안 정보 업데이트
+                                existing_bill.bill_id = bill_id
+                                existing_bill.proc_result = proc_result
+                                # 필요한 다른 필드들 업데이트
+                                bill = existing_bill
+                            else:
+                                # 법안 기본 정보 저장
+                                bill = Bill(
+                                    bill_id=bill_id,
+                                    bill_no=item.get("BILL_NO", ""),
+                                    bill_name=item.get("BILL_NAME", ""),
+                                    law_title=item.get("BILL_NAME", ""),  # law_title이 없으면 bill_name 사용
+                                    propose_dt=item.get("PROPOSE_DT", ""),
+                                    detail_link=item.get("LINK_URL", ""),
+                                    proposer=item.get("PROPOSER", ""),
+                                    committee=item.get("CURR_COMMITTEE", ""),
+                                    proc_result=proc_result,
+                                    main_proposer_id=None  # 대표발의자 정보 없음
+                                )
+                                db.add(bill)
+                                db.flush()
+                            
+                            # 표결이 있는 법안 ID 추가
+                            voted_bill_ids.append(bill_id)
+                    
+                    # 모든 기존 표결을 찾았으면 종료
+                    if found_all_existing:
+                        break
+                    
+                    # 다음 페이지로 이동
+                    page_index += 1
+                    
+                    # 모든 데이터를 가져왔는지 확인
+                    if total_count and (page_index-1) * page_size >= total_count:
+                        print(f"모든 데이터({total_count}개)를 가져왔습니다.")
+                        break
+                else:
+                    print(f"예상한 구조(TVBPMBILL11)를 찾지 못했습니다.")
+                    break
+            
+            db.commit()
+            db.close()
+            
+            print(f"표결이 있는 법안 수: {len(voted_bill_ids)}")
+            return voted_bill_ids
+            
+        except Exception as e:
+            print(f"표결 법안 정보 가져오기 오류: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return []
+    
+    def fetch_vote_results(self, bill_id: str) -> Dict[str, Any]:
+        """
+        특정 법안의 표결 결과 조회
+        
+        Args:
+            bill_id: 법안 ID
+        
+        Returns:
+            표결 정보 딕셔너리
+        """
+        try:
+            # API 호출 파라미터 설정
+            additional_params = {
+                "BILL_ID": bill_id,
+                "AGE": "22",  # 22대 국회
+                "pSize": "300"  # 최대한 많은 표결 결과를 한번에 가져오기
+            }
+            
+            print(f"법안 {bill_id}의 표결 정보 요청 중...")
+            response_text = self._make_api_call("vote_results", additional_params)
+            
+            if not response_text:
+                print(f"법안 {bill_id}의 표결 정보를 가져올 수 없습니다.")
+                return None
+            
+            # XML 응답 파싱
+            data_dict = parse_xml_to_dict(response_text)
+            
+            # 오류 체크
+            if data_dict.get('error'):
+                print(f"API 오류: {data_dict.get('message')}")
+                return None
+            
+            # 'nojepdqqaweusdfbi' 구조 처리 (표결 정보 API의 응답 구조)
+            if 'nojepdqqaweusdfbi' in data_dict:
+                root = data_dict['nojepdqqaweusdfbi']
+                
+                # 'row' 태그에서 표결 정보 추출
+                items = root.get('row', [])
+                
+                # 단일 항목인 경우 리스트로 변환
+                if isinstance(items, dict):
+                    items = [items]
+                
+                # 표결 결과 없으면 None 반환
+                if not items:
+                    print(f"법안 {bill_id}의 표결 결과가 없습니다.")
+                    return None
+                
+                # 표결 기본 정보 (첫 번째 항목에서 추출)
+                first_item = items[0]
+                vote_date = first_item.get("VOTE_DATE", "")
+                bill_name = first_item.get("BILL_NAME", "")
+                committee = first_item.get("CURR_COMMITTEE", "")
+                law_title = first_item.get("LAW_TITLE", "")
+                
+                # 의원별 표결 결과 추출
+                vote_results = []
+                for item in items:
+                    vote_result = {
+                        "legislator_name": item.get("HG_NM", ""),
+                        "party": item.get("POLY_NM", ""),
+                        "result": item.get("RESULT_VOTE_MOD", "")
+                    }
+                    vote_results.append(vote_result)
+                
+                print(f"법안 {bill_id}의 표결 결과 {len(vote_results)}건 추출 완료")
+                
+                # 결과 딕셔너리 구성
+                vote_info = {
+                    "bill_id": bill_id,
+                    "vote_date": vote_date,
+                    "bill_name": bill_name,
+                    "committee": committee,
+                    "law_title": law_title,
+                    "results": vote_results
+                }
+                
+                return vote_info
+            else:
+                print(f"예상한 구조(nojepdqqaweusdfbi)를 찾지 못했습니다.")
+                return None
+                
+        except Exception as e:
+            print(f"표결 결과 가져오기 오류: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return None

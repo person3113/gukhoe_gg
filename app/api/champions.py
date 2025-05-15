@@ -94,8 +94,10 @@ async def champion_detail(
         tab_data["speeches_by_meeting"] = speech_service.get_speech_by_meeting_type(db, legislator_id)
         tab_data["speech_chart"] = chart_service.generate_speech_chart_data(tab_data["speeches_by_meeting"])
         
-        # 본회의 표결 결과 조회
-        tab_data["vote_results"] = vote_service.get_vote_results(db, legislator_id)
+        # 본회의 표결 결과 조회 (수정된 부분)
+        vote_data = vote_service.get_vote_results(db, legislator_id)
+        tab_data["vote_results"] = vote_data["vote_results"]
+        tab_data["vote_results_count"] = vote_data["total_count"]
     elif tab == "bills":
         from app.services import bill_service
         bills_data = bill_service.get_representative_bills(db, legislator_id)

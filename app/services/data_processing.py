@@ -69,6 +69,7 @@ def process_bill_data(raw_data):
                 
                 if existing_bill:
                     # 기존 법안 정보 업데이트
+                    existing_bill.bill_id = bill_data.get("bill_id", "")  # bill_id 필드 추가
                     existing_bill.bill_name = bill_data.get("bill_name")
                     existing_bill.propose_dt = bill_data.get("propose_dt")
                     existing_bill.detail_link = bill_data.get("detail_link")
@@ -82,6 +83,7 @@ def process_bill_data(raw_data):
                 else:
                     # 새 법안 정보 생성
                     bill = Bill(
+                        bill_id=bill_data.get("bill_id", ""),  # bill_id 필드 추가
                         bill_no=bill_data.get("bill_no"),
                         bill_name=bill_data.get("bill_name"),
                         propose_dt=bill_data.get("propose_dt"),
@@ -184,12 +186,123 @@ def process_bill_data(raw_data):
     finally:
         db.close()
 
-def process_vote_data(raw_data, age='22'):
-    # 표결 데이터 정리 및 가공
-    # 법안 ID를 기준으로 표결 정보 연결
-    # 찬성/반대/기권 분석
-    # 반환: 처리된 표결 데이터
-    pass
+def process_vote_data(raw_data, db=None):
+    """
+    표결 데이터 정리 및 가공
+    
+    Args:
+        raw_data: API로부터 받은 원본 표결 데이터
+        db: 데이터베이스 세션 (None인 경우 내부에서 생성)
+    
+    Returns:
+        처리된 표결 데이터
+    """
+    from app.db.database import SessionLocal
+    from app.models.vote import Vote, VoteResult
+    from app.models.bill import Bill
+    from app.models.legislator import Legislator
+    
+    if not raw_data:
+        return None
+    
+    # DB 세션 생성 (외부에서 제공되지 않은 경우)
+    close_db = False
+    if db is None:
+        db = SessionLocal()
+        close_db = True
+    
+    try:
+        bill_id = raw_data.get("bill_id")
+        vote_date = raw_data.get("vote_date")
+        
+        # 법안 ID로 법안 정보 조회
+        bill = db.query(Bill).filter(Bill.bill_id == bill_id).first()
+        if not bill:
+            print(f"bill_id로 법안을 찾을 수 없음: {bill_id}, bill_no로 시도합니다.")
+            # bill_no가 있는 경우 bill_no로도 시도
+            if raw_data.get("bill_no"):
+                bill = db.query(Bill).filter(Bill.bill_no == raw_data.get("bill_no")).first()
+        
+        # 기존 표결 정보 확인
+        existing_vote = db.query(Vote).filter(
+            Vote.bill_id == bill.id,
+            Vote.vote_date == vote_date
+        ).first()
+        
+        if existing_vote:
+            # 기존 표결 결과 삭제
+            db.query(VoteResult).filter(
+                VoteResult.vote_id == existing_vote.id
+            ).delete()
+            
+            vote = existing_vote
+        else:
+            # 새 표결 정보 생성
+            vote = Vote(
+                vote_date=vote_date,
+                bill_id=bill.id
+            )
+            db.add(vote)
+            db.flush()  # ID 할당을 위해 flush
+        
+        # 표결 결과 처리
+        results = raw_data.get("results", [])
+        processed_count = 0
+        missing_legislators = []
+        
+        for result in results:
+            # 의원 이름으로 의원 정보 조회
+            legislator_name = result.get("legislator_name", "")
+            legislator = db.query(Legislator).filter(
+                Legislator.hg_nm == legislator_name
+            ).first()
+            
+            if not legislator:
+                missing_legislators.append(legislator_name)
+                continue
+            
+            # 표결 결과 저장
+            vote_result = VoteResult(
+                vote_id=vote.id,
+                legislator_id=legislator.id,
+                result_vote_mod=result.get("result", "")
+            )
+            db.add(vote_result)
+            processed_count += 1
+        
+        # 변경사항 저장
+        db.commit()
+        
+        # 처리 통계 출력
+        print(f"법안 {bill_id}의 표결 결과 처리 완료")
+        print(f"- 전체 표결 수: {len(results)}")
+        print(f"- 처리된 표결 수: {processed_count}")
+        if missing_legislators:
+            print(f"- DB에 없는 의원 수: {len(missing_legislators)}")
+            print(f"- 미확인 의원: {', '.join(missing_legislators[:5])}{'...' if len(missing_legislators) > 5 else ''}")
+        
+        # 처리 결과 반환
+        processed_data = {
+            "vote_id": vote.id,
+            "bill_id": bill.id,
+            "vote_date": vote_date,
+            "total_results": len(results),
+            "processed_results": processed_count,
+            "missing_legislators": len(missing_legislators)
+        }
+        
+        return processed_data
+        
+    except Exception as e:
+        print(f"표결 데이터 처리 중 오류 발생: {str(e)}")
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return None
+    finally:
+        # 내부에서 생성한 DB 세션인 경우에만 닫기
+        if close_db:
+            db.close()
 
 def calculate_committee_processing_ratio(db: Session):
     # DB에서 위원회별 접수건수, 처리건수 데이터 조회

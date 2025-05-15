@@ -187,11 +187,39 @@ def fetch_votes(db: Session):
     """
     표결 정보 수집
     """
-    # ApiService 인스턴스 생성
-    # 호출: api_service.fetch_vote_results()로 표결 정보 수집
-    # 호출: process_vote_data()로 데이터 처리
-    # DB에 저장
-    pass
+    # API 서비스 인스턴스 생성
+    api_service = ApiService()
+    
+    # 표결이 있는 법안 ID 조회
+    voted_bill_ids = api_service.fetch_bills_with_votes()
+    
+    if not voted_bill_ids:
+        print("표결이 있는 법안이 없습니다.")
+        return
+    
+    print(f"총 {len(voted_bill_ids)}개의 법안에 대한 표결 정보를 수집합니다.")
+    
+    # 각 법안에 대한 표결 정보 수집 및 처리
+    for index, bill_id in enumerate(voted_bill_ids):
+        # 진행 상황 출력
+        print(f"[{index+1}/{len(voted_bill_ids)}] 법안 {bill_id}의 표결 정보 수집 중...")
+        
+        # 표결 정보 수집
+        vote_data = api_service.fetch_vote_results(bill_id)
+        
+        if not vote_data:
+            print(f"법안 {bill_id}의 표결 정보를 가져올 수 없습니다.")
+            continue
+        
+        # 표결 데이터 처리
+        from app.services.data_processing import process_vote_data
+        processed_data = process_vote_data(vote_data, db)
+        
+        if not processed_data:
+            print(f"법안 {bill_id}의 표결 데이터 처리에 실패했습니다.")
+            continue
+        
+        print(f"법안 {bill_id}의 표결 정보 처리 완료: {processed_data['processed_results']}/{processed_data['total_results']} 결과 처리됨")
 
 def fetch_committees(db: Session):
     """
