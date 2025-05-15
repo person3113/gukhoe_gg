@@ -15,6 +15,8 @@ from app.services.api_service import ApiService
 from app.utils.excel_parser import parse_attendance_excel, parse_speech_keywords_excel, parse_speech_by_meeting_excel
 from app.services.data_processing import process_attendance_data, process_speech_data, process_bill_data, process_vote_data
 from app.services.data_processing import process_keyword_data
+from scripts.calculate_scores import calculate_speech_scores
+
 def fetch_all_data():
     """
     모든 데이터 수집 함수 호출
@@ -261,6 +263,12 @@ def fetch_excel_data(db: Session):
             print(f"  - 파일 처리 오류: {filename}, 오류: {str(e)}")
     
     print(f"회의별 발언 데이터 처리 완료: {processed_count}/{total_files}개 파일")
+
+    # speech_score 계산 
+    if processed_count > 0:
+        print("\n발언 점수 계산 시작...")
+        calculate_speech_scores(db)
+        print("발언 점수 계산 완료")
 
     # 2. 키워드 데이터 처리 (새로 추가)
     keywords_dir = "data/excel/speech/keywords"
