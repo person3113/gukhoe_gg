@@ -5,9 +5,16 @@ from sqlalchemy.orm import Session
 # 프로젝트 루트 디렉토리 추가
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from app.db.database import SessionLocal
+# 순환 참조 해결을 위해 모든 모델을 명시적으로 import
 from app.models.legislator import Legislator
-from app.models.speech import SpeechByMeeting
+from app.models.sns import LegislatorSNS
+from app.models.committee import Committee, CommitteeHistory, CommitteeMember
+from app.models.speech import SpeechKeyword, SpeechByMeeting
+from app.models.attendance import Attendance
+from app.models.bill import Bill, BillCoProposer
+from app.models.vote import Vote, VoteResult
+
+from app.db.database import SessionLocal
 from app.services.ranking_service import RankingService
 from app.services.tier_service import TierService
 

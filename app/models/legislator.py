@@ -36,5 +36,5 @@ class Legislator(Base):
     asset = Column(BigInteger)  # 재산
     
     # 관계 정의 - 단방향 관계로 유지할 것들만 남기고 나머지 제거
-    sns = relationship("LegislatorSNS", uselist=False, back_populates=None)
+    sns = relationship("LegislatorSNS", uselist=False, back_populates=None, overlaps="legislator")
     bills_proposed = relationship("Bill", foreign_keys="[Bill.main_proposer_id]", back_populates=None)
