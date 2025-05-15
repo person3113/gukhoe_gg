@@ -70,21 +70,30 @@ def calculate_speech_scores(db: Session):
         # 각 의원의 Total 발언수를 그대로 speech_score에 저장
         updated_count = 0
         for legislator in legislators:
-            # Total 발언수 조회
-            total_speech = db.query(SpeechByMeeting).filter(
-                SpeechByMeeting.legislator_id == legislator.id,
-                SpeechByMeeting.meeting_type == "Total"
-            ).first()
-            
-            if total_speech:
-                # Total 값을 그대로 speech_score에 저장
-                legislator.speech_score = float(total_speech.count)
-                updated_count += 1
-                print(f"{legislator.hg_nm}: Total={total_speech.count} -> speech_score={legislator.speech_score}")
-            else:
-                # Total 값이 없으면 0으로 설정
-                legislator.speech_score = 0.0
-                print(f"{legislator.hg_nm}: Total 없음 -> speech_score=0")
+            try:
+                # Total 발언수 조회
+                total_speech = db.query(SpeechByMeeting).filter(
+                    SpeechByMeeting.legislator_id == legislator.id,
+                    SpeechByMeeting.meeting_type == "Total"
+                ).first()
+                
+                if total_speech and total_speech.count is not None:
+                    # Total 값을 그대로 speech_score에 저장
+                    try:
+                        legislator.speech_score = float(total_speech.count)
+                        updated_count += 1
+                        print(f"{legislator.hg_nm}: Total={total_speech.count} -> speech_score={legislator.speech_score}")
+                    except (ValueError, TypeError) as e:
+                        print(f"경고: {legislator.hg_nm}의 발언 수({total_speech.count})를 float로 변환할 수 없습니다: {e}")
+                        legislator.speech_score = 0.0
+                else:
+                    # Total 값이 없으면 0으로 설정
+                    legislator.speech_score = 0.0
+                    print(f"{legislator.hg_nm}: Total 없음 -> speech_score=0")
+            except Exception as e:
+                # 의원별 처리 중 오류 발생 시 해당 의원만 스킵하고 계속 진행
+                print(f"의원 {legislator.hg_nm} 처리 중 오류 발생: {str(e)}")
+                continue
         
         # 변경사항 저장
         db.commit()
