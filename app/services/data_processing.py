@@ -22,7 +22,7 @@ def process_attendance_data(raw_data: List[Dict[str, Any]], db: Session) -> None
         skipped_count = 0
         updated_count = 0
         
-        # 의원 이름 캐시 및 위원회 이름 캐시
+        # 의원 및 위원회 캐시
         legislator_name_map = {}
         committee_name_map = {}
         
@@ -30,7 +30,7 @@ def process_attendance_data(raw_data: List[Dict[str, Any]], db: Session) -> None
         for data in raw_data:
             legislator_name = data['legislator_name']
             
-            # 의원 정보가 캐시에 없으면 DB에서 조회
+            # 의원 정보 조회
             if legislator_name not in legislator_name_map:
                 legislator = db.query(Legislator).filter(Legislator.hg_nm == legislator_name).first()
                 if not legislator:
@@ -43,10 +43,9 @@ def process_attendance_data(raw_data: List[Dict[str, Any]], db: Session) -> None
             
             # 위원회 정보 처리 (상임위인 경우)
             committee_id = None
-            if data['meeting_type'] == '상임위' and 'committee_name' in data and data['committee_name']:
+            if data['meeting_type'] == '상임위' and 'committee_name' in data:
                 committee_name = data['committee_name']
                 
-                # 위원회 정보가 캐시에 없으면 DB에서 조회
                 if committee_name not in committee_name_map:
                     committee = db.query(Committee).filter(Committee.dept_nm == committee_name).first()
                     if committee:
@@ -59,32 +58,38 @@ def process_attendance_data(raw_data: List[Dict[str, Any]], db: Session) -> None
                 if committee:
                     committee_id = committee.id
             
-            # 기존 출석 데이터 확인
-            existing_attendance = db.query(Attendance).filter(
+            # 기존 데이터 확인 (요약 데이터의 경우 날짜 없음)
+            query = db.query(Attendance).filter(
                 Attendance.legislator_id == legislator.id,
-                Attendance.meeting_date == data['meeting_date'],
-                Attendance.meeting_type == data['meeting_type']
-            ).first()
+                Attendance.meeting_type == data['meeting_type'],
+                Attendance.status == data['status']
+            )
+            
+            if committee_id is not None:
+                query = query.filter(Attendance.committee_id == committee_id)
+            else:
+                query = query.filter(Attendance.committee_id == None)
+            
+            existing_attendance = query.first()
             
             if existing_attendance:
-                # 기존 데이터가 있으면 업데이트 여부 결정
-                if existing_attendance.status != data['status']:
-                    print(f"출석 상태 업데이트: {legislator.hg_nm}, {data['meeting_date']}, {data['meeting_type']}: {existing_attendance.status} -> {data['status']}")
-                    existing_attendance.status = data['status']
+                # 기존 데이터가 있으면 count 업데이트
+                if existing_attendance.count != data.get('count', 0):
+                    print(f"출석 카운트 업데이트: {legislator.hg_nm}, {data['meeting_type']}, {data['status']}: {existing_attendance.count} -> {data.get('count', 0)}")
+                    existing_attendance.count = data.get('count', 0)
                     updated_count += 1
-                else:
-                    print(f"동일한 출석 데이터 건너뜀: {legislator.hg_nm}, {data['meeting_date']}, {data['meeting_type']}: {data['status']}")
             else:
-                # 새 출석 데이터 추가
+                # 새 데이터 추가
                 new_attendance = Attendance(
                     legislator_id=legislator.id,
                     committee_id=committee_id,
-                    meeting_date=data['meeting_date'],
                     meeting_type=data['meeting_type'],
-                    status=data['status']
+                    status=data['status'],
+                    count=data.get('count', 0),
+                    meeting_date=data.get('meeting_date')  # 날짜가 있으면 사용, 없으면 None
                 )
                 db.add(new_attendance)
-                print(f"새 출석 데이터 추가: {legislator.hg_nm}, {data['meeting_date']}, {data['meeting_type']}: {data['status']}")
+                print(f"새 출석 데이터 추가: {legislator.hg_nm}, {data['meeting_type']}, {data['status']}: {data.get('count', 0)}")
                 processed_count += 1
         
         # 변경사항 커밋
@@ -96,15 +101,8 @@ def process_attendance_data(raw_data: List[Dict[str, Any]], db: Session) -> None
         
         # 출석 데이터가 추가되었으면 참여 점수 재계산
         if processed_count > 0 or updated_count > 0:
-            # 함수 내부에서 직접 임포트
-            import sys
-            import os
-            # 프로젝트 루트 디렉토리 추가 (상대 경로 문제 해결)
-            sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
             from scripts.calculate_scores import calculate_participation_scores
-            # 여기서 동일한 db 세션 전달
-            participation_db = db  # 명시적인 할당으로 변수명 변경
-            calculate_participation_scores(participation_db)
+            calculate_participation_scores(db)
         
     except Exception as e:
         db.rollback()
