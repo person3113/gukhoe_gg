@@ -2,12 +2,15 @@
 ├── scripts/
 │   ├── test_speech_parser.py     회의록별 발언 수 파싱 및 db저장 테스트
 │   ├── check_speech_data.py      회의록별 발언 수 출력 테스트
-│   ├── fetch_data.py
-│   └── calculate_scores.py
+│   ├── fetch_data.py             수동파싱 하기
+│   ├── reset_speech_data.py      의정발언 값 모두 0으로 리셋하기
+│   └── calculate_scores.py       의정발언 값 넣기
+
+
 
 
 # 전체 구조 만들기전 수동으로 파싱해서 DB에 넣고,
-의정발언(speech_score)에 total 값 넣어주기
+# 의정발언(speech_score)에 total 값 넣어주기
 ***************************************************
 
 수동 파싱
