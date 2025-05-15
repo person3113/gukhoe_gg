@@ -41,7 +41,10 @@ class Settings(BaseSettings):
         "processed_bills": {"AGE": "22"},  # 법률안 심사 및 처리(처리의안) - 대수 필수
         "processed_assembly_bills": {"AGE": "22"},  # 본회의 처리안건_법률안 - 대수 필수
         "vote_results": {"AGE": "22", "BILL_ID": None},  # 본회의 표결정보 - 대수 및 의안ID 필수
-        "processed_bills_stats": {"ERACO": "제22대"}  # 처리 의안통계(위원회별) - 대수 필수
+        "processed_bills_stats": {"ERACO": "제22대"}, 
+        "bills": {"AGE": "22"},  # 법안 API에도 AGE 추가
+        "committee_members": {"AGE": "22"},  # 새로 추가
+        "committee_info": {"AGE": "22"}  # # 처리 의안통계(위원회별) - 대수 필수
     }
     
     # Pydantic 2.x에서 Config 클래스 대신 model_config 사용

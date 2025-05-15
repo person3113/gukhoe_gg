@@ -347,16 +347,259 @@ class ApiService:
             return []
 
     def fetch_committee_members(self) -> List[Dict[str, Any]]:
-        # 호출: requests.get()로 위원회 위원 명단 API 호출
-        # 호출: utils.xml_parser.parse_xml_to_dict()로 XML 응답 파싱
-        # 반환: 위원회 멤버십 정보 리스트
-        pass
+        """
+        위원회 위원 명단 API 호출
         
+        Returns:
+            List[Dict[str, Any]]: 위원회 멤버십 정보 리스트
+        """
+        try:
+            print("API 호출 시작: committee_members")
+            
+            # 결과 리스트 초기화
+            all_committee_members = []
+            
+            # 페이지 정보
+            page_index = 1
+            page_size = 100  # API 기본값
+            total_count = None
+            
+            # 전체 데이터를 가져올 때까지 반복
+            while True:
+                # 페이지 정보를 포함한 API 호출 (AGE 파라미터 필수)
+                additional_params = {
+                    "pIndex": str(page_index),
+                    "pSize": str(page_size),
+                    "AGE": "22"  # 22대 국회 - 위원회 위원 명단 API에 필수
+                }
+                
+                print(f"위원회 멤버 페이지 {page_index} 요청 중...")
+                response_text = self._make_api_call("committee_members", additional_params)
+                
+                if not response_text:
+                    print(f"페이지 {page_index} 응답이 없습니다!")
+                    break
+                
+                # XML 응답 파싱
+                data_dict = parse_xml_to_dict(response_text)
+                
+                # 오류 체크
+                if data_dict.get('error'):
+                    print(f"API 오류: {data_dict.get('message')}")
+                    break
+                
+                # OpenAPI_ServiceResponse 구조 처리
+                root = None
+                if 'OpenAPI_ServiceResponse' in data_dict:
+                    service_response = data_dict['OpenAPI_ServiceResponse']
+                    
+                    # 응답 헤더 확인
+                    if 'cmmMsgHeader' in service_response:
+                        header = service_response['cmmMsgHeader']
+                        if header.get('returnReasonCode') != '00':
+                            print(f"API 처리 오류: {header.get('errMsg', '알 수 없는 오류')}")
+                            break
+                    
+                    # 위원회 멤버 데이터 구조 확인
+                    if 'nktulghcadyhmiqxi' in service_response:
+                        root = service_response['nktulghcadyhmiqxi']
+                    else:
+                        print(f"데이터 구조를 찾을 수 없습니다. 키: {list(service_response.keys())}")
+                        break
+                else:
+                    print(f"OpenAPI_ServiceResponse를 찾을 수 없습니다. 키: {list(data_dict.keys())}")
+                    break
+                
+                # head 정보에서 총 개수 확인
+                if 'head' in root and total_count is None:
+                    head = root['head']
+                    total_count = int(head.get('list_total_count', 0))
+                    print(f"총 위원회 멤버 수: {total_count}")
+                    
+                    # 결과가 없는 경우 종료
+                    if total_count == 0:
+                        print("위원회 멤버 정보가 없습니다.")
+                        break
+                
+                # row 데이터 추출
+                items = root.get('row', [])
+                
+                # 단일 항목인 경우 리스트로 변환
+                if isinstance(items, dict):
+                    items = [items]
+                
+                # 페이지에 항목이 없으면 종료
+                if not items:
+                    print(f"페이지 {page_index}에 데이터가 없습니다. 종료합니다.")
+                    break
+                
+                print(f"페이지 {page_index}에서 {len(items)}개의 위원회 멤버 정보 추출")
+                
+                # 위원회 멤버 정보 매핑
+                for item in items:
+                    member_info = {
+                        "committee_name": item.get("DEPT_NM", ""),  # 위원회명
+                        "member_name": item.get("HG_NM", ""),      # 의원명  
+                        "member_code": item.get("MONA_CD", ""),    # 의원코드
+                        "party_name": item.get("POLY_NM", ""),     # 정당명
+                        "role": item.get("ROLE", ""),              # 역할
+                        "start_date": item.get("START_DT", ""),    # 시작일
+                        "end_date": item.get("END_DT", "")         # 종료일
+                    }
+                    all_committee_members.append(member_info)
+                
+                # 다음 페이지로 이동
+                page_index += 1
+                
+                # 모든 데이터를 가져왔는지 확인
+                if total_count and len(all_committee_members) >= total_count:
+                    print(f"모든 데이터({total_count}개)를 가져왔습니다.")
+                    break
+                    
+                # 예외적으로 너무 많은 페이지를 요청하는 것을 방지
+                if page_index > 100:
+                    print("페이지 수가 100을 초과했습니다. 종료합니다.")
+                    break
+            
+            print(f"최종 처리된 위원회 멤버 수: {len(all_committee_members)}")
+            return all_committee_members
+            
+        except Exception as e:
+            print(f"위원회 멤버 정보 가져오기 오류: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return []
+
     def fetch_committee_info(self) -> List[Dict[str, Any]]:
-        # 호출: requests.get()로 위원회 현황 정보 API 호출
-        # 호출: utils.xml_parser.parse_xml_to_dict()로 XML 응답 파싱
-        # 반환: 위원회 정보 리스트 (위원회명, 현원, 위원정수, 위원장 등)
-        pass
+        """
+        위원회 현황 정보 API 호출
+        
+        Returns:
+            List[Dict[str, Any]]: 위원회 정보 리스트 (위원회명, 현원, 위원정수, 위원장 등)
+        """
+        try:
+            print("API 호출 시작: committee_info")
+            
+            # 결과 리스트 초기화
+            all_committee_info = []
+            
+            # 페이지 정보
+            page_index = 1
+            page_size = 100  # API 기본값
+            total_count = None
+            
+            # 전체 데이터를 가져올 때까지 반복
+            while True:
+                # 페이지 정보를 포함한 API 호출 (AGE 파라미터 필수)
+                additional_params = {
+                    "pIndex": str(page_index),
+                    "pSize": str(page_size),
+                    "AGE": "22"  # 22대 국회 - 위원회 현황 정보 API에 필수
+                }
+                
+                print(f"위원회 정보 페이지 {page_index} 요청 중...")
+                response_text = self._make_api_call("committee_info", additional_params)
+                
+                if not response_text:
+                    print(f"페이지 {page_index} 응답이 없습니다!")
+                    break
+                
+                # XML 응답 파싱
+                data_dict = parse_xml_to_dict(response_text)
+                
+                # 오류 체크
+                if data_dict.get('error'):
+                    print(f"API 오류: {data_dict.get('message')}")
+                    break
+                
+                # OpenAPI_ServiceResponse 구조 처리
+                root = None
+                if 'OpenAPI_ServiceResponse' in data_dict:
+                    service_response = data_dict['OpenAPI_ServiceResponse']
+                    
+                    # 응답 헤더 확인
+                    if 'cmmMsgHeader' in service_response:
+                        header = service_response['cmmMsgHeader']
+                        if header.get('returnReasonCode') != '00':
+                            print(f"API 처리 오류: {header.get('errMsg', '알 수 없는 오류')}")
+                            break
+                    
+                    # 위원회 정보 데이터 구조 확인
+                    if 'nxrvzonlafugpqjuh' in service_response:
+                        root = service_response['nxrvzonlafugpqjuh']
+                    else:
+                        print(f"데이터 구조를 찾을 수 없습니다. 키: {list(service_response.keys())}")
+                        break
+                else:
+                    print(f"OpenAPI_ServiceResponse를 찾을 수 없습니다. 키: {list(data_dict.keys())}")
+                    break
+                
+                # head 정보에서 총 개수 확인
+                if 'head' in root and total_count is None:
+                    head = root['head']
+                    total_count = int(head.get('list_total_count', 0))
+                    print(f"총 위원회 수: {total_count}")
+                    
+                    # 결과가 없는 경우 종료
+                    if total_count == 0:
+                        print("위원회 정보가 없습니다.")
+                        break
+                
+                # row 데이터 추출
+                items = root.get('row', [])
+                
+                # 단일 항목인 경우 리스트로 변환
+                if isinstance(items, dict):
+                    items = [items]
+                
+                # 페이지에 항목이 없으면 종료
+                if not items:
+                    print(f"페이지 {page_index}에 데이터가 없습니다. 종료합니다.")
+                    break
+                
+                print(f"페이지 {page_index}에서 {len(items)}개의 위원회 정보 추출")
+                
+                # 위원회 정보 매핑
+                for item in items:
+                    try:
+                        committee_info = {
+                            "committee_name": item.get("DEPT_NM", ""),                    # 위원회명
+                            "committee_code": item.get("DEPT_CD", ""),                    # 위원회코드  
+                            "current_count": int(item.get("CURR_CNT", 0) or 0),          # 현원
+                            "limit_count": int(item.get("LIMIT_CNT", 0) or 0),           # 위원정수
+                            "committee_chair": item.get("CMIT_CH", ""),                   # 위원장
+                            "reception_count": int(item.get("RCP_CNT", 0) or 0),         # 접수건수
+                            "processed_count": int(item.get("PROC_CNT", 0) or 0),        # 처리건수
+                            "pending_count": int(item.get("PEND_CNT", 0) or 0),          # 보류건수
+                            "start_date": item.get("START_DT", ""),                       # 활동시작일
+                            "end_date": item.get("END_DT", "")                           # 활동종료일
+                        }
+                        all_committee_info.append(committee_info)
+                    except (ValueError, TypeError) as e:
+                        print(f"위원회 정보 파싱 오류: {e}, 항목: {item}")
+                        continue
+                
+                # 다음 페이지로 이동
+                page_index += 1
+                
+                # 모든 데이터를 가져왔는지 확인
+                if total_count and len(all_committee_info) >= total_count:
+                    print(f"모든 데이터({total_count}개)를 가져왔습니다.")
+                    break
+                    
+                # 예외적으로 너무 많은 페이지를 요청하는 것을 방지
+                if page_index > 100:
+                    print("페이지 수가 100을 초과했습니다. 종료합니다.")
+                    break
+            
+            print(f"최종 처리된 위원회 정보 수: {len(all_committee_info)}")
+            return all_committee_info
+            
+        except Exception as e:
+            print(f"위원회 정보 가져오기 오류: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return []
 
     def fetch_bills(self) -> List[Dict[str, Any]]:
         """
@@ -495,24 +738,166 @@ class ApiService:
             import traceback
             traceback.print_exc()
             return []
-        
+
     def fetch_processed_bills_stats(self) -> List[Dict[str, Any]]:
-        # 호출: requests.get()로 처리 의안통계(위원회별) API 호출
-        # 호출: utils.xml_parser.parse_xml_to_dict()로 XML 응답 파싱
-        # 반환: 위원회별 처리 의안 통계 리스트 (위원회명, 접수건수, 처리건수, 보류건수)
-        pass
+        """
+        처리 의안통계(위원회별) API 호출
+        
+        Returns:
+            List[Dict[str, Any]]: 위원회별 처리 의안 통계 리스트 (위원회명, 접수건수, 처리건수, 보류건수)
+        """
+        try:
+            print("API 호출 시작: processed_bills_stats")
+            
+            # 결과 리스트 초기화
+            all_bills_stats = []
+            
+            # 페이지 정보
+            page_index = 1
+            page_size = 100  # API 기본값
+            total_count = None
+            
+            # 전체 데이터를 가져올 때까지 반복
+            while True:
+                # 페이지 정보 포함 (ERACO 파라미터는 required_args에서 자동 추가됨)
+                additional_params = {
+                    "pIndex": str(page_index),
+                    "pSize": str(page_size)
+                }
+                
+                print(f"의안통계 페이지 {page_index} 요청 중...")
+                response_text = self._make_api_call("processed_bills_stats", additional_params)
+                
+                if not response_text:
+                    print(f"페이지 {page_index} 응답이 없습니다!")
+                    break
+                
+                # XML 응답 파싱
+                data_dict = parse_xml_to_dict(response_text)
+                
+                # 오류 체크
+                if data_dict.get('error'):
+                    print(f"API 오류: {data_dict.get('message')}")
+                    break
+                
+                # OpenAPI_ServiceResponse 구조 처리
+                root = None
+                if 'OpenAPI_ServiceResponse' in data_dict:
+                    service_response = data_dict['OpenAPI_ServiceResponse']
+                    
+                    # 응답 헤더 확인
+                    if 'cmmMsgHeader' in service_response:
+                        header = service_response['cmmMsgHeader']
+                        if header.get('returnReasonCode') != '00':
+                            print(f"API 처리 오류: {header.get('errMsg', '알 수 없는 오류')}")
+                            break
+                    
+                    # 의안통계 데이터 구조 확인
+                    if 'BILLCNTCMIT' in service_response:
+                        root = service_response['BILLCNTCMIT']
+                    else:
+                        print(f"데이터 구조를 찾을 수 없습니다. 키: {list(service_response.keys())}")
+                        break
+                else:
+                    print(f"OpenAPI_ServiceResponse를 찾을 수 없습니다. 키: {list(data_dict.keys())}")
+                    break
+                
+                # head 정보에서 총 개수 확인
+                if 'head' in root and total_count is None:
+                    head = root['head']
+                    total_count = int(head.get('list_total_count', 0))
+                    print(f"총 의안통계 수: {total_count}")
+                    
+                    # 결과가 없는 경우 종료
+                    if total_count == 0:
+                        print("의안통계 정보가 없습니다.")
+                        break
+                
+                # row 데이터 추출
+                items = root.get('row', [])
+                
+                # 단일 항목인 경우 리스트로 변환
+                if isinstance(items, dict):
+                    items = [items]
+                
+                # 페이지에 항목이 없으면 종료
+                if not items:
+                    print(f"페이지 {page_index}에 데이터가 없습니다. 종료합니다.")
+                    break
+                
+                print(f"페이지 {page_index}에서 {len(items)}개의 의안통계 정보 추출")
+                
+                # 의안통계 정보 매핑
+                for item in items:
+                    try:
+                        bills_stats = {
+                            "committee_name": item.get("DEPT_NM", ""),                     # 위원회명
+                            "reception_count": int(item.get("RCP_CNT", 0) or 0),          # 접수건수
+                            "processed_count": int(item.get("PROC_CNT", 0) or 0),         # 처리건수  
+                            "pending_count": int(item.get("PEND_CNT", 0) or 0),           # 보류건수
+                            "progress_rate": float(item.get("PROG_RT", 0) or 0),          # 진행율(%)
+                            "age": item.get("AGE", ""),                                    # 대수 정보
+                            "session": item.get("SESS", "")                                # 회기 정보
+                        }
+                        all_bills_stats.append(bills_stats)
+                    except (ValueError, TypeError) as e:
+                        print(f"의안통계 정보 파싱 오류: {e}, 항목: {item}")
+                        continue
+                
+                # 다음 페이지로 이동
+                page_index += 1
+                
+                # 모든 데이터를 가져왔는지 확인
+                if total_count and len(all_bills_stats) >= total_count:
+                    print(f"모든 데이터({total_count}개)를 가져왔습니다.")
+                    break
+                    
+                # 예외적으로 너무 많은 페이지를 요청하는 것을 방지
+                if page_index > 100:
+                    print("페이지 수가 100을 초과했습니다. 종료합니다.")
+                    break
+            
+            print(f"최종 처리된 의안통계 수: {len(all_bills_stats)}")
+            return all_bills_stats
+            
+        except Exception as e:
+            print(f"의안통계 정보 가져오기 오류: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return []
 
     def fetch_processed_bill_ids(self, age='22') -> List[str]:
+        """
+        처리된 법안 ID 목록 수집
+        
+        Args:
+            age: 국회 대수 (기본값: '22')
+        
+        Returns:
+            List[str]: 처리된 법안 ID 목록
+        """
         # 1. "법률안 심사 및 처리(처리의안)" API 호출
         # 2. "본회의 처리안건_법률안" API 호출
         # 3. 두 API에서 얻은 BILL_ID 추출
         # 4. 중복 제거를 위해 집합(set)으로 변환 후 다시 리스트로
         # 반환: 중복 제거된 처리된 법률안 ID 목록
+        # TODO: 구현 필요
         pass
 
     def fetch_vote_results(self, legislator_id=None, age='22') -> List[Dict[str, Any]]:
+        """
+        표결 결과 정보 수집
+        
+        Args:
+            legislator_id: 특정 의원 ID (None인 경우 전체)
+            age: 국회 대수 (기본값: '22')
+        
+        Returns:
+            List[Dict[str, Any]]: 표결 결과 목록
+        """
         # 호출: self.fetch_processed_bill_ids()로 처리된 법안 ID 목록 가져오기
         # 각 법안 ID에 대해 본회의 표결 찬반 목록 API 호출
         # 특정 의원 ID가 제공되면 해당 의원의 표결 결과만 필터링
         # 반환: 표결 결과 리스트
+        # TODO: 구현 필요
         pass
