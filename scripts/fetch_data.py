@@ -271,7 +271,7 @@ def fetch_excel_data(db: Session):
         calculate_speech_scores(db)
         print("발언 점수 계산 완료")
 
-    # 2. 키워드 데이터 처리 (새로 추가)
+    # 2. 키워드 데이터 처리
     keywords_dir = "data/excel/speech/keywords"
     
     if os.path.exists(keywords_dir):
@@ -303,6 +303,54 @@ def fetch_excel_data(db: Session):
     else:
         print(f"키워드 폴더가 없습니다: {keywords_dir}")
     
+
+    # 3. 출석 데이터 처리
+    print("\n=== 출석 데이터 수집 ===")
+    attendance_plenary_dir = "data/excel/attendance/plenary"
+    attendance_standing_dir = "data/excel/attendance/standing_committee"
+    
+    # 폴더 존재 확인 및 생성
+    for dir_path in [attendance_plenary_dir, attendance_standing_dir]:
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path, exist_ok=True)
+            print(f"폴더 생성: {dir_path}")
+    
+    # 출석 엑셀 파일 처리
+    processed_count = 0
+    all_attendance_files = []
+    
+    for attendance_dir in [attendance_plenary_dir, attendance_standing_dir]:
+        attendance_files = glob.glob(os.path.join(attendance_dir, "*.xlsx"))
+        all_attendance_files.extend(attendance_files)
+    
+    total_files = len(all_attendance_files)
+    print(f"총 {total_files}개의 출석 파일 발견됨")
+    
+    for file_path in all_attendance_files:
+        filename = os.path.basename(file_path)
+        print(f"파일 처리 중 ({processed_count+1}/{total_files}): {filename}")
+        
+        try:
+            # 출석 데이터 파싱
+            attendance_data = parse_attendance_excel(file_path)
+            
+            # 데이터 확인
+            if not attendance_data:
+                print(f"  - 파일에서 데이터를 찾을 수 없음: {filename}")
+                continue
+                
+            print(f"  - {len(attendance_data)}개의 출석 데이터 발견")
+            
+            # 데이터 처리 및 DB 저장
+            process_attendance_data(attendance_data, db)
+            processed_count += 1
+            
+        except Exception as e:
+            print(f"  - 파일 처리 오류: {filename}, 오류: {str(e)}")
+    
+    print(f"출석 데이터 처리 완료: {processed_count}/{total_files}개 파일")
+    
+
     print("\n엑셀 데이터 수집 완료")
 
 if __name__ == "__main__":

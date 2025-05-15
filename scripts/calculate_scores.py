@@ -46,7 +46,108 @@ def calculate_participation_scores(db: Session):
     # 의원별 출석률 계산
     # 점수 산출 알고리즘 적용
     # DB 업데이트
-    pass
+    """
+    의원별 참여 점수(출석률) 계산하여 DB 업데이트
+    
+    참여 점수 = (의원이 출석한 회의 수 / 의원이 참석해야 할 회의 수) × 100
+    * 참석해야 할 회의: 본회의 + 소속 위원회의 회의
+    
+    Args:
+        db: 데이터베이스 세션
+    """
+    from app.models.attendance import Attendance
+    from app.models.legislator import Legislator
+    from app.models.committee import Committee, CommitteeMember
+    from sqlalchemy import func, distinct, and_, or_
+    
+    try:
+        print("참여 점수(출석률) 계산 시작...")
+        
+        # 모든 의원 조회
+        legislators = db.query(Legislator).all()
+        print(f"총 {len(legislators)}명의 의원 점수 계산")
+        
+        # 전체 본회의 날짜 목록 (모든 의원이 참석해야 함)
+        plenary_meeting_dates = db.query(distinct(Attendance.meeting_date)).filter(
+            Attendance.meeting_type == "본회의"
+        ).all()
+        plenary_meeting_dates = [date[0] for date in plenary_meeting_dates]
+        
+        # 의원별 출석 점수 계산
+        updated_count = 0
+        for legislator in legislators:
+            # 1. 해당 의원의 소속 위원회 ID 목록
+            committee_ids = db.query(CommitteeMember.committee_id).filter(
+                CommitteeMember.legislator_id == legislator.id
+            ).all()
+            committee_ids = [id[0] for id in committee_ids]
+            
+            # 2. 의원이 참석해야 할 회의 수 계산
+            # 2-1. 본회의는 모든 의원이 참석해야 함
+            required_plenary_count = len(plenary_meeting_dates)
+            
+            # 2-2. 소속 위원회의 회의
+            required_committee_meetings = []
+            if committee_ids:
+                committee_meetings = db.query(distinct(Attendance.meeting_date, Attendance.committee_id)).filter(
+                    Attendance.meeting_type == "상임위",
+                    Attendance.committee_id.in_(committee_ids)
+                ).all()
+                required_committee_meetings = committee_meetings
+            
+            required_committee_count = len(required_committee_meetings)
+            required_total_count = required_plenary_count + required_committee_count
+            
+            # 3. 의원의 출석 횟수 계산
+            # 3-1. 본회의 출석
+            plenary_attendance = db.query(func.count()).filter(
+                Attendance.legislator_id == legislator.id,
+                Attendance.meeting_type == "본회의",
+                Attendance.status == "출석"
+            ).scalar() or 0
+            
+            # 3-2. 상임위 출석 (소속 위원회만)
+            committee_attendance = 0
+            if committee_ids:
+                committee_attendance = db.query(func.count()).filter(
+                    Attendance.legislator_id == legislator.id,
+                    Attendance.meeting_type == "상임위",
+                    Attendance.committee_id.in_(committee_ids),
+                    Attendance.status == "출석"
+                ).scalar() or 0
+            
+            total_attendance = plenary_attendance + committee_attendance
+            
+            # 4. 참여 점수 계산 (0~100)
+            if required_total_count > 0:
+                participation_score = (total_attendance / required_total_count) * 100
+                participation_score = round(participation_score, 1)  # 소수점 첫째 자리까지
+            else:
+                participation_score = 0
+            
+            # 5. DB 업데이트
+            legislator.participation_score = participation_score
+            updated_count += 1
+            
+            # 6. 로그 출력
+            committee_names = ""
+            if committee_ids:
+                committee_query = db.query(Committee.dept_nm).filter(Committee.id.in_(committee_ids)).all()
+                committee_names = ", ".join([c[0] for c in committee_query])
+            
+            print(f"{legislator.hg_nm}: 본회의({plenary_attendance}/{required_plenary_count}), 상임위({committee_attendance}/{required_committee_count}) -> 참여 점수: {participation_score}")
+            if committee_names:
+                print(f"  소속 위원회: {committee_names}")
+        
+        # 변경사항 저장
+        db.commit()
+        print(f"참여 점수 계산 완료: {updated_count}명 업데이트")
+        
+    except Exception as e:
+        db.rollback()
+        print(f"참여 점수 계산 오류: {str(e)}")
+        import traceback
+        traceback.print_exc()
 
 def calculate_legislation_scores(db: Session):
     """
