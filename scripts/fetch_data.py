@@ -161,10 +161,11 @@ def fetch_bills(db: Session):
     # DB에 저장
     """
     # 기존 데이터 확인
-    existing_data = db.query(Bill).count()
-    if existing_data > 0:
-        print(f"이미 {existing_data}개의 법안 정보가 있습니다. 스킵합니다.")
-        return
+    existing_count = db.query(Bill).count()
+    if existing_count > 0:
+        print(f"이미 {existing_count}개의 법안 정보가 있습니다. 새로운 법안만 가져옵니다.")
+    else:
+        print("법안 정보가 없습니다. 모든 법안을 가져옵니다.")
     
     # ApiService 인스턴스 생성
     api_service = ApiService()
@@ -174,14 +175,13 @@ def fetch_bills(db: Session):
     bills_data = api_service.fetch_bills()
     
     if not bills_data:
-        print("수집된 법안 정보가 없습니다.")
+        print("수집된 새로운 법안 정보가 없습니다.")
         return
     
     # 처리된 법안 정보를 DB에 저장
-    # 수정: db 인자 제거
     processed_bills = process_bill_data(bills_data)
     
-    print(f"법안 정보 수집 완료: {len(processed_bills)}개")
+    print(f"새로운 법안 정보 수집 완료: {len(processed_bills)}개")
 
 def fetch_votes(db: Session):
     """

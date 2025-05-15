@@ -360,16 +360,26 @@ class ApiService:
 
     def fetch_bills(self) -> List[Dict[str, Any]]:
         """
-        국회의원 발의법률안 API 호출
+        국회의원 발의법률안 API 호출 - 새로운 발의안만 가져오도록 개선
         
         Returns:
-            List[Dict[str, Any]]: 법안 정보 리스트
+            List[Dict[str, Any]]: 새로 추가된 법안 정보 리스트
         """
         try:
-            print("API 호출 시작: bills")
+            from app.db.database import SessionLocal
+            from app.models.bill import Bill
+            
+            db = SessionLocal()
+            
+            # 가장 최근 발의안의 제안일 확인
+            latest_bill = db.query(Bill).order_by(Bill.propose_dt.desc()).first()
+            latest_date = latest_bill.propose_dt if latest_bill else None
+            
+            print(f"최근 발의안 제안일: {latest_date}")
             
             # 결과 리스트 초기화
             all_bills = []
+            new_bills = []
             
             # 페이지 정보
             page_index = 1
@@ -424,8 +434,10 @@ class ApiService:
                     
                     print(f"페이지 {page_index}에서 {len(items)}개의 법안 정보 추출")
                     
-                    # 법안 정보 매핑 부분 수정
+                    # 법안 정보 매핑 및 기존 발의안 확인
+                    found_all_existing = False
                     for item in items:
+                        # 법안 정보 매핑
                         bill_info = {
                             "bill_id": item.get("BILL_ID", ""),
                             "bill_no": item.get("BILL_NO", ""),
@@ -437,9 +449,30 @@ class ApiService:
                             "proc_result": item.get("PROC_RESULT", ""),
                             "main_proposer": item.get("RST_PROPOSER", ""),
                             "co_proposers": item.get("PUBL_PROPOSER", ""),
-                            "MEMBER_LIST": item.get("MEMBER_LIST", "")  # 이 필드 추가
+                            "MEMBER_LIST": item.get("MEMBER_LIST", "")
                         }
+                        
                         all_bills.append(bill_info)
+                        
+                        # 이미 DB에 있는 발의안인지 확인
+                        bill_no = bill_info["bill_no"]
+                        existing_bill = db.query(Bill).filter(Bill.bill_no == bill_no).first()
+                        
+                        if not existing_bill:
+                            # DB에 없는 새로운 발의안
+                            new_bills.append(bill_info)
+                        else:
+                            # 해당 제안일이 최신 제안일보다 이전이면, 모든 새 법안을 가져왔다고 가정
+                            current_propose_dt = bill_info["propose_dt"]
+                            if latest_date and current_propose_dt <= latest_date:
+                                # 이미 존재하는 발의안이고 최신 발의안보다 이전이면 더 이상 조회 필요 없음
+                                found_all_existing = True
+                                print(f"이미 존재하는 발의안 발견: {bill_no}, 검색 종료")
+                                break
+                    
+                    # 모든 기존 발의안을 찾았으면 종료
+                    if found_all_existing:
+                        break
                     
                     # 다음 페이지로 이동
                     page_index += 1
@@ -452,8 +485,10 @@ class ApiService:
                     print(f"예상한 구조(nzmimeepazxkubdpn)를 찾지 못했습니다.")
                     break
             
-            print(f"최종 처리된 법안 수: {len(all_bills)}")
-            return all_bills
+            db.close()
+            
+            print(f"전체 법안 수: {len(all_bills)}, 새로 추가된 법안 수: {len(new_bills)}")
+            return new_bills
             
         except Exception as e:
             print(f"국회의원 법안 정보 가져오기 오류: {str(e)}")
