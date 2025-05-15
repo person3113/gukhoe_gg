@@ -27,6 +27,7 @@ def process_bill_data(raw_data):
     from app.db.database import SessionLocal
     from app.models.bill import Bill, BillCoProposer
     from app.models.legislator import Legislator
+    from app.services.bill_service import get_co_proposers_from_url  # 추가된 부분
     
     db = SessionLocal()
     processed_bills = []
@@ -75,7 +76,7 @@ def process_bill_data(raw_data):
                     existing_bill.committee = bill_data.get("committee")
                     existing_bill.proc_result = bill_data.get("proc_result")
                     existing_bill.main_proposer_id = primary_proposer.id
-                    existing_bill.member_list_url = member_list_url  # URL 업데이트
+                    existing_bill.member_list_url = member_list_url
                     
                     bill = existing_bill
                 else:
@@ -89,7 +90,7 @@ def process_bill_data(raw_data):
                         committee=bill_data.get("committee"),
                         proc_result=bill_data.get("proc_result"),
                         main_proposer_id=primary_proposer.id,
-                        member_list_url=member_list_url  # URL 저장
+                        member_list_url=member_list_url
                     )
                     db.add(bill)
                     db.flush()  # ID 할당을 위해 flush
@@ -114,7 +115,7 @@ def process_bill_data(raw_data):
                 # 일반 공동발의자 처리
                 co_proposers_str = bill_data.get("co_proposers", "")
                 
-                # 일반적인 경우: 콤마로 구분된 목록
+                # 공동발의자 정보가 API에서 제공되는 경우
                 if co_proposers_str:
                     co_proposer_names = [name.strip() for name in co_proposers_str.split(',')]
                     
@@ -133,6 +134,28 @@ def process_bill_data(raw_data):
                                 is_representative=False  # 일반 공동발의자
                             )
                             db.add(co_proposer_rel)
+                # API에서 공동발의자 정보가 제공되지 않는 경우, member_list_url에서 가져오기
+                elif member_list_url:
+                    try:
+                        print(f"공동발의자 정보가 비어있어 URL에서 파싱합니다: {member_list_url}")
+                        url_co_proposer_names = get_co_proposers_from_url(member_list_url)
+                        
+                        for name in url_co_proposer_names:
+                            if not name or name in main_proposer_names:
+                                continue
+                            
+                            # 공동발의자 정보 DB에서 조회
+                            co_proposer = db.query(Legislator).filter(Legislator.hg_nm == name).first()
+                            if co_proposer:
+                                # 공동발의자 연결 정보 추가
+                                co_proposer_rel = BillCoProposer(
+                                    bill_id=bill.id,
+                                    legislator_id=co_proposer.id,
+                                    is_representative=False  # 일반 공동발의자
+                                )
+                                db.add(co_proposer_rel)
+                    except Exception as e:
+                        print(f"공동발의자 URL 파싱 중 오류 발생: {str(e)}")
                 
                 # 변경사항 저장
                 db.commit()
@@ -148,7 +171,7 @@ def process_bill_data(raw_data):
                     "committee": bill.committee,
                     "proc_result": bill.proc_result,
                     "main_proposer_id": bill.main_proposer_id,
-                    "member_list_url": bill.member_list_url  # URL 정보 추가
+                    "member_list_url": bill.member_list_url
                 }
                 processed_bills.append(processed_bill)
                 

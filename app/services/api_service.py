@@ -424,7 +424,7 @@ class ApiService:
                     
                     print(f"페이지 {page_index}에서 {len(items)}개의 법안 정보 추출")
                     
-                    # 법안 정보 매핑
+                    # 법안 정보 매핑 부분 수정
                     for item in items:
                         bill_info = {
                             "bill_id": item.get("BILL_ID", ""),
@@ -436,7 +436,8 @@ class ApiService:
                             "committee": item.get("COMMITTEE", ""),
                             "proc_result": item.get("PROC_RESULT", ""),
                             "main_proposer": item.get("RST_PROPOSER", ""),
-                            "co_proposers": item.get("PUBL_PROPOSER", "")
+                            "co_proposers": item.get("PUBL_PROPOSER", ""),
+                            "MEMBER_LIST": item.get("MEMBER_LIST", "")  # 이 필드 추가
                         }
                         all_bills.append(bill_info)
                     

@@ -121,7 +121,6 @@ def get_co_sponsored_bills(db: Session, legislator_id: int) -> Dict[str, Any]:
     
     return result
 
-# app/services/bill_service.py에 추가
 def get_co_proposers_from_url(url: str) -> List[str]:
     """
     공동발의자 목록 페이지에서 발의자 이름 추출
