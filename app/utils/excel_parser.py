@@ -26,10 +26,46 @@ def parse_speech_keywords_excel(file_path: str) -> List[Dict[str, Any]]:
     Returns:
         List[Dict[str, Any]]: 키워드 데이터 리스트
     """
-    # 호출: pandas.read_excel()로 발언 키워드 엑셀 파일 읽기
-    # 데이터 클리닝 및 구조화
-    # 반환: 키워드 데이터 리스트
-    pass
+    try:
+        # 명세서에 따르면:
+        # - 시트명: "발언 키워드 Top10"
+        # - 헤더는 3번째 행 (header=2)
+        # - 컬럼: 발언자, 키워드, 키워드수
+        
+        # 시트2 "발언 키워드 Top10"에서 데이터 읽기
+        df_keywords = pd.read_excel(file_path, sheet_name="발언 키워드 Top10", header=2)
+        
+        # 데이터 확인
+        print(f"엑셀 데이터 형태: {df_keywords.shape}")
+        print(f"컬럼명: {df_keywords.columns.tolist()}")
+        
+        if not df_keywords.empty:
+            print(f"첫 5행 데이터 샘플:")
+            print(df_keywords.head())
+        
+        # 결과 데이터 생성
+        result = []
+        
+        for _, row in df_keywords.iterrows():
+            # 행 데이터가 유효한지 확인
+            if pd.isna(row['발언자']) or pd.isna(row['키워드']):
+                continue
+            
+            keyword_data = {
+                'legislator_name': str(row['발언자']).strip(),
+                'keyword': str(row['키워드']).strip(),
+                'count': int(row['키워드수']) if pd.notna(row['키워드수']) else 0
+            }
+            result.append(keyword_data)
+        
+        print(f"파싱 완료: {len(result)}개의 키워드 데이터")
+        return result
+        
+    except Exception as e:
+        print(f"키워드 엑셀 파일 파싱 오류 ({file_path}): {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return []
 
 def parse_speech_by_meeting_excel(file_path: str) -> List[Dict[str, Any]]:
     """

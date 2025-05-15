@@ -14,7 +14,7 @@ from app.models.legislator import Legislator
 from app.services.api_service import ApiService
 from app.utils.excel_parser import parse_attendance_excel, parse_speech_keywords_excel, parse_speech_by_meeting_excel
 from app.services.data_processing import process_attendance_data, process_speech_data, process_bill_data, process_vote_data
-
+from app.services.data_processing import process_keyword_data
 def fetch_all_data():
     """
     모든 데이터 수집 함수 호출
@@ -219,7 +219,8 @@ def fetch_excel_data(db: Session):
     from app.services.data_processing import process_speech_data
     
     print("엑셀 데이터 수집 시작...")
-    
+
+    # 1. 회의별 발언 데이터 처리 
     # 엑셀 파일 경로 설정
     speech_by_meeting_dir = "data/excel/speech/speech_by_meeting"
     
@@ -260,6 +261,40 @@ def fetch_excel_data(db: Session):
             print(f"  - 파일 처리 오류: {filename}, 오류: {str(e)}")
     
     print(f"회의별 발언 데이터 처리 완료: {processed_count}/{total_files}개 파일")
+
+    # 2. 키워드 데이터 처리 (새로 추가)
+    keywords_dir = "data/excel/speech/keywords"
+    
+    if os.path.exists(keywords_dir):
+        processed_count = 0
+        keyword_files = glob.glob(os.path.join(keywords_dir, "*_speech_keywords.xlsx"))
+        total_files = len(keyword_files)
+        
+        print(f"\n총 {total_files}개의 키워드 파일 발견됨")
+        
+        for file_path in keyword_files:
+            filename = os.path.basename(file_path)
+            print(f"파일 처리 중 ({processed_count+1}/{total_files}): {filename}")
+            
+            try:
+                keyword_data = parse_speech_keywords_excel(file_path)
+                
+                if not keyword_data:
+                    print(f"  - 파일에서 데이터를 찾을 수 없음: {filename}")
+                    continue
+                    
+                print(f"  - {len(keyword_data)}개의 키워드 데이터 발견")
+                process_keyword_data(keyword_data, db)
+                processed_count += 1
+                
+            except Exception as e:
+                print(f"  - 파일 처리 오류: {filename}, 오류: {str(e)}")
+        
+        print(f"키워드 데이터 처리 완료: {processed_count}/{total_files}개 파일")
+    else:
+        print(f"키워드 폴더가 없습니다: {keywords_dir}")
+    
+    print("\n엑셀 데이터 수집 완료")
 
 if __name__ == "__main__":
     fetch_all_data()

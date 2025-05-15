@@ -4,7 +4,8 @@
 │   ├── check_speech_data.py      회의록별 발언 수 출력 테스트
 │   ├── fetch_data.py             수동파싱 하기
 │   ├── reset_speech_data.py      의정발언 값 모두 0으로 리셋하기
-│   └── calculate_scores.py       의정발언 값 넣기
+│   ├── calculate_scores.py       의정발언 값 넣기
+│   └── check_keyword_data.py     저장된 키워드 확인
 
 
 
@@ -12,11 +13,12 @@
 # 전체 구조 만들기전 수동으로 파싱해서 DB에 넣고,
 # 의정발언(speech_score)에 total 값 넣어주기
 ***************************************************
+##### 회의록별 발언수 및 의정발언 값 #####
 
 수동 파싱
 python scripts/fetch_data.py
 
-의정발언 - speech_score 리셋
+의정발언 값 - speech_score 리셋 (그냥 리셋하고 다시 넣을때 잘 들어가는지 확인하려고 만든거거)
 python scripts/reset_speech_data.py
 
 
@@ -29,9 +31,26 @@ python scripts/check_speech_data.py
 python scripts/calculate_scores.py
 
 
-수동 파싱 밑 의정발언 순서
+수동 파싱 밑 의정발언 순서 (** 서버 실행됐을때 이 두개를 호출하는 방식- 물론 안에 있는 함수겠지만만)
 python scripts/fetch_data.py
 python scripts/calculate_scores.py
+
+##### 키워드 #####
+
+1. `python scripts/fetch_data.py` - 의원 정보 수집 및 키워드 데이터 수집
+2. `python scripts/check_keyword_data.py` - 저장된 키워드 확인
+
+
+
+1. **`app/utils/excel_parser.py`** - `parse_speech_keywords_excel()` 함수 추가
+   - 키워드 엑셀 파일을 파싱하는 기능
+
+2. **`app/services/data_processing.py`** - `process_keyword_data()` 함수 추가
+   - 파싱된 키워드 데이터를 DB에 저장하는 기능
+   - 중복 데이터 처리 로직 포함
+
+3. **`scripts/fetch_data.py`** - `fetch_excel_data()` 함수 수정
+   - 키워드 데이터 수집 추가
 
 ***************************************************
 

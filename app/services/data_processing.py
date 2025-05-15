@@ -99,6 +99,82 @@ def process_speech_data(raw_data, db: Session):
         import traceback
         traceback.print_exc()
 
+def process_keyword_data(raw_data: List[Dict[str, Any]], db: Session):
+    """
+    발언 키워드 데이터 정리 및 가공하여 DB에 저장
+    
+    Args:
+        raw_data: 키워드 데이터 리스트
+        db: 데이터베이스 세션
+    """
+    from app.models.speech import SpeechKeyword
+    from app.models.legislator import Legislator
+    
+    try:
+        processed_count = 0
+        skipped_count = 0
+        updated_count = 0
+        
+        # 의원 이름 캐시
+        legislator_name_map = {}
+        
+        # 각 키워드 데이터를 처리
+        for data in raw_data:
+            legislator_name = data['legislator_name']
+            
+            # 의원 정보가 캐시에 없으면 DB에서 조회
+            if legislator_name not in legislator_name_map:
+                legislator = db.query(Legislator).filter(Legislator.hg_nm == legislator_name).first()
+                if not legislator:
+                    print(f"경고: {legislator_name} 의원을 DB에서 찾을 수 없습니다.")
+                    skipped_count += 1
+                    continue
+                legislator_name_map[legislator_name] = legislator
+            else:
+                legislator = legislator_name_map[legislator_name]
+            
+            if not legislator:
+                skipped_count += 1
+                continue
+            
+            # 기존 키워드 데이터 확인
+            existing_keyword = db.query(SpeechKeyword).filter(
+                SpeechKeyword.legislator_id == legislator.id,
+                SpeechKeyword.keyword == data['keyword']
+            ).first()
+            
+            if existing_keyword:
+                # 기존 데이터가 있으면 값을 비교하여 업데이트
+                if existing_keyword.count != data['count']:
+                    print(f"키워드 업데이트: {legislator.hg_nm} - '{data['keyword']}' (기존: {existing_keyword.count}, 새로운: {data['count']})")
+                    existing_keyword.count = data['count']
+                    updated_count += 1
+                else:
+                    print(f"동일한 데이터 스킵: {legislator.hg_nm} - '{data['keyword']}': {data['count']}")
+            else:
+                # 새 키워드 데이터 추가
+                new_keyword = SpeechKeyword(
+                    legislator_id=legislator.id,
+                    keyword=data['keyword'],
+                    count=data['count']
+                )
+                db.add(new_keyword)
+                print(f"새 키워드 추가: {legislator.hg_nm} - '{data['keyword']}': {data['count']}")
+                processed_count += 1
+        
+        # 변경사항 커밋
+        db.commit()
+        print(f"\n=== 키워드 처리 결과 ===")
+        print(f"새로 추가: {processed_count}개")
+        print(f"업데이트: {updated_count}개")
+        print(f"건너뜀: {skipped_count}개")
+        
+    except Exception as e:
+        db.rollback()
+        print(f"키워드 데이터 처리 오류: {str(e)}")
+        import traceback
+        traceback.print_exc()
+
 def process_bill_data(raw_data):
     # 법안 데이터 정리 및 가공
     # 대표발의, 공동발의 구분
