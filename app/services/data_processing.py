@@ -3,9 +3,6 @@ from typing import List, Dict, Any
 from scripts.calculate_scores import calculate_participation_scores
 
 def process_attendance_data(raw_data: List[Dict[str, Any]], db: Session) -> None:
-    # 출석 데이터 정리 및 가공
-    # 출석률 계산
-    # 반환: 처리된 출석 데이터
     """
     출석 데이터 처리 및 DB 저장
     
@@ -26,6 +23,21 @@ def process_attendance_data(raw_data: List[Dict[str, Any]], db: Session) -> None
         legislator_name_map = {}
         committee_name_map = {}
         
+        # 위원회 정보가 없으면 일단 생성하거나 None으로 처리
+        for data in raw_data:
+            if data['meeting_type'] == '상임위' and 'committee_name' in data:
+                committee_name = data['committee_name']
+                
+                if committee_name not in committee_name_map:
+                    committee = db.query(Committee).filter(Committee.dept_nm == committee_name).first()
+                    if not committee:
+                        # 위원회가 없으면 새로 생성
+                        committee = Committee(dept_nm=committee_name)
+                        db.add(committee)
+                        db.commit()
+                        print(f"새 위원회 생성: {committee_name}")
+                    committee_name_map[committee_name] = committee
+        
         # 각 출석 데이터 처리
         for data in raw_data:
             legislator_name = data['legislator_name']
@@ -45,20 +57,11 @@ def process_attendance_data(raw_data: List[Dict[str, Any]], db: Session) -> None
             committee_id = None
             if data['meeting_type'] == '상임위' and 'committee_name' in data:
                 committee_name = data['committee_name']
-                
-                if committee_name not in committee_name_map:
-                    committee = db.query(Committee).filter(Committee.dept_nm == committee_name).first()
-                    if committee:
-                        committee_name_map[committee_name] = committee
-                    else:
-                        print(f"경고: {committee_name} 위원회를 DB에서 찾을 수 없습니다.")
-                        committee_name_map[committee_name] = None
-                
-                committee = committee_name_map[committee_name]
+                committee = committee_name_map.get(committee_name)
                 if committee:
                     committee_id = committee.id
             
-            # 기존 데이터 확인 (요약 데이터의 경우 날짜 없음)
+            # 기존 데이터 확인
             query = db.query(Attendance).filter(
                 Attendance.legislator_id == legislator.id,
                 Attendance.meeting_type == data['meeting_type'],
@@ -79,14 +82,14 @@ def process_attendance_data(raw_data: List[Dict[str, Any]], db: Session) -> None
                     existing_attendance.count = data.get('count', 0)
                     updated_count += 1
             else:
-                # 새 데이터 추가
+                # 새 데이터 추가 (meeting_date 제거)
                 new_attendance = Attendance(
                     legislator_id=legislator.id,
                     committee_id=committee_id,
                     meeting_type=data['meeting_type'],
                     status=data['status'],
-                    count=data.get('count', 0),
-                    meeting_date=data.get('meeting_date')  # 날짜가 있으면 사용, 없으면 None
+                    count=data.get('count', 0)
+                    # meeting_date 필드 제거
                 )
                 db.add(new_attendance)
                 print(f"새 출석 데이터 추가: {legislator.hg_nm}, {data['meeting_type']}, {data['status']}: {data.get('count', 0)}")

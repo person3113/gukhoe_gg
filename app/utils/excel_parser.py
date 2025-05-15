@@ -50,6 +50,7 @@ def parse_attendance_excel(file_path: str) -> List[Dict[str, Any]]:
         traceback.print_exc()
         return []
 
+
 def parse_plenary_attendance_excel(file_path: str) -> List[Dict[str, Any]]:
     """
     본회의 출석 현황 엑셀 파일을 파싱
@@ -80,13 +81,13 @@ def parse_plenary_attendance_excel(file_path: str) -> List[Dict[str, Any]]:
             if pd.isna(legislator_name) or not legislator_name:
                 continue
             
-            # 22대 총계 데이터 추출 (M~R열, index 12~17)
-            total_days = row_data[12]  # 회의일수
-            attended = row_data[13]    # 출석
-            absent = row_data[14]      # 결석
-            leave = row_data[15]       # 청가
-            trip = row_data[16]        # 출장
-            report = row_data[17]      # 결석신고서
+            # 실제 22대 총계 데이터 위치 (15~20열)
+            total_days = row_data[15] if pd.notna(row_data[15]) else 0  # 회의일수
+            attended = row_data[16] if pd.notna(row_data[16]) else 0    # 출석
+            absent = row_data[17] if pd.notna(row_data[17]) else 0      # 결석
+            leave = row_data[18] if pd.notna(row_data[18]) else 0       # 청가
+            trip = row_data[19] if pd.notna(row_data[19]) else 0        # 출장
+            report = row_data[20] if pd.notna(row_data[20]) else 0      # 결석신고서
             
             # 각 상태별로 데이터 생성
             statuses = [
@@ -100,14 +101,13 @@ def parse_plenary_attendance_excel(file_path: str) -> List[Dict[str, Any]]:
             
             # 각 출석 상태별로 데이터 생성
             for status, count in statuses:
-                if pd.notna(count):
-                    attendance_data.append({
-                        "legislator_name": str(legislator_name).strip(),
-                        "meeting_type": "본회의",
-                        "status": status,
-                        "count": int(count),
-                        "committee_id": None
-                    })
+                attendance_data.append({
+                    "legislator_name": str(legislator_name).strip(),
+                    "meeting_type": "본회의",
+                    "status": status,
+                    "count": int(count),
+                    "committee_id": None
+                })
         
         print(f"본회의 출석 데이터 파싱 완료: {len(attendance_data)}개")
         return attendance_data
@@ -136,7 +136,7 @@ def parse_standing_committee_attendance_excel(file_path: str) -> List[Dict[str, 
         sheets = xls.sheet_names
         
         # 각 시트(위원회별) 처리
-        for sheet_name in sheets:
+        for sheet_idx, sheet_name in enumerate(sheets):
             try:
                 df = pd.read_excel(file_path, sheet_name=sheet_name, header=None)
                 
@@ -147,11 +147,11 @@ def parse_standing_committee_attendance_excel(file_path: str) -> List[Dict[str, 
                 
                 print(f"  - 시트 '{sheet_name}' 처리 중: {committee_name}")
                 
-                # 헤더 행 동적으로 찾기 (2~5행 사이에서 찾기)
+                # 헤더 행 동적으로 찾기
                 header_row = None
                 data_start_row = None
                 
-                for i in range(2, min(6, len(df))):
+                for i in range(2, min(10, len(df))):
                     row_values = df.iloc[i].tolist()
                     row_str = ' '.join(str(v) for v in row_values if pd.notna(v))
                     
@@ -161,20 +161,32 @@ def parse_standing_committee_attendance_excel(file_path: str) -> List[Dict[str, 
                     
                     if matched_keywords >= 2:
                         header_row = i
+                        
                         # 헤더 이후 실제 데이터가 있는 행 찾기
-                        for j in range(i+1, min(i+4, len(df))):
+                        for j in range(i+1, min(i+10, len(df))):
                             test_row = df.iloc[j].tolist()
                             if pd.notna(test_row[0]):
                                 first_val = str(test_row[0])
-                                # 의원명처럼 보이는 경우 (한글 포함하고 날짜/차수가 아닌 경우)
-                                if any(char.isalpha() for char in first_val) and '일' not in first_val and '차' not in first_val:
+                                # 한자가 포함된 의원명 패턴 확인
+                                if '(' in first_val and ')' in first_val:
                                     data_start_row = j
                                     break
+                                # 또는 한글로만 된 의원명
+                                elif any(ord('가') <= ord(char) <= ord('힣') for char in first_val):
+                                    # 날짜나 차수 관련 단어가 없는 경우
+                                    if not any(word in first_val for word in ['일', '차', '제', '회']):
+                                        data_start_row = j
+                                        break
                         break
                 
                 if header_row is None:
                     print(f"  - 시트 '{sheet_name}'에서 헤더 행을 찾을 수 없음")
                     continue
+                
+                if data_start_row is None:
+                    print(f"  - 시트 '{sheet_name}'에서 데이터 시작 행을 자동으로 찾을 수 없음")
+                    # 헤더 이후 3행부터 시작하도록 기본값 설정
+                    data_start_row = header_row + 3
                 
                 print(f"  - 헤더 행: {header_row}, 데이터 시작 행: {data_start_row}")
                 
