@@ -178,7 +178,8 @@ def fetch_bills(db: Session):
         return
     
     # 처리된 법안 정보를 DB에 저장
-    processed_bills = process_bill_data(bills_data, db)
+    # 수정: db 인자 제거
+    processed_bills = process_bill_data(bills_data)
     
     print(f"법안 정보 수집 완료: {len(processed_bills)}개")
 

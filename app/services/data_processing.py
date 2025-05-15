@@ -60,6 +60,9 @@ def process_bill_data(raw_data):
                     print(f"대표발의자를 찾을 수 없음: {main_proposers_str}, 법안: {bill_data.get('bill_name')}")
                     continue
                 
+                # MEMBER_LIST URL 추출
+                member_list_url = bill_data.get("MEMBER_LIST", "")
+                
                 # 기존 법안 정보 확인
                 existing_bill = db.query(Bill).filter(Bill.bill_no == bill_data.get("bill_no")).first()
                 
@@ -72,6 +75,7 @@ def process_bill_data(raw_data):
                     existing_bill.committee = bill_data.get("committee")
                     existing_bill.proc_result = bill_data.get("proc_result")
                     existing_bill.main_proposer_id = primary_proposer.id
+                    existing_bill.member_list_url = member_list_url  # URL 업데이트
                     
                     bill = existing_bill
                 else:
@@ -84,7 +88,8 @@ def process_bill_data(raw_data):
                         proposer=bill_data.get("proposer"),
                         committee=bill_data.get("committee"),
                         proc_result=bill_data.get("proc_result"),
-                        main_proposer_id=primary_proposer.id
+                        main_proposer_id=primary_proposer.id,
+                        member_list_url=member_list_url  # URL 저장
                     )
                     db.add(bill)
                     db.flush()  # ID 할당을 위해 flush
@@ -108,9 +113,12 @@ def process_bill_data(raw_data):
                 
                 # 일반 공동발의자 처리
                 co_proposers_str = bill_data.get("co_proposers", "")
+                
+                # 일반적인 경우: 콤마로 구분된 목록
                 if co_proposers_str:
-                    # 공동발의자 목록 파싱 (콤마로 구분)
                     co_proposer_names = [name.strip() for name in co_proposers_str.split(',')]
+                    
+                    # 공동발의자 정보 DB에 저장
                     for name in co_proposer_names:
                         if not name or name in main_proposer_names:
                             continue
@@ -139,7 +147,8 @@ def process_bill_data(raw_data):
                     "proposer": bill.proposer,
                     "committee": bill.committee,
                     "proc_result": bill.proc_result,
-                    "main_proposer_id": bill.main_proposer_id
+                    "main_proposer_id": bill.main_proposer_id,
+                    "member_list_url": bill.member_list_url  # URL 정보 추가
                 }
                 processed_bills.append(processed_bill)
                 
