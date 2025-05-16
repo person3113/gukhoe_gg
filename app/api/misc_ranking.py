@@ -53,7 +53,7 @@ async def party_ranking(request: Request, db: Session = Depends(get_db), party_n
     Args:
         request: FastAPI 요청 객체
         db: 데이터베이스 세션
-        party_name: 선택한 정당명 (None인 경우 정당 비교 홈 화면)
+        party_name: 선택한 정당명 (선택 사항)
     
     Returns:
         템플릿 렌더링
@@ -62,32 +62,29 @@ async def party_ranking(request: Request, db: Session = Depends(get_db), party_n
     party_query = db.query(Legislator.poly_nm).distinct().all()
     parties = [party[0] for party in party_query]
     
-    # party_name이 None인 경우 - 정당 비교 홈 화면
-    if party_name is None:
-        # 정당별 평균 종합점수 조회
-        party_scores = stats_service.get_party_average_scores(db)
-        
-        # 정당별 평균 대표발의안수 조회
-        party_bills = stats_service.get_party_average_bill_counts(db)
-        
-        # 차트 데이터 생성
-        scores_chart = chart_service.generate_party_scores_chart_data(party_scores)
-        bills_chart = chart_service.generate_party_bills_chart_data(party_bills)
-        
-        # 템플릿 렌더링
-        return templates.TemplateResponse(
-            "misc_ranking/party.html", 
-            {
-                "request": request,
-                "parties": parties,
-                "party_name": None,
-                "party_scores": party_scores,
-                "party_bills": party_bills,
-                "scores_chart": scores_chart,
-                "bills_chart": bills_chart
-            }
-        )
-    else:
+    # 정당별 평균 종합점수 조회 (항상 필요)
+    party_scores = stats_service.get_party_average_scores(db)
+    
+    # 정당별 평균 대표발의안수 조회 (항상 필요)
+    party_bills = stats_service.get_party_average_bill_counts(db)
+    
+    # 차트 데이터 생성 (항상 필요)
+    scores_chart = chart_service.generate_party_scores_chart_data(party_scores)
+    bills_chart = chart_service.generate_party_bills_chart_data(party_bills)
+    
+    # 기본 컨텍스트 데이터
+    context = {
+        "request": request,
+        "parties": parties,
+        "party_name": party_name,
+        "party_scores": party_scores,
+        "party_bills": party_bills,
+        "scores_chart": scores_chart,
+        "bills_chart": bills_chart
+    }
+    
+    # 특정 정당이 선택된 경우 추가 데이터 조회
+    if party_name:
         # 정당명이 유효한지 확인
         if party_name not in parties:
             # 유효하지 않은 경우 404 에러
@@ -102,17 +99,14 @@ async def party_ranking(request: Request, db: Session = Depends(get_db), party_n
         # 정당 소속 의원 목록 조회
         legislators = stats_service.get_legislators_by_party(db, party_name)
         
-        # 템플릿 렌더링
-        return templates.TemplateResponse(
-            "misc_ranking/party.html", 
-            {
-                "request": request,
-                "parties": parties,
-                "party_name": party_name,
-                "party_stats": party_stats,
-                "legislators": legislators
-            }
-        )
+        # 컨텍스트에 추가 데이터 추가
+        context.update({
+            "party_stats": party_stats,
+            "legislators": legislators
+        })
+    
+    # 템플릿 렌더링
+    return templates.TemplateResponse("misc_ranking/party.html", context)
 
 @router.get("/misc-ranking/committee")
 async def committee_ranking(request: Request, db: Session = Depends(get_db), committee_name: Optional[str] = None):
