@@ -225,15 +225,6 @@ def fetch_votes(db: Session):
         
         print(f"법안 {bill_id}의 표결 정보 처리 완료: {processed_data['processed_results']}/{processed_data['total_results']} 결과 처리됨")
 
-def fetch_committees(db: Session):
-    """
-    위원회 정보 수집
-    """
-    # ApiService 인스턴스 생성
-    # 호출: api_service.fetch_committee_members()로 위원회 정보 수집
-    # DB에 저장
-    pass
-
 def fetch_committee_info(db: Session):
     """
     위원회 현황 정보 수집 - 상임위원회와 상설특별위원회만 필터링하여 저장
@@ -347,6 +338,71 @@ def fetch_committee_info(db: Session):
     db.commit()
     print(f"위원회 현황 정보 수집 완료: 총 {processed_count}개 (업데이트: {updated_count}개, 필터링: {filtered_count}개, 스킵: {skipped_count}개)")
 
+def fetch_processed_bills_stats(db: Session):
+    """
+    처리 의안통계(위원회별) 수집
+    """
+    print("처리 의안통계(위원회별) 수집 시작...")
+    
+    # API 서비스 인스턴스 생성
+    api_service = ApiService()
+    
+    # 위원회별 처리 의안통계 수집
+    stats_data = api_service.fetch_processed_bills_stats()
+    
+    if not stats_data:
+        print("수집된 처리 의안통계가 없습니다.")
+        return
+    
+    # 위원회별 통계 정보 업데이트
+    updated_count = 0
+    not_found_count = 0
+    
+    for stat in stats_data:
+        # 위원회명 추출
+        cmit_nm = stat.get("cmit_nm")
+        if not cmit_nm:
+            continue
+        
+        # 접수건수, 처리건수 추출 (문자열에서 정수로 변환)
+        try:
+            rcp_cnt = int(stat.get("rcp_cnt", "0"))
+            proc_cnt = int(stat.get("proc_cnt", "0"))
+        except ValueError:
+            print(f"숫자 변환 오류: 위원회 {cmit_nm}의 통계값이 올바르지 않습니다.")
+            continue
+        
+        # 해당 위원회 조회 (이름 기준)
+        committee = db.query(Committee).filter(Committee.dept_nm == cmit_nm).first()
+        
+        if committee:
+            # 위원회 정보 업데이트
+            committee.rcp_cnt = rcp_cnt
+            committee.proc_cnt = proc_cnt
+            updated_count += 1
+            
+            # 10개마다 커밋
+            if updated_count % 10 == 0:
+                db.commit()
+                print(f"{updated_count}개 위원회 통계 업데이트 완료...")
+        else:
+            print(f"위원회를 찾을 수 없음: {cmit_nm}")
+            not_found_count += 1
+    
+    # 마지막 커밋
+    db.commit()
+    
+    print(f"처리 의안통계 업데이트 완료: 총 {updated_count}개 위원회 (찾지 못한 위원회: {not_found_count}개)")
+
+def fetch_committees(db: Session):
+    """
+    위원회 정보 수집
+    """
+    # ApiService 인스턴스 생성
+    # 호출: api_service.fetch_committee_members()로 위원회 정보 수집
+    # DB에 저장
+    pass
+
 def fetch_committee_history(db: Session):
     """
     국회의원 위원회 경력 정보 수집
@@ -394,16 +450,6 @@ def fetch_committee_history(db: Session):
     # 마지막 커밋
     db.commit()
     print(f"위원회 경력 정보 수집 완료: {processed_count}개")
-
-def fetch_processed_bills_stats(db: Session):
-    """
-    처리 의안통계(위원회별) 수집
-    """
-    # ApiService 인스턴스 생성
-    # 호출: api_service.fetch_processed_bills_stats()로 처리 의안통계 수집
-    # 위원회 테이블에서 해당 위원회 조회 후 접수건수, 처리건수 정보 업데이트
-    # 변경사항 커밋
-    pass
 
 def fetch_excel_data(db: Session):
     """

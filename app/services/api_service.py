@@ -686,10 +686,75 @@ class ApiService:
             return []
         
     def fetch_processed_bills_stats(self) -> List[Dict[str, Any]]:
-        # 호출: requests.get()로 처리 의안통계(위원회별) API 호출
-        # 호출: utils.xml_parser.parse_xml_to_dict()로 XML 응답 파싱
-        # 반환: 위원회별 처리 의안 통계 리스트 (위원회명, 접수건수, 처리건수, 보류건수)
-        pass
+        """
+        처리 의안통계(위원회별) API 호출
+        
+        Returns:
+            List[Dict[str, Any]]: 위원회별 처리 의안 통계 리스트
+        """
+        try:
+            print("API 호출 시작: processed_bills_stats")
+            
+            # 결과 리스트 초기화
+            all_stats = []
+            
+            # API 호출 파라미터 설정 - ERACO는 config에서 필수 인자로 지정됨
+            additional_params = {}
+            
+            print("처리 의안통계 요청 중...")
+            response_text = self._make_api_call("processed_bills_stats", additional_params)
+            
+            if not response_text:
+                print("응답이 없습니다!")
+                return []
+            
+            # XML 응답 파싱
+            data_dict = parse_xml_to_dict(response_text)
+            
+            # 오류 체크
+            if data_dict.get('error'):
+                print(f"API 오류: {data_dict.get('message')}")
+                return []
+            
+            # 'BILLCNTCMIT' 구조 처리 (처리 의안통계 API의 응답 구조)
+            if 'BILLCNTCMIT' in data_dict:
+                root = data_dict['BILLCNTCMIT']
+                
+                # 'row' 태그에서 통계 정보 추출
+                items = root.get('row', [])
+                
+                # 단일 항목인 경우 리스트로 변환
+                if isinstance(items, dict):
+                    items = [items]
+                
+                # 데이터가 없는 경우
+                if not items:
+                    print("처리 의안통계 데이터가 없습니다.")
+                    return []
+                
+                print(f"총 {len(items)}개의 위원회 통계 정보 추출")
+                
+                # 통계 정보 매핑
+                for item in items:
+                    stat_info = {
+                        "cmit_nm": item.get("CMIT_NM", ""),
+                        "rcp_cnt": item.get("RCP_CNT", "0"),
+                        "proc_cnt": item.get("PROC_CNT", "0"),
+                        "rsvt_cnt": item.get("RSVT_CNT", "0")
+                    }
+                    all_stats.append(stat_info)
+            else:
+                print("예상한 구조(BILLCNTCMIT)를 찾지 못했습니다.")
+                return []
+            
+            print(f"처리 의안통계 수집 완료: {len(all_stats)}개 위원회")
+            return all_stats
+            
+        except Exception as e:
+            print(f"처리 의안통계 가져오기 오류: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return []
 
     def fetch_bills_with_votes(self, age='22') -> List[str]:
         """
