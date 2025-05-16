@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.db.database import SessionLocal
 from app.models.bill import Bill
-from app.models.committee import CommitteeHistory
+from app.models.committee import Committee, CommitteeHistory
 from app.models.sns import LegislatorSNS
 
 # 프로젝트 루트 디렉토리 추가
@@ -33,14 +33,14 @@ def fetch_all_data():
         # 표결 정보 수집
         fetch_votes(db)
         
-        # 위원회 정보 수집
-        fetch_committees(db)
-        
         # 위원회 현황 정보 수집
         fetch_committee_info(db)
-        
+
         # 처리 의안통계 수집
         fetch_processed_bills_stats(db)
+
+        # 위원회 정보 수집 (의원-위원회 매핑)
+        fetch_committees(db)
 
         # 위원회 경력 정보 수집 (추가)
         fetch_committee_history(db)
@@ -236,13 +236,116 @@ def fetch_committees(db: Session):
 
 def fetch_committee_info(db: Session):
     """
-    위원회 현황 정보 수집
+    위원회 현황 정보 수집 - 상임위원회와 상설특별위원회만 필터링하여 저장
     """
-    # ApiService 인스턴스 생성
-    # 호출: api_service.fetch_committee_info()로 위원회 현황 정보 수집
-    # 위원회 테이블에서 해당 위원회 조회 후 정보 업데이트 또는 새로 생성
-    # 변경사항 커밋
-    pass
+    print("위원회 현황 정보 수집 시작...")
+    
+    # 기존 데이터 확인
+    existing_count = db.query(Committee).count()
+    if existing_count > 0:
+        print(f"이미 {existing_count}개의 위원회 정보가 있습니다. 업데이트를 진행합니다.")
+    
+    # API 서비스 인스턴스 생성
+    api_service = ApiService()
+    
+    # 위원회 현황 정보 수집
+    committee_data = api_service.fetch_committee_info()
+    
+    if not committee_data:
+        print("수집된 위원회 정보가 없습니다.")
+        return
+
+    # 위원회 정보 처리 및 DB 저장
+    processed_count = 0
+    skipped_count = 0
+    updated_count = 0
+    filtered_count = 0
+    duplicate_names = set()  # 중복된 위원회 이름 추적용
+    
+    for data in committee_data:
+        try:
+            # 위원회 구분 확인 - 상임위원회 또는 상설특별위원회만 처리
+            cmt_div_nm = data.get("cmt_div_nm", "")
+            
+            # 상임위원회 또는 상설특별위원회가 아닌 경우 스킵
+            if "상임위원회" not in cmt_div_nm and "상설특별위원회" not in cmt_div_nm:
+                filtered_count += 1
+                continue
+                
+            # 위원회 코드 확인 - 없는 경우 스킵
+            hr_dept_cd = data.get("hr_dept_cd")
+            committee_name = data.get("committee_name")
+            
+            if not hr_dept_cd:
+                print(f"위원회 코드가 없는 항목 스킵: {committee_name}")
+                skipped_count += 1
+                continue
+                
+            if not committee_name:
+                print(f"위원회 이름이 없는 항목 스킵: 코드 {hr_dept_cd}")
+                skipped_count += 1
+                continue
+            
+            # 이미 처리한 위원회 이름인지 확인 (중복 검출)
+            if committee_name in duplicate_names:
+                # 이름을 고유하게 만들기 위해 코드를 추가
+                original_name = committee_name
+                committee_name = f"{committee_name}_{hr_dept_cd}"
+                print(f"중복된 위원회 이름 수정: '{original_name}' -> '{committee_name}'")
+            else:
+                duplicate_names.add(committee_name)
+            
+            # 위원정수와 현원을 정수로 변환
+            limit_cnt = int(data.get("limit_cnt", "0")) if data.get("limit_cnt") and data.get("limit_cnt").isdigit() else 0
+            curr_cnt = int(data.get("curr_cnt", "0")) if data.get("curr_cnt") and data.get("curr_cnt").isdigit() else 0
+            
+            # 먼저 위원회 코드로 조회
+            committee = db.query(Committee).filter(Committee.dept_cd == hr_dept_cd).first()
+            
+            # 코드로 찾지 못했다면 이름으로 조회
+            if not committee:
+                committee = db.query(Committee).filter(Committee.dept_nm == committee_name).first()
+            
+            if committee:
+                # 기존 위원회 정보 업데이트
+                committee.dept_cd = hr_dept_cd  # 코드 업데이트
+                committee.dept_nm = committee_name
+                committee.cmt_div_nm = cmt_div_nm
+                committee.committee_chair = data.get("hg_nm", "")
+                committee.limit_cnt = limit_cnt
+                committee.curr_cnt = curr_cnt
+                # 다른 필드들은 그대로 유지
+                updated_count += 1
+            else:
+                # 새 위원회 정보 생성
+                committee = Committee(
+                    dept_cd=hr_dept_cd,
+                    dept_nm=committee_name,
+                    cmt_div_nm=cmt_div_nm,
+                    committee_chair=data.get("hg_nm", ""),
+                    limit_cnt=limit_cnt,
+                    curr_cnt=curr_cnt,
+                    avg_score=0.0,  # 초기값 설정
+                    rcp_cnt=0,      # 초기값 설정
+                    proc_cnt=0      # 초기값 설정
+                )
+                db.add(committee)
+            
+            processed_count += 1
+            
+            # 10개마다 커밋
+            if processed_count % 10 == 0:
+                db.commit()
+                print(f"{processed_count}개 처리 완료...")
+        
+        except Exception as e:
+            print(f"위원회 정보 처리 오류: {e}, 데이터: {data}")
+            skipped_count += 1
+            continue
+    
+    # 마지막 커밋
+    db.commit()
+    print(f"위원회 현황 정보 수집 완료: 총 {processed_count}개 (업데이트: {updated_count}개, 필터링: {filtered_count}개, 스킵: {skipped_count}개)")
 
 def fetch_committee_history(db: Session):
     """
