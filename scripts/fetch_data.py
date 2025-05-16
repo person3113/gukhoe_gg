@@ -396,12 +396,121 @@ def fetch_processed_bills_stats(db: Session):
 
 def fetch_committees(db: Session):
     """
-    위원회 정보 수집
+    위원회 멤버십 정보 수집 및 DB 저장 - 상임위원회와 상설특별위원회만 필터링
     """
-    # ApiService 인스턴스 생성
-    # 호출: api_service.fetch_committee_members()로 위원회 정보 수집
-    # DB에 저장
-    pass
+    from app.models.committee import Committee, CommitteeMember
+    
+    # 기존 데이터 확인
+    existing_count = db.query(CommitteeMember).count()
+    if existing_count > 0:
+        print(f"이미 {existing_count}개의 위원회 멤버십 정보가 있습니다. 스킵합니다.")
+        return
+    
+    # API 서비스 인스턴스 생성
+    api_service = ApiService()
+    
+    # 위원회 멤버십 정보 수집
+    print("위원회 멤버십 정보 수집 시작...")
+    members_data = api_service.fetch_committee_members()
+    
+    if not members_data:
+        print("수집된 위원회 멤버십 정보가 없습니다.")
+        return
+    
+    # 현재 DB에 있는 상임위원회와 상설특별위원회 목록 가져오기
+    valid_committees = db.query(Committee).filter(
+        (Committee.cmt_div_nm.like('%상임위원회%')) | 
+        (Committee.cmt_div_nm.like('%상설특별위원회%'))
+    ).all()
+    
+    # 유효한 위원회 ID와 코드 목록 생성
+    valid_committee_ids = {committee.id for committee in valid_committees}
+    valid_committee_codes = {committee.dept_cd for committee in valid_committees}
+    
+    print(f"총 {len(valid_committees)}개의 상임위원회/상설특별위원회를 찾았습니다.")
+    
+    # 멤버십 정보 처리 및 DB 저장
+    processed_count = 0
+    skipped_count = 0
+    filtered_count = 0
+    
+    for member in members_data:
+        try:
+            # 위원회 코드 가져오기
+            dept_cd = member.get("dept_cd")
+            if not dept_cd:
+                print(f"위원회 코드가 없는 항목 스킵: {member}")
+                skipped_count += 1
+                continue
+            
+            # 상임위원회/상설특별위원회가 아니면 필터링
+            if dept_cd not in valid_committee_codes:
+                filtered_count += 1
+                continue
+            
+            # 위원회 정보 조회 (코드 기준)
+            committee = db.query(Committee).filter(Committee.dept_cd == dept_cd).first()
+            
+            # 위원회 정보가 없으면 이름으로 조회 시도
+            if not committee:
+                dept_nm = member.get("dept_nm")
+                committee = db.query(Committee).filter(Committee.dept_nm == dept_nm).first()
+            
+            # 위원회 정보가 없거나 유효한 위원회가 아니면 스킵
+            if not committee or committee.id not in valid_committee_ids:
+                filtered_count += 1
+                continue
+            
+            # 의원 정보 조회 (mona_cd 기준)
+            mona_cd = member.get("mona_cd")
+            if not mona_cd:
+                print(f"의원 코드가 없는 항목 스킵: {member}")
+                skipped_count += 1
+                continue
+            
+            legislator = db.query(Legislator).filter(Legislator.mona_cd == mona_cd).first()
+            if not legislator:
+                # 이름으로 의원 조회 시도
+                hg_nm = member.get("hg_nm")
+                if hg_nm:
+                    legislator = db.query(Legislator).filter(Legislator.hg_nm == hg_nm).first()
+            
+            # 의원 정보가 없으면 스킵
+            if not legislator:
+                print(f"의원 정보를 찾을 수 없음: {member.get('hg_nm')} ({mona_cd})")
+                skipped_count += 1
+                continue
+            
+            # 이미 위원회 멤버십이 있는지 확인
+            existing_membership = db.query(CommitteeMember).filter(
+                CommitteeMember.committee_id == committee.id,
+                CommitteeMember.legislator_id == legislator.id
+            ).first()
+            
+            if not existing_membership:
+                # 위원회 멤버십 정보 저장
+                role = member.get("job_res_nm", "위원")  # 기본값은 '위원'
+                committee_member = CommitteeMember(
+                    committee_id=committee.id,
+                    legislator_id=legislator.id,
+                    role=role
+                )
+                db.add(committee_member)
+                processed_count += 1
+                
+                # 100개마다 커밋
+                if processed_count % 100 == 0:
+                    db.commit()
+                    print(f"{processed_count}개 처리 완료...")
+        
+        except Exception as e:
+            print(f"멤버십 정보 처리 오류: {e}, 데이터: {member}")
+            skipped_count += 1
+            continue
+    
+    # 마지막 커밋
+    db.commit()
+    print(f"위원회 멤버십 정보 수집 완료: {processed_count}개 (필터링: {filtered_count}개, 스킵: {skipped_count}개)")
 
 def fetch_committee_history(db: Session):
     """
