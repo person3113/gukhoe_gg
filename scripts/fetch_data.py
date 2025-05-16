@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.db.database import SessionLocal
 from app.models.bill import Bill
+from app.models.committee import CommitteeHistory
 from app.models.sns import LegislatorSNS
 
 # 프로젝트 루트 디렉토리 추가
@@ -40,6 +41,9 @@ def fetch_all_data():
         
         # 처리 의안통계 수집
         fetch_processed_bills_stats(db)
+
+        # 위원회 경력 정보 수집 (추가)
+        fetch_committee_history(db)
         
         # 엑셀 데이터 수집
         fetch_excel_data(db)
@@ -239,6 +243,54 @@ def fetch_committee_info(db: Session):
     # 위원회 테이블에서 해당 위원회 조회 후 정보 업데이트 또는 새로 생성
     # 변경사항 커밋
     pass
+
+def fetch_committee_history(db: Session):
+    """
+    국회의원 위원회 경력 정보 수집
+    """
+    # 기존 데이터 확인
+    existing_count = db.query(CommitteeHistory).count()
+    if existing_count > 0:
+        print(f"이미 {existing_count}개의 위원회 경력 정보가 있습니다. 스킵합니다.")
+        return
+    
+    # API 서비스 인스턴스 생성
+    api_service = ApiService()
+    
+    # 위원회 경력 정보 수집
+    print("위원회 경력 정보 수집 시작...")
+    history_data = api_service.fetch_committee_history()
+    
+    if not history_data:
+        print("수집된 위원회 경력 정보가 없습니다.")
+        return
+    
+    # 위원회 경력 정보 처리 및 DB 저장
+    processed_count = 0
+    for history in history_data:
+        # 의원 정보 조회
+        legislator = db.query(Legislator).filter(Legislator.mona_cd == history["mona_cd"]).first()
+        if not legislator:
+            print(f"의원 정보를 찾을 수 없음: {history['hg_nm']} ({history['mona_cd']})")
+            continue
+        
+        # 위원회 경력 정보 저장
+        committee_history = CommitteeHistory(
+            legislator_id=legislator.id,
+            frto_date=history["frto_date"],
+            profile_sj=history["profile_sj"]
+        )
+        db.add(committee_history)
+        processed_count += 1
+        
+        # 100개마다 커밋
+        if processed_count % 100 == 0:
+            db.commit()
+            print(f"{processed_count}개 처리 완료...")
+    
+    # 마지막 커밋
+    db.commit()
+    print(f"위원회 경력 정보 수집 완료: {processed_count}개")
 
 def fetch_processed_bills_stats(db: Session):
     """
