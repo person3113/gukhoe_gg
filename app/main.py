@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 import os
 
 from app.db.database import SessionLocal, engine, Base, get_db
-from app.api import home, search, champions, ranking, misc_ranking
+from app.api import home, search, champions, ranking, misc_ranking, about
 from app.models.legislator import Legislator
 
 # 모든 모델을 명시적으로 임포트
@@ -35,6 +35,7 @@ def setup_routes(app):
     app.include_router(champions.router)
     app.include_router(ranking.router)
     app.include_router(misc_ranking.router)
+    app.include_router(about.router)
     pass
 
 def setup_static(app):

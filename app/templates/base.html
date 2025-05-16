@@ -21,6 +21,8 @@
             display: flex;
             min-height: 100vh;
         }
+        
+        /* 사이드바 전체 스타일 */
         .sidebar {
             width: 200px;
             background-color: #212529;
@@ -28,14 +30,32 @@
             padding-top: 20px;
             position: fixed;
             height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
+        
+        /* 상단 메뉴 영역 */
+        .sidebar-top {
+            flex-grow: 0;
+        }
+        
+        /* 하단 소개 링크 영역 */
+        .sidebar-bottom {
+            margin-top: auto;
+            padding-bottom: 50px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 15px;
+        }
+        
         .sidebar .nav-link {
             color: rgba(255, 255, 255, 0.75);
             padding: 0.5rem 1rem;
         }
+        
         .sidebar .nav-link:hover {
             color: rgba(255, 255, 255, 1);
         }
+        
         .sidebar .nav-link.active {
             color: #fff;
             background-color: rgba(255, 255, 255, 0.1);
@@ -46,6 +66,7 @@
             margin-left: 200px;
             padding: 20px;
         }
+        
         .search-container {
             padding: 15px;
             background-color: #f8f9fa;
@@ -57,14 +78,17 @@
             margin-left: 1rem;
             font-size: 0.9rem;
         }
+        
         .sub-link {
             padding: 0.3rem 1rem !important;
             color: rgba(255, 255, 255, 0.65) !important;
         }
+        
         .sub-link:hover, .sub-link.active {
             color: rgba(255, 255, 255, 0.9) !important;
             background-color: rgba(255, 255, 255, 0.1);
         }
+        
         /* 활성화된 서브 링크 강조 */
         .sub-link.active {
             color: #fff !important;
@@ -95,64 +119,76 @@
 <body>
     <!-- 좌측 세로 네비게이션 -->
     <div class="sidebar">
-        <h2 class="text-center mb-4">국회.gg</h2>
-        <ul class="nav flex-column">
-            <li class="nav-item">
-                <a class="nav-link" href="/">홈</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/champions">챔피언</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/ranking">활동 랭킹</a>
-                <!-- 활동 랭킹 하위 메뉴 -->
-                {% if request.path.startswith('/ranking') %}
-                <ul class="nav flex-column sub-menu">
-                    <li class="nav-item">
-                        <a class="nav-link sub-link {% if request.path == '/ranking/participation' %}active{% endif %}" href="/ranking/participation">참여</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link sub-link {% if request.path == '/ranking/legislation' %}active{% endif %}" href="/ranking/legislation">입법활동</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link sub-link {% if request.path == '/ranking/speech' %}active{% endif %}" href="/ranking/speech">의정발언</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link sub-link {% if request.path == '/ranking/voting' %}active{% endif %}" href="/ranking/voting">표결 책임성</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link sub-link {% if request.path == '/ranking/cooperation' %}active{% endif %}" href="/ranking/cooperation">협치/초당적 활동</a>
-                    </li>
-                </ul>
-                {% endif %}
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/misc-ranking">잡다한 랭킹</a>
-                <!-- 잡다한 랭킹 하위 메뉴 -->
-                {% if request.path.startswith('/misc-ranking') %}
-                <ul class="nav flex-column sub-menu">
-                    <li class="nav-item">
-                        <a class="nav-link sub-link {% if request.path == '/misc-ranking/party' %}active{% endif %}" href="/misc-ranking/party">정당별</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link sub-link {% if request.path == '/misc-ranking/committee' %}active{% endif %}" href="/misc-ranking/committee">위원회별</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link sub-link {% if request.path == '/misc-ranking/term' %}active{% endif %}" href="/misc-ranking/term">초선/재선+</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link sub-link {% if request.path == '/misc-ranking/age' %}active{% endif %}" href="/misc-ranking/age">나이별</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link sub-link {% if request.path == '/misc-ranking/gender' %}active{% endif %}" href="/misc-ranking/gender">성별</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link sub-link {% if request.path == '/misc-ranking/asset' %}active{% endif %}" href="/misc-ranking/asset">재산</a>
-                    </li>
-                </ul>
-                {% endif %}
-            </li>
-        </ul>
+        <!-- 상단 내용 -->
+        <div class="sidebar-top">
+            <h2 class="text-center mb-4">국회.gg</h2>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">홈</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/champions">챔피언</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/ranking">활동 랭킹</a>
+                    <!-- 활동 랭킹 하위 메뉴 -->
+                    {% if request.path.startswith('/ranking') %}
+                    <ul class="nav flex-column sub-menu">
+                        <li class="nav-item">
+                            <a class="nav-link sub-link {% if request.path == '/ranking/participation' %}active{% endif %}" href="/ranking/participation">참여</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link sub-link {% if request.path == '/ranking/legislation' %}active{% endif %}" href="/ranking/legislation">입법활동</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link sub-link {% if request.path == '/ranking/speech' %}active{% endif %}" href="/ranking/speech">의정발언</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link sub-link {% if request.path == '/ranking/voting' %}active{% endif %}" href="/ranking/voting">표결 책임성</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link sub-link {% if request.path == '/ranking/cooperation' %}active{% endif %}" href="/ranking/cooperation">협치/초당적 활동</a>
+                        </li>
+                    </ul>
+                    {% endif %}
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/misc-ranking">잡다한 랭킹</a>
+                    <!-- 잡다한 랭킹 하위 메뉴 -->
+                    {% if request.path.startswith('/misc-ranking') %}
+                    <ul class="nav flex-column sub-menu">
+                        <li class="nav-item">
+                            <a class="nav-link sub-link {% if request.path == '/misc-ranking/party' %}active{% endif %}" href="/misc-ranking/party">정당별</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link sub-link {% if request.path == '/misc-ranking/committee' %}active{% endif %}" href="/misc-ranking/committee">위원회별</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link sub-link {% if request.path == '/misc-ranking/term' %}active{% endif %}" href="/misc-ranking/term">초선/재선+</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link sub-link {% if request.path == '/misc-ranking/age' %}active{% endif %}" href="/misc-ranking/age">나이별</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link sub-link {% if request.path == '/misc-ranking/gender' %}active{% endif %}" href="/misc-ranking/gender">성별</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link sub-link {% if request.path == '/misc-ranking/asset' %}active{% endif %}" href="/misc-ranking/asset">재산</a>
+                        </li>
+                    </ul>
+                    {% endif %}
+                </li>
+            </ul>
+        </div>
+        
+        <!-- 하단 소개 링크 -->
+        <div class="sidebar-bottom">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/about' %}active{% endif %}" href="/about">국회.gg 소개</a>
+                </li>
+            </ul>
+        </div>
     </div>
 
     <!-- 메인 컨텐츠 영역 -->
