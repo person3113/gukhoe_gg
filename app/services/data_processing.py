@@ -2,47 +2,40 @@ from sqlalchemy.orm import Session
 from typing import List, Dict, Any
 from scripts.calculate_scores import calculate_participation_scores
 
-def process_attendance_data(raw_data: List[Dict[str, Any]], db: Session) -> None:
+def process_attendance_data(raw_data: List[Dict[str, Any]], db: Session, reset_standing_committee: bool = False) -> None:
     """
     출석 데이터 처리 및 DB 저장
     
     Args:
         raw_data: 출석 데이터 리스트
         db: 데이터베이스 세션
+        reset_standing_committee: 상임위 데이터 초기화 여부 (기본값: False)
     """
     from app.models.attendance import Attendance
     from app.models.legislator import Legislator
-    from app.models.committee import Committee
     
     try:
+        # 상임위 데이터 초기화 옵션이 활성화된 경우
+        if reset_standing_committee:
+            # 상임위 데이터만 모두 삭제
+            deleted_count = db.query(Attendance).filter(
+                Attendance.meeting_type == '상임위'
+            ).delete()
+            print(f"기존 상임위 출석 데이터 {deleted_count}개 삭제됨")
+            db.commit()
+        
         processed_count = 0
         skipped_count = 0
         updated_count = 0
         
-        # 의원 및 위원회 캐시
+        # 의원 이름 캐시
         legislator_name_map = {}
-        committee_name_map = {}
-        
-        # 위원회 정보가 없으면 일단 생성하거나 None으로 처리
-        for data in raw_data:
-            if data['meeting_type'] == '상임위' and 'committee_name' in data:
-                committee_name = data['committee_name']
-                
-                if committee_name not in committee_name_map:
-                    committee = db.query(Committee).filter(Committee.dept_nm == committee_name).first()
-                    if not committee:
-                        # 위원회가 없으면 새로 생성
-                        committee = Committee(dept_nm=committee_name)
-                        db.add(committee)
-                        db.commit()
-                        print(f"새 위원회 생성: {committee_name}")
-                    committee_name_map[committee_name] = committee
         
         # 각 출석 데이터 처리
         for data in raw_data:
             legislator_name = data['legislator_name']
             
-            # 의원 정보 조회
+            # 의원 정보 조회 (캐시에 없으면 DB 조회)
             if legislator_name not in legislator_name_map:
                 legislator = db.query(Legislator).filter(Legislator.hg_nm == legislator_name).first()
                 if not legislator:
@@ -53,43 +46,34 @@ def process_attendance_data(raw_data: List[Dict[str, Any]], db: Session) -> None
             else:
                 legislator = legislator_name_map[legislator_name]
             
-            # 위원회 정보 처리 (상임위인 경우)
-            committee_id = None
-            if data['meeting_type'] == '상임위' and 'committee_name' in data:
-                committee_name = data['committee_name']
-                committee = committee_name_map.get(committee_name)
-                if committee:
-                    committee_id = committee.id
-            
             # 기존 데이터 확인
-            query = db.query(Attendance).filter(
+            existing_attendance = db.query(Attendance).filter(
                 Attendance.legislator_id == legislator.id,
                 Attendance.meeting_type == data['meeting_type'],
                 Attendance.status == data['status']
-            )
-            
-            if committee_id is not None:
-                query = query.filter(Attendance.committee_id == committee_id)
-            else:
-                query = query.filter(Attendance.committee_id == None)
-            
-            existing_attendance = query.first()
+            ).first()
             
             if existing_attendance:
-                # 기존 데이터가 있으면 count 업데이트
-                if existing_attendance.count != data.get('count', 0):
-                    print(f"출석 카운트 업데이트: {legislator.hg_nm}, {data['meeting_type']}, {data['status']}: {existing_attendance.count} -> {data.get('count', 0)}")
-                    existing_attendance.count = data.get('count', 0)
-                    updated_count += 1
+                # 상임위 데이터인 경우, 초기화 옵션이 False일 때만 합산
+                if data['meeting_type'] == '상임위' and not reset_standing_committee:
+                    new_count = existing_attendance.count + data.get('count', 0)
+                    print(f"상임위 출석 카운트 합산: {legislator.hg_nm}, {data['status']}: {existing_attendance.count} + {data.get('count', 0)} = {new_count}")
+                    existing_attendance.count = new_count
+                else:
+                    # 본회의 또는 상임위 초기화 옵션이 True인 경우 덮어쓰기
+                    if existing_attendance.count != data.get('count', 0):
+                        print(f"출석 카운트 업데이트: {legislator.hg_nm}, {data['meeting_type']}, {data['status']}: {existing_attendance.count} -> {data.get('count', 0)}")
+                        existing_attendance.count = data.get('count', 0)
+                updated_count += 1
             else:
-                # 새 데이터 추가 (meeting_date 제거)
+                # 새 데이터 추가
                 new_attendance = Attendance(
                     legislator_id=legislator.id,
-                    committee_id=committee_id,
+                    committee_id=None,  # committee_id는 항상 None으로 설정
                     meeting_type=data['meeting_type'],
                     status=data['status'],
-                    count=data.get('count', 0)
-                    # meeting_date 필드 제거
+                    count=data.get('count', 0),
+                    meeting_date=None  # meeting_date도 None으로 설정
                 )
                 db.add(new_attendance)
                 print(f"새 출석 데이터 추가: {legislator.hg_nm}, {data['meeting_type']}, {data['status']}: {data.get('count', 0)}")
@@ -104,14 +88,17 @@ def process_attendance_data(raw_data: List[Dict[str, Any]], db: Session) -> None
         
         # 출석 데이터가 추가되었으면 참여 점수 재계산
         if processed_count > 0 or updated_count > 0:
+            print("참여 점수 재계산 중...")
             from scripts.calculate_scores import calculate_participation_scores
             calculate_participation_scores(db)
+            print("참여 점수 재계산 완료")
         
     except Exception as e:
         db.rollback()
         print(f"출석 데이터 처리 오류: {str(e)}")
         import traceback
         traceback.print_exc()
+
 
 def process_speech_data(raw_data, db: Session):
     # 발언 데이터 정리 및 가공

@@ -317,40 +317,59 @@ def fetch_excel_data(db: Session):
     
     # 출석 엑셀 파일 처리
     processed_count = 0
-    all_attendance_files = []
     
-    for attendance_dir in [attendance_plenary_dir, attendance_standing_dir]:
-        attendance_files = glob.glob(os.path.join(attendance_dir, "*.xlsx"))
-        all_attendance_files.extend(attendance_files)
+    # 본회의와 상임위 파일 분리 처리
+    plenary_files = glob.glob(os.path.join(attendance_plenary_dir, "*.xlsx"))
+    standing_files = glob.glob(os.path.join(attendance_standing_dir, "*.xlsx"))
     
-    total_files = len(all_attendance_files)
-    print(f"총 {total_files}개의 출석 파일 발견됨")
-    
-    for file_path in all_attendance_files:
-        filename = os.path.basename(file_path)
-        print(f"파일 처리 중 ({processed_count+1}/{total_files}): {filename}")
+    # 본회의 파일 처리 (기존 방식)
+    if plenary_files:
+        total_files = len(plenary_files)
+        print(f"총 {total_files}개의 본회의 출석 파일 발견됨")
         
-        try:
-            # 출석 데이터 파싱
-            attendance_data = parse_attendance_excel(file_path)
+        all_plenary_data = []
+        for file_path in plenary_files:
+            filename = os.path.basename(file_path)
+            print(f"파일 처리 중 ({processed_count+1}/{total_files}): {filename}")
             
-            # 데이터 확인
-            if not attendance_data:
-                print(f"  - 파일에서 데이터를 찾을 수 없음: {filename}")
-                continue
-                
-            print(f"  - {len(attendance_data)}개의 출석 데이터 발견")
-            
-            # 데이터 처리 및 DB 저장
-            process_attendance_data(attendance_data, db)
-            processed_count += 1
-            
-        except Exception as e:
-            print(f"  - 파일 처리 오류: {filename}, 오류: {str(e)}")
+            try:
+                attendance_data = parse_attendance_excel(file_path)
+                if attendance_data:
+                    all_plenary_data.extend(attendance_data)
+                    processed_count += 1
+            except Exception as e:
+                print(f"  - 파일 처리 오류: {filename}, 오류: {str(e)}")
+        
+        # 본회의 데이터 처리 (초기화 없이)
+        if all_plenary_data:
+            print(f"  - {len(all_plenary_data)}개의 본회의 출석 데이터 처리 중...")
+            process_attendance_data(all_plenary_data, db, reset_standing_committee=False)
     
-    print(f"출석 데이터 처리 완료: {processed_count}/{total_files}개 파일")
+    # 상임위 파일 처리 (초기화 후 처리)
+    if standing_files:
+        total_files = len(standing_files)
+        print(f"총 {total_files}개의 상임위 출석 파일 발견됨")
+        
+        all_standing_data = []
+        for file_path in standing_files:
+            filename = os.path.basename(file_path)
+            print(f"파일 처리 중 ({processed_count+1}/{total_files}): {filename}")
+            
+            try:
+                attendance_data = parse_attendance_excel(file_path)
+                if attendance_data:
+                    all_standing_data.extend(attendance_data)
+                    processed_count += 1
+            except Exception as e:
+                print(f"  - 파일 처리 오류: {filename}, 오류: {str(e)}")
+        
+        # 상임위 데이터 처리 (초기화 후)
+        if all_standing_data:
+            print(f"  - {len(all_standing_data)}개의 상임위 출석 데이터 처리 중...")
+            # 상임위 데이터 초기화 후 처리
+            process_attendance_data(all_standing_data, db, reset_standing_committee=True)
     
-
+    print(f"출석 데이터 처리 완료: {processed_count}개 파일")
     print("\n엑셀 데이터 수집 완료")
 
 if __name__ == "__main__":

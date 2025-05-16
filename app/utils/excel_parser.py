@@ -14,6 +14,98 @@ def parse_attendance_excel(file_path: str) -> List[Dict[str, Any]]:
         List[Dict[str, Any]]: 출석 데이터 리스트
     """
     try:
+        # 폴더 경로로 구분
+        if '/plenary/' in file_path or '\\plenary\\' in file_path:
+            print(f"본회의 출석 파일로 인식됨 (폴더 경로): {file_path}")
+            return parse_plenary_attendance_excel(file_path)
+        elif '/standing_committee/' in file_path or '\\standing_committee\\' in file_path:
+            print(f"상임위 출석 파일로 인식됨 (폴더 경로): {file_path}")
+            return parse_standing_committee_attendance_excel(file_path)
+        
+        # 파일명으로 구분
+        filename = os.path.basename(file_path).lower()
+        if '_plenary_' in filename:
+            print(f"본회의 출석 파일로 인식됨 (파일명): {filename}")
+            return parse_plenary_attendance_excel(file_path)
+        elif '_standing' in filename:
+            print(f"상임위 출석 파일로 인식됨 (파일명): {filename}")
+            return parse_standing_committee_attendance_excel(file_path)
+        
+        # 이전 방식 호환성 유지
+        elif 'plenary' in filename or '본회의' in filename:
+            print(f"본회의 출석 파일로 인식됨 (이전 규칙): {filename}")
+            return parse_plenary_attendance_excel(file_path)
+        else:
+            print(f"기타 파일은 상임위로 처리: {filename}")
+            return parse_standing_committee_attendance_excel(file_path)
+            
+    except Exception as e:
+        print(f"출석 엑셀 파일 파싱 오류 ({file_path}): {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return []
+    """
+    출석 현황 엑셀 파일을 파싱 (본회의 또는 상임위)
+    
+    Args:
+        file_path: 엑셀 파일 경로
+    
+    Returns:
+        List[Dict[str, Any]]: 출석 데이터 리스트
+    """
+    try:
+        # 파일명 확인하여 본회의/상임위 구분
+        filename = os.path.basename(file_path).lower()
+        
+        # 명시적인 구분자가 있을 경우
+        if 'plenary' in filename:
+            print(f"본회의 출석 파일로 인식됨: {filename}")
+            return parse_plenary_attendance_excel(file_path)
+        elif 'standing' in filename:
+            print(f"상임위 출석 파일로 인식됨: {filename}")
+            return parse_standing_committee_attendance_excel(file_path)
+        
+        # 한글 파일명 구분
+        elif '본회의' in filename:
+            print(f"본회의 출석 파일로 인식됨(한글명): {filename}")
+            return parse_plenary_attendance_excel(file_path)
+        elif '상임위' in filename:
+            print(f"상임위 출석 파일로 인식됨(한글명): {filename}")
+            return parse_standing_committee_attendance_excel(file_path)
+        
+        # 시트 구조로 판단 시도
+        else:
+            try:
+                # 엑셀 시트 확인
+                xls = pd.ExcelFile(file_path)
+                sheets = xls.sheet_names
+                
+                if '22대' in sheets:
+                    print(f"시트 기반으로 본회의 출석 파일로 인식됨: {filename}")
+                    return parse_plenary_attendance_excel(file_path)
+                else:
+                    print(f"기타 출석 파일은 상임위로 처리: {filename}")
+                    return parse_standing_committee_attendance_excel(file_path)
+            except:
+                # 마지막 대안으로 상임위로 처리
+                print(f"판단 불가능한 파일은 상임위로 처리: {filename}")
+                return parse_standing_committee_attendance_excel(file_path)
+            
+    except Exception as e:
+        print(f"출석 엑셀 파일 파싱 오류 ({file_path}): {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return []
+    """
+    출석 현황 엑셀 파일을 파싱 (본회의 또는 상임위)
+    
+    Args:
+        file_path: 엑셀 파일 경로
+    
+    Returns:
+        List[Dict[str, Any]]: 출석 데이터 리스트
+    """
+    try:
         # 파일명 확인하여 본회의/상임위 구분
         filename = os.path.basename(file_path).lower()
         
@@ -119,6 +211,138 @@ def parse_plenary_attendance_excel(file_path: str) -> List[Dict[str, Any]]:
         return []
 
 def parse_standing_committee_attendance_excel(file_path: str) -> List[Dict[str, Any]]:
+    """
+    상임위 출석 현황 엑셀 파일을 파싱 (단순화된 버전)
+    
+    Args:
+        file_path: 엑셀 파일 경로
+    
+    Returns:
+        List[Dict[str, Any]]: 출석 데이터 리스트
+    """
+    try:
+        # 엑셀 파일 로드
+        df = pd.read_excel(file_path)
+        
+        print(f"상임위 출석 엑셀 데이터 형태: {df.shape}")
+        print(f"컬럼명: {df.columns.tolist()}")
+        
+        # 의원별 상태별 카운트를 저장할 딕셔너리
+        legislator_counts = {}
+        
+        # 각 행 처리
+        for _, row in df.iterrows():
+            # 의원명 확인
+            legislator_name = row['의원명']
+            if pd.isna(legislator_name) or not legislator_name:
+                continue
+            
+            # 문자열로 변환 및 공백 제거
+            legislator_name = str(legislator_name).strip()
+            
+            # 의원별 상태별 카운트 초기화
+            if legislator_name not in legislator_counts:
+                legislator_counts[legislator_name] = {
+                    "회의일수": 0,
+                    "출석": 0,
+                    "결석": 0,
+                    "청가": 0,
+                    "출장": 0,
+                    "결석신고서": 0
+                }
+            
+            # 각 상태별 값 추출 및 합산
+            for status in ["회의일수", "출석", "결석", "청가", "출장", "결석신고서"]:
+                if status in row:
+                    value = row[status]
+                    if not pd.isna(value):
+                        try:
+                            # 문자열이나 숫자를 정수로 변환 시도
+                            count = int(value)
+                            legislator_counts[legislator_name][status] += count
+                        except (ValueError, TypeError):
+                            # 변환 불가능한 경우 경고 출력
+                            print(f"경고: '{legislator_name}' 의원의 '{status}' 값 '{value}'를 정수로 변환할 수 없습니다.")
+        
+        # 결과 리스트 생성
+        attendance_data = []
+        
+        # 합산된 의원별 데이터를 결과 형식으로 변환
+        for legislator_name, status_counts in legislator_counts.items():
+            for status, count in status_counts.items():
+                attendance_data.append({
+                    "legislator_name": legislator_name,
+                    "meeting_type": "상임위",
+                    "status": status,
+                    "count": count
+                })
+        
+        print(f"상임위 출석 데이터 파싱 완료: {len(attendance_data)}개")
+        return attendance_data
+        
+    except Exception as e:
+        print(f"상임위 출석 엑셀 파일 파싱 오류 ({file_path}): {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return []
+    """
+    상임위 출석 현황 엑셀 파일을 파싱 (단순화된 버전)
+    
+    Args:
+        file_path: 엑셀 파일 경로
+    
+    Returns:
+        List[Dict[str, Any]]: 출석 데이터 리스트
+    """
+    try:
+        # 엑셀 파일 로드
+        df = pd.read_excel(file_path)
+        
+        print(f"상임위 출석 엑셀 데이터 형태: {df.shape}")
+        print(f"컬럼명: {df.columns.tolist()}")
+        
+        # 결과 리스트 초기화
+        attendance_data = []
+        
+        # 각 행 처리
+        for _, row in df.iterrows():
+            # 의원명 확인
+            legislator_name = row['의원명']
+            if pd.isna(legislator_name) or not legislator_name:
+                continue
+            
+            # 각 상태별 데이터 추출
+            statuses = [
+                ("회의일수", row.get('회의일수', 0)),
+                ("출석", row.get('출석', 0)),
+                ("결석", row.get('결석', 0)),
+                ("청가", row.get('청가', 0)),
+                ("출장", row.get('출장', 0)),
+                ("결석신고서", row.get('결석신고서', 0))
+            ]
+            
+            # 각 상태에 대해 데이터 생성
+            for status, count in statuses:
+                if pd.isna(count):
+                    count = 0
+                else:
+                    count = int(count)
+                
+                attendance_data.append({
+                    "legislator_name": str(legislator_name).strip(),
+                    "meeting_type": "상임위",
+                    "status": status,
+                    "count": count
+                })
+        
+        print(f"상임위 출석 데이터 파싱 완료: {len(attendance_data)}개")
+        return attendance_data
+        
+    except Exception as e:
+        print(f"상임위 출석 엑셀 파일 파싱 오류 ({file_path}): {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return []
     """
     상임위 출석 현황 엑셀 파일을 파싱
     
