@@ -107,8 +107,8 @@
     <!-- 특정 정당 상세 화면 -->
     <div class="row">
         <!-- 정당 통계 요약 -->
-        <div class="col-md-4 mb-4">
-            <div class="card h-100">
+        <div class="col-12 mb-4">
+            <div class="card">
                 <div class="card-header">
                     <h5>{{ party_name }} 통계 요약</h5>
                 </div>
@@ -152,64 +152,64 @@
         </div>
         
         <!-- 정당 소속 의원 목록 -->
-        <div class="col-md-8 mb-4">
+        <div class="col-12">
             <div class="card">
                 <div class="card-header">
                     <h5>{{ party_name }} 소속 의원 목록</h5>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                      <table class="table table-striped" id="legislators-table">
-                          <thead>
-                              <tr>
-                                  <th data-sort="overall_rank">순위 <i class="sort-icon"></i></th>
-                                  <th>의원명</th>
-                                  <th>티어</th>
-                                  <th data-sort="overall_score">종합점수 <i class="sort-icon"></i></th>
-                                  <th data-sort="participation_score">참여 <i class="sort-icon"></i></th>
-                                  <th data-sort="legislation_score">입법활동 <i class="sort-icon"></i></th>
-                                  <th data-sort="speech_score">의정발언 <i class="sort-icon"></i></th>
-                                  <th data-sort="voting_score">표결책임성 <i class="sort-icon"></i></th>
-                                  <th data-sort="cooperation_score">협치/초당적활동 <i class="sort-icon"></i></th>
-                              </tr>
-                          </thead>
-                          <tbody>
-                              {% for legislator in legislators %}
-                              <tr data-overall_rank="{{ legislator.overall_rank }}"
-                                  data-overall_score="{{ legislator.overall_score }}"
-                                  data-participation_score="{{ legislator.participation_score }}"
-                                  data-legislation_score="{{ legislator.legislation_score }}"
-                                  data-speech_score="{{ legislator.speech_score }}"
-                                  data-voting_score="{{ legislator.voting_score }}"
-                                  data-cooperation_score="{{ legislator.cooperation_score }}">
-                                  <td>{{ legislator.overall_rank }}</td>
-                                  <td>
-                                      <a href="/champions/{{ legislator.id }}">
-                                          {{ legislator.name }}
-                                      </a>
-                                  </td>
-                                  <td>
-                                      <span class="badge 
-                                          {% if legislator.tier == 'Challenger' %}bg-danger{% 
-                                          elif legislator.tier == 'Master' %}bg-warning{% 
-                                          elif legislator.tier == 'Diamond' %}bg-info{% 
-                                          elif legislator.tier == 'Platinum' %}bg-success{% 
-                                          elif legislator.tier == 'Gold' %}bg-warning text-dark{% 
-                                          elif legislator.tier == 'Silver' %}bg-secondary{% 
-                                          else %}bg-dark{% endif %}">
-                                          {{ legislator.tier }}
-                                      </span>
-                                  </td>
-                                  <td>{{ legislator.overall_score }}</td>
-                                  <td>{{ legislator.participation_score }}</td>
-                                  <td>{{ legislator.legislation_score }}</td>
-                                  <td>{{ legislator.speech_score }}</td>
-                                  <td>{{ legislator.voting_score }}</td>
-                                  <td>{{ legislator.cooperation_score }}</td>
-                              </tr>
-                              {% endfor %}
-                          </tbody>
-                      </table>
+                    <table class="table table-striped" id="legislators-table">
+                        <thead>
+                            <tr>
+                                <th data-sort="overall_rank">순위 <i class="sort-icon"></i></th>
+                                <th>의원명</th>
+                                <th>티어</th>
+                                <th data-sort="overall_score">종합점수 <i class="sort-icon"></i></th>
+                                <th data-sort="participation_score">참여 <i class="sort-icon"></i></th>
+                                <th data-sort="legislation_score">입법활동 <i class="sort-icon"></i></th>
+                                <th data-sort="speech_score">의정발언 <i class="sort-icon"></i></th>
+                                <th data-sort="voting_score">표결책임성 <i class="sort-icon"></i></th>
+                                <th data-sort="cooperation_score">협치/초당적활동 <i class="sort-icon"></i></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for legislator in legislators %}
+                            <tr data-overall_rank="{{ legislator.overall_rank }}"
+                                data-overall_score="{{ legislator.overall_score }}"
+                                data-participation_score="{{ legislator.participation_score }}"
+                                data-legislation_score="{{ legislator.legislation_score }}"
+                                data-speech_score="{{ legislator.speech_score }}"
+                                data-voting_score="{{ legislator.voting_score }}"
+                                data-cooperation_score="{{ legislator.cooperation_score }}">
+                                <td>{{ legislator.overall_rank }}</td>
+                                <td>
+                                    <a href="/champions/{{ legislator.id }}">
+                                        {{ legislator.name }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge 
+                                        {% if legislator.tier == 'Challenger' %}bg-danger{% 
+                                        elif legislator.tier == 'Master' %}bg-warning{% 
+                                        elif legislator.tier == 'Diamond' %}bg-info{% 
+                                        elif legislator.tier == 'Platinum' %}bg-success{% 
+                                        elif legislator.tier == 'Gold' %}bg-warning text-dark{% 
+                                        elif legislator.tier == 'Silver' %}bg-secondary{% 
+                                        else %}bg-dark{% endif %}">
+                                        {{ legislator.tier }}
+                                    </span>
+                                </td>
+                                <td>{{ legislator.overall_score }}</td>
+                                <td>{{ legislator.participation_score }}</td>
+                                <td>{{ legislator.legislation_score }}</td>
+                                <td>{{ legislator.speech_score }}</td>
+                                <td>{{ legislator.voting_score }}</td>
+                                <td>{{ legislator.cooperation_score }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                     </div>
                 </div>
             </div>
