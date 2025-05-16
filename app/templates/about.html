@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}국회.gg - 소개{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">국회.gg 소개</h1>
+    
+    <!-- 서비스 목표 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3>국회.gg의 목표</h3>
+        </div>
+        <div class="card-body">
+            <p>국회.gg는 국회의원들의 의정활동을 게임의 티어 시스템처럼 직관적으로 보여주는 서비스입니다. 
+            복잡한 의정활동 데이터를 시각화하고 누구나 쉽게 이해할 수 있도록 하는 것이 목표입니다.</p>
+            
+            <p>주요 목표:</p>
+            <ul>
+                <li>국회의원들의 활동을 쉽고 재미있게 확인할 수 있는 플랫폼 제공</li>
+                <li>시민들의 정치 참여와 관심을 높이는 새로운 방식 제안</li>
+                <li>투명한 의정활동 평가 기준을 통한 정보 접근성 향상</li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- 평가 방식 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3>평가 방식 및 티어 시스템</h3>
+        </div>
+        <div class="card-body">
+            <p>국회.gg는 다양한 의정활동 지표를 바탕으로 국회의원들을 평가하고 티어를 부여합니다.</p>
+            
+            <h5>주요 평가 항목</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <ul>
+                        <li>참여 점수 (출석률, 회의 참여도)</li>
+                        <li>입법활동 점수 (대표발의안, 공동발의안)</li>
+                        <li>의정발언 점수 (발언 횟수, 다양성)</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <ul>
+                        <li>표결 책임성 점수 (본회의 표결 참여)</li>
+                        <li>협치/초당적 활동 점수 (여야 협력도)</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <h5 class="mt-4">티어 시스템</h5>
+            <p>종합 점수를 기준으로 다음과 같은 티어로 분류됩니다:</p>
+            
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>티어</th>
+                            <th>상위 비율</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="badge bg-danger">Challenger</span></td><td>상위 0.03%</td></tr>
+                        <tr><td><span class="badge bg-warning">Grandmaster</span></td><td>상위 0.08%</td></tr>
+                        <tr><td><span class="badge bg-warning">Master</span></td><td>상위 0.67%</td></tr>
+                        <tr><td><span class="badge bg-info">Diamond</span></td><td>상위 2.65%</td></tr>
+                        <tr><td><span class="badge bg-info">Emerald</span></td><td>상위 8.76%</td></tr>
+                        <tr><td><span class="badge bg-success">Platinum</span></td><td>상위 11.97%</td></tr>
+                        <tr><td><span class="badge bg-warning text-dark">Gold</span></td><td>상위 17.81%</td></tr>
+                        <tr><td><span class="badge bg-secondary">Silver</span></td><td>상위 19.40%</td></tr>
+                        <tr><td><span class="badge bg-secondary">Bronze</span></td><td>상위 19.85%</td></tr>
+                        <tr><td><span class="badge bg-dark">Iron</span></td><td>나머지 18.79%</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="alert alert-warning mt-3">
+                <strong>주의사항:</strong> 이 티어 시스템은 직관적인 이해를 위한 도구일 뿐, 국회의원의 활동을 온전히 평가하기는 어렵습니다. 
+                다양한 상황과 맥락을 고려하여 참고용으로만 활용해 주시기 바랍니다.
+            </div>
+        </div>
+    </div>
+    
+    <!-- 자료 출처 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3>자료 출처 및 한계점</h3>
+        </div>
+        <div class="card-body">
+            <h5>주요 자료 출처</h5>
+            <ul>
+                <li>국회 의안정보시스템 Open API</li>
+                <li>국회 회의록 시스템</li>
+                <li>국회의원 인적사항 API</li>
+                <li>본회의 표결 정보</li>
+            </ul>
+            
+            <h5 class="mt-4">서비스의 한계점</h5>
+            <div class="alert alert-info">
+                <p>국회.gg는 공개된 데이터를 바탕으로 가능한 객관적인 평가를 제공하려 노력하고 있으나, 다음과 같은 한계점이 있습니다:</p>
+                <ul>
+                    <li>국회의원의 질적인 활동(발언의 질, 법안의 중요도 등)을 충분히 반영하기 어려움</li>
+                    <li>지역구 활동, 상임위원회 외 비공개 활동 등은 데이터에 포함되지 않음</li>
+                    <li>정치적 상황과 맥락에 따른 해석의 차이가 존재함</li>
+                </ul>
+                <p class="mb-0">이 사이트는 가볍고 보조적인 도구에 불과하므로, 더 자세한 정보와 정확한 평가를 위해서는 공식 국회 홈페이지를 방문하시기 바랍니다.</p>
+            </div>
+            
+            <div class="mt-4">
+                <h5>관련 공식 사이트</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title">대한민국 국회</h6>
+                                <p class="card-text">국회 공식 홈페이지로 의정활동과 국회 소식을 제공합니다.</p>
+                                <a href="https://www.assembly.go.kr" target="_blank" class="btn btn-primary">방문하기</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title">열린국회정보</h6>
+                                <p class="card-text">국회 관련 각종 통계 및 데이터를 제공합니다.</p>
+                                <a href="https://open.assembly.go.kr" target="_blank" class="btn btn-primary">방문하기</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 면책 조항 및 정보 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3>면책 조항</h3>
+        </div>
+        <div class="card-body">
+            <p>국회.gg는 공익 목적의 정보 제공 서비스로, 제공되는 모든 정보는 참고용으로만 활용해 주시기 바랍니다. 
+            데이터 수집 및 가공 과정에서 오류가 있을 수 있으며, 이로 인한 책임은 지지 않습니다.</p>
+            
+            <p>더 정확하고 상세한 정보는 공식 국회 홈페이지와 관련 기관을 통해 확인해 주시기 바랍니다.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
