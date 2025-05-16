@@ -3,6 +3,7 @@ import os
 import re
 from typing import List, Dict, Any
 
+
 def parse_attendance_excel(file_path: str) -> List[Dict[str, Any]]:
     """
     출석 현황 엑셀 파일을 파싱 (본회의 또는 상임위)
@@ -14,54 +15,23 @@ def parse_attendance_excel(file_path: str) -> List[Dict[str, Any]]:
         List[Dict[str, Any]]: 출석 데이터 리스트
     """
     try:
-        # 폴더 경로로 구분
-        if '/plenary/' in file_path or '\\plenary\\' in file_path:
-            print(f"본회의 출석 파일로 인식됨 (폴더 경로): {file_path}")
-            return parse_plenary_attendance_excel(file_path)
-        elif '/standing_committee/' in file_path or '\\standing_committee\\' in file_path:
-            print(f"상임위 출석 파일로 인식됨 (폴더 경로): {file_path}")
-            return parse_standing_committee_attendance_excel(file_path)
+        # 임시 파일 확인 (파일명에 ~$가 포함된 경우)
+        filename = os.path.basename(file_path)
+        if '~$' in filename:
+            print(f"임시 파일을 건너뜁니다: {filename}")
+            return []
         
-        # 파일명으로 구분
-        filename = os.path.basename(file_path).lower()
-        if '_plenary_' in filename:
-            print(f"본회의 출석 파일로 인식됨 (파일명): {filename}")
-            return parse_plenary_attendance_excel(file_path)
-        elif '_standing' in filename:
-            print(f"상임위 출석 파일로 인식됨 (파일명): {filename}")
-            return parse_standing_committee_attendance_excel(file_path)
+        # 파일 경로 정규화 및 디렉토리 부분으로 분리
+        normalized_path_parts = os.path.normpath(file_path).split(os.path.sep)
+        filename = filename.lower()
         
-        # 이전 방식 호환성 유지
-        elif 'plenary' in filename or '본회의' in filename:
-            print(f"본회의 출석 파일로 인식됨 (이전 규칙): {filename}")
-            return parse_plenary_attendance_excel(file_path)
-        else:
-            print(f"기타 파일은 상임위로 처리: {filename}")
-            return parse_standing_committee_attendance_excel(file_path)
-            
-    except Exception as e:
-        print(f"출석 엑셀 파일 파싱 오류 ({file_path}): {str(e)}")
-        import traceback
-        traceback.print_exc()
-        return []
-    """
-    출석 현황 엑셀 파일을 파싱 (본회의 또는 상임위)
-    
-    Args:
-        file_path: 엑셀 파일 경로
-    
-    Returns:
-        List[Dict[str, Any]]: 출석 데이터 리스트
-    """
-    try:
-        # 파일명 확인하여 본회의/상임위 구분
-        filename = os.path.basename(file_path).lower()
-        
-        # 명시적인 구분자가 있을 경우
-        if 'plenary' in filename:
+        # 경로에 'plenary'가 포함되어 있거나 파일명에 'plenary'가 포함된 경우
+        if 'plenary' in normalized_path_parts or 'plenary' in filename:
             print(f"본회의 출석 파일로 인식됨: {filename}")
             return parse_plenary_attendance_excel(file_path)
-        elif 'standing' in filename:
+        
+        # 경로에 'standing_committee'가 포함되어 있거나 파일명에 'standing'이 포함된 경우
+        elif 'standing_committee' in normalized_path_parts or 'standing' in filename:
             print(f"상임위 출석 파일로 인식됨: {filename}")
             return parse_standing_committee_attendance_excel(file_path)
         
@@ -90,51 +60,6 @@ def parse_attendance_excel(file_path: str) -> List[Dict[str, Any]]:
                 # 마지막 대안으로 상임위로 처리
                 print(f"판단 불가능한 파일은 상임위로 처리: {filename}")
                 return parse_standing_committee_attendance_excel(file_path)
-            
-    except Exception as e:
-        print(f"출석 엑셀 파일 파싱 오류 ({file_path}): {str(e)}")
-        import traceback
-        traceback.print_exc()
-        return []
-    """
-    출석 현황 엑셀 파일을 파싱 (본회의 또는 상임위)
-    
-    Args:
-        file_path: 엑셀 파일 경로
-    
-    Returns:
-        List[Dict[str, Any]]: 출석 데이터 리스트
-    """
-    try:
-        # 파일명 확인하여 본회의/상임위 구분
-        filename = os.path.basename(file_path).lower()
-        
-        if 'plenary' in filename:
-            print(f"본회의 출석 파일로 인식됨: {filename}")
-            return parse_plenary_attendance_excel(file_path)
-        elif 'standing' in filename:
-            print(f"상임위 출석 파일로 인식됨: {filename}")
-            return parse_standing_committee_attendance_excel(file_path)
-        else:
-            print(f"알 수 없는 출석 파일 형식: {filename}")
-            # 확장자 기반 구분 시도
-            try:
-                # 엑셀 시트 구조 확인하여 자동 파악 시도
-                xls = pd.ExcelFile(file_path)
-                sheets = xls.sheet_names
-                
-                if '22대' in sheets:
-                    print(f"시트 기반으로 본회의 출석 파일로 인식됨: {filename}")
-                    return parse_plenary_attendance_excel(file_path)
-                else:
-                    print(f"시트 기반으로 상임위 출석 파일로 인식됨: {filename}")
-                    return parse_standing_committee_attendance_excel(file_path)
-            except:
-                # 마지막 방법으로 파일명 대소문자 무시하고 확인
-                if 'plenary' in filename.lower() or '본회의' in filename:
-                    return parse_plenary_attendance_excel(file_path)
-                else:
-                    return parse_standing_committee_attendance_excel(file_path)
             
     except Exception as e:
         print(f"출석 엑셀 파일 파싱 오류 ({file_path}): {str(e)}")

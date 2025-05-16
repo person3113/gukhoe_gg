@@ -156,6 +156,10 @@ def test_parse_attendance_excel():
                 
                 print(f"DB에 {legislator_count}명의 의원 정보가 있습니다.")
                 
+                 # 기존 출석 데이터 초기화 (추가된 부분)
+                deleted_count = db.query(Attendance).delete()
+                db.commit()
+                print(f"\n기존 출석 데이터 {deleted_count}개를 초기화했습니다.")
                 # 모든 파일의 데이터를 수집
                 all_attendance_data = []
                 for file_path in all_files:
