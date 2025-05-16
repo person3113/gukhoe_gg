@@ -9,6 +9,7 @@ class Committee(Base):
     
     # 기본 컬럼 정의
     id = Column(Integer, primary_key=True, index=True)
+    dept_cd = Column(String, unique=True, index=True)  # 위원회 코드 추가
     dept_nm = Column(String, unique=True, index=True)  # 위원회명
     avg_score = Column(Float)  # 평균 점수
     rcp_cnt = Column(Integer)  # 접수건수
