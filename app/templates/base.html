@@ -127,7 +127,7 @@
                     <a class="nav-link" href="/">홈</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/champions">챔피언</a>
+                    <a class="nav-link" href="/champions">국회의원</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="/ranking">활동 랭킹</a>
@@ -135,7 +135,7 @@
                     {% if request.path.startswith('/ranking') %}
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
-                            <a class="nav-link sub-link {% if request.path == '/ranking/participation' %}active{% endif %}" href="/ranking/participation">참여</a>
+                            <a class="nav-link sub-link {% if request.path == '/ranking/participation' %}active{% endif %}" href="/ranking/participation">참여도</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link sub-link {% if request.path == '/ranking/legislation' %}active{% endif %}" href="/ranking/legislation">입법활동</a>
@@ -147,7 +147,7 @@
                             <a class="nav-link sub-link {% if request.path == '/ranking/voting' %}active{% endif %}" href="/ranking/voting">표결 책임성</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link sub-link {% if request.path == '/ranking/cooperation' %}active{% endif %}" href="/ranking/cooperation">협치/초당적 활동</a>
+                            <a class="nav-link sub-link {% if request.path == '/ranking/cooperation' %}active{% endif %}" href="/ranking/cooperation">정당 간 협력</a>
                         </li>
                     </ul>
                     {% endif %}
@@ -164,7 +164,7 @@
                             <a class="nav-link sub-link {% if request.path == '/misc-ranking/committee' %}active{% endif %}" href="/misc-ranking/committee">위원회별</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link sub-link {% if request.path == '/misc-ranking/term' %}active{% endif %}" href="/misc-ranking/term">초선/재선+</a>
+                            <a class="nav-link sub-link {% if request.path == '/misc-ranking/term' %}active{% endif %}" href="/misc-ranking/term">의원 경력별</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link sub-link {% if request.path == '/misc-ranking/age' %}active{% endif %}" href="/misc-ranking/age">나이별</a>

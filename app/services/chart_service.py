@@ -48,7 +48,7 @@ def generate_comparison_chart_data(stats: Dict[str, Any], avg_stats: Optional[Di
         차트 데이터 딕셔너리
     """
     # 차트 라벨 (카테고리)
-    labels = ["참여", "입법활동", "의정발언", "표결 책임성", "협치/초당적 활동"]
+    labels = ["참여도", "입법활동", "의정발언", "표결 책임성", "정당 간 협력"]
     
     # 의원 스탯 데이터
     personal_data = [
