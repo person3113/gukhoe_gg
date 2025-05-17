@@ -30,6 +30,22 @@ def get_filter_options(db: Session) -> Dict[str, List[str]]:
     terms = db.query(Legislator.reele_gbn_nm).distinct().all()
     term_list = [term[0] for term in terms if term[0]]
     
+    # 초선/재선 목록 정렬 (숫자 추출 후 정렬)
+    def term_sort_key(term):
+        # "초선", "재선", "3선", "4선", "5선" 등의 형태에서 숫자를 추출
+        if term == "초선":
+            return 1
+        elif term == "재선":
+            return 2
+        else:
+            # "3선", "4선", "5선" 등에서 숫자만 추출
+            for char in term:
+                if char.isdigit():
+                    return int(char)
+            return 999  # 숫자를 찾지 못한 경우 큰 숫자 반환
+    
+    term_list.sort(key=term_sort_key)
+    
     # 선거구 목록 조회
     districts = db.query(Legislator.orig_nm).distinct().all()
     district_list = [district[0] for district in districts if district[0]]
