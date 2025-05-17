@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>관리자 대시보드</h1>
+    
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5>점수 계산</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>전체 점수 계산</h6>
+                    <button id="calculate-all" class="btn btn-primary">전체 점수 계산</button>
+                    <button id="calculate-all-force" class="btn btn-warning">강제 재계산</button>
+                </div>
+                <div class="col-md-6">
+                    <h6>카테고리별 점수 계산</h6>
+                    <div class="input-group mb-3">
+                        <select id="category-select" class="form-select">
+                            <option value="participation">참여도</option>
+                            <option value="legislation">입법활동</option>
+                            <option value="speech">의정발언</option>
+                            <option value="voting">표결 책임성</option>
+                            <option value="cooperation">협치/초당적 활동</option>
+                            <option value="overall">종합 점수만</option>
+                        </select>
+                        <button id="calculate-category" class="btn btn-primary">계산</button>
+                        <button id="calculate-category-force" class="btn btn-warning">강제 계산</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-3">
+                <div id="result-box" class="alert d-none"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('calculate-all').addEventListener('click', function() {
+        calculateScores();
+    });
+    
+    document.getElementById('calculate-all-force').addEventListener('click', function() {
+        calculateScores(null, true);
+    });
+    
+    document.getElementById('calculate-category').addEventListener('click', function() {
+        const category = document.getElementById('category-select').value;
+        calculateScores(category);
+    });
+    
+    document.getElementById('calculate-category-force').addEventListener('click', function() {
+        const category = document.getElementById('category-select').value;
+        calculateScores(category, true);
+    });
+    
+    function calculateScores(category = null, force = false) {
+        // 결과 박스 초기화
+        const resultBox = document.getElementById('result-box');
+        resultBox.className = 'alert alert-info';
+        resultBox.classList.remove('d-none');
+        resultBox.textContent = '점수 계산 중...';
+        
+        // API 호출 URL 생성
+        let url = '/admin/calculate-scores';
+        const params = new URLSearchParams();
+        if (category) params.append('category', category);
+        if (force) params.append('force', 'true');
+        if (params.toString()) url += '?' + params.toString();
+        
+        // API 호출
+        fetch(url, {
+            method: 'POST',
+        })
+        .then(response => response.json())
+        .then(data => {
+            resultBox.className = 'alert alert-success';
+            resultBox.textContent = data.message;
+        })
+        .catch(error => {
+            resultBox.className = 'alert alert-danger';
+            resultBox.textContent = '오류 발생: ' + error.message;
+        });
+    }
+</script>
+{% endblock %}

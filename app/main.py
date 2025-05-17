@@ -36,7 +36,10 @@ def setup_routes(app):
     app.include_router(ranking.router)
     app.include_router(misc_ranking.router)
     app.include_router(about.router)
-    pass
+    
+    # 관리자 라우터 추가
+    from app.api import admin
+    app.include_router(admin.router)
 
 def setup_static(app):
     # 정적 파일 디렉토리 설정

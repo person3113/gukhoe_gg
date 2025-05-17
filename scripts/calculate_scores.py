@@ -1,12 +1,12 @@
 import sys
 import os
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 # 프로젝트 루트 디렉토리 추가
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from app.db.database import SessionLocal
-from app.services.ranking_service import RankingService
 from app.services.tier_service import TierService
 
 # 먼저 모든 모델을 명시적으로 임포트하여 순환 참조 문제 해결
@@ -186,12 +186,78 @@ def calculate_cooperation_scores(db: Session):
 
 def calculate_overall_scores(db: Session):
     """
-    종합 점수 계산
+    종합 점수 계산 (모든 스탯에 스케일링 적용)
     """
-    # 각 카테고리별 점수에 가중치 적용
-    # 의원별 종합 점수 계산
-    # DB 업데이트
-    pass
+    try:
+        # 모든 의원 조회
+        legislators = db.query(Legislator).all()
+        
+        # 전체 스탯의 현재 최대값 찾기
+        max_participation = db.query(func.max(Legislator.participation_score)).scalar() or 1
+        max_legislation = db.query(func.max(Legislator.legislation_score)).scalar() or 1
+        max_speech = db.query(func.max(Legislator.speech_score)).scalar() or 1
+        max_voting = db.query(func.max(Legislator.voting_score)).scalar() or 1
+        max_cooperation = db.query(func.max(Legislator.cooperation_score)).scalar() or 1
+        
+        # 스케일링 목표 설정
+        TARGET_MAX = 100       # 목표 최대 점수
+        TARGET_AVG = 40        # 목표 평균 점수
+        BASE_SCORE = 15        # 기본 점수 (최소 15점은 보장)
+        
+        # 스케일링 계수 계산 (각 스탯을 100점 만점으로 변환)
+        scale_participation = (TARGET_MAX - BASE_SCORE) / max_participation if max_participation > 0 else 1
+        scale_legislation = (TARGET_MAX - BASE_SCORE) / max_legislation if max_legislation > 0 else 1
+        scale_speech = (TARGET_MAX - BASE_SCORE) / max_speech if max_speech > 0 else 1
+        scale_voting = (TARGET_MAX - BASE_SCORE) / max_voting if max_voting > 0 else 1
+        scale_cooperation = (TARGET_MAX - BASE_SCORE) / max_cooperation if max_cooperation > 0 else 1
+        
+        print(f"스케일링 계수 - 참여: {scale_participation:.2f}, 입법: {scale_legislation:.2f}, "
+              f"발언: {scale_speech:.2f}, 표결: {scale_voting:.2f}, 협치: {scale_cooperation:.2f}")
+        
+        # 의원별 점수 계산 및 DB 업데이트
+        for legislator in legislators:
+            # 기존 각 카테고리 점수 (None인 경우 0으로 처리)
+            participation = legislator.participation_score or 0
+            legislation = legislator.legislation_score or 0
+            speech = legislator.speech_score or 0
+            voting = legislator.voting_score or 0
+            cooperation = legislator.cooperation_score or 0
+            
+            # 스케일링 적용 (기본 점수 + 스케일링된 점수)
+            participation_scaled = min(BASE_SCORE + (participation * scale_participation), 100)
+            legislation_scaled = min(BASE_SCORE + (legislation * scale_legislation), 100)
+            speech_scaled = min(BASE_SCORE + (speech * scale_speech), 100)
+            voting_scaled = min(BASE_SCORE + (voting * scale_voting), 100)
+            cooperation_scaled = min(BASE_SCORE + (cooperation * scale_cooperation), 100)
+            
+            # 스케일링된 점수 저장
+            legislator.participation_score = participation_scaled
+            legislator.legislation_score = legislation_scaled
+            legislator.speech_score = speech_scaled
+            legislator.voting_score = voting_scaled
+            legislator.cooperation_score = cooperation_scaled
+            
+            # 가중치에 따른 종합 점수 계산
+            overall_score = (
+                participation_scaled * 0.15 +  # 참여도 (15%)
+                legislation_scaled * 0.4 +     # 입법활동 (40%)
+                speech_scaled * 0.25 +         # 의정발언 (25%)
+                voting_scaled * 0.1 +          # 표결 책임성 (10%)
+                cooperation_scaled * 0.1       # 협치/초당적 활동 (10%)
+            )
+            
+            # 종합 점수 저장
+            legislator.overall_score = overall_score
+        
+        # 변경사항 저장
+        db.commit()
+        print(f"종합 점수 계산 완료: {len(legislators)}명")
+        
+    except Exception as e:
+        db.rollback()
+        print(f"종합 점수 계산 중 오류 발생: {str(e)}")
+        import traceback
+        traceback.print_exc()
 
 def update_tiers(db: Session):
     """
@@ -199,18 +265,14 @@ def update_tiers(db: Session):
     """
     # 호출: TierService(db).update_tiers()로 티어 업데이트
     # DB 업데이트
-    tier_service = TierService(db)
-    tier_service.update_tiers()
     pass
 
 def update_rankings(db: Session):
     """
     랭킹 업데이트
     """
-    # 호출: RankingService(db).update_rankings()로 랭킹 업데이트
+    # 호출: update_rankings()로 랭킹 업데이트
     # DB 업데이트
-    ranking_service = RankingService(db)
-    ranking_service.update_rankings()
     pass
 
 if __name__ == "__main__":
