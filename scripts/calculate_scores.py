@@ -292,13 +292,100 @@ def calculate_voting_scores(db: Session):
 
 def calculate_cooperation_scores(db: Session):
     """
-    협치/초당적 활동 점수 계산
+    협치/초당적 활동 점수 계산 - 이념 성향에 따른 가중치 적용
     """
-    # DB에서 법안 공동발의 데이터 조회
-    # 의원별 타 정당 의원과 공동발의 비율 계산
-    # 점수 산출 알고리즘 적용
-    # DB 업데이트
-    pass
+    try:
+        # SQLAlchemy text() 함수 임포트 추가
+        from sqlalchemy import text
+        
+        # 진보/보수 정당 구분
+        progressive_parties = ["조국혁신당", "더불어민주당", "기본소득당", "진보당", "사회민주당"]
+        conservative_parties = ["국민의힘", "개혁신당"]
+        
+        # 모든 의원과 그들의 정당 정보를 한 번에 조회하여 캐싱
+        all_legislators = db.query(Legislator).all()
+        legislator_parties = {leg.id: leg.poly_nm for leg in all_legislators}
+        
+        # 무소속 의원 매핑
+        independent_mapping = {
+            "김상욱": "국민의힘",
+            "우원식": "더불어민주당",
+            "김종민": "더불어민주당"
+        }
+        
+        # 각 의원별 이념 성향 캐싱
+        legislator_ideologies = {}
+        for leg_id, party in legislator_parties.items():
+            leg = next((l for l in all_legislators if l.id == leg_id), None)
+            
+            # 무소속 처리
+            if party == "무소속" and leg and leg.hg_nm in independent_mapping:
+                party = independent_mapping[leg.hg_nm]
+            
+            if party in progressive_parties:
+                legislator_ideologies[leg_id] = "progressive"
+            elif party in conservative_parties:
+                legislator_ideologies[leg_id] = "conservative"
+            else:
+                legislator_ideologies[leg_id] = "other"
+        
+        # 각 의원별 점수 계산
+        for legislator in all_legislators:
+            # 의원 자신의 성향
+            leg_id = legislator.id
+            leg_ideology = legislator_ideologies.get(leg_id, "other")
+            
+            # 해당 의원이 함께 발의한 다른 의원들의 정당 통계 가져오기
+            # text() 함수로 SQL 쿼리 감싸기
+            coworker_query = text("""
+            SELECT b.legislator_id, COUNT(*) as count
+            FROM bill_co_proposers a
+            JOIN bill_co_proposers b ON a.bill_id = b.bill_id AND b.legislator_id != :leg_id
+            WHERE a.legislator_id = :leg_id
+            GROUP BY b.legislator_id
+            """)
+            
+            coworkers = db.execute(coworker_query, {"leg_id": leg_id}).fetchall()
+            
+            if not coworkers:
+                legislator.cooperation_score = 0
+                continue
+            
+            # 성향 다른 의원과의 협력 비율 계산
+            total_cooperations = sum(count for _, count in coworkers)
+            weighted_score = 0
+            
+            for coworker_id, count in coworkers:
+                coworker_ideology = legislator_ideologies.get(coworker_id, "other")
+                
+                # 다른 이념 성향과의 협력은 높은 가중치
+                if leg_ideology != coworker_ideology and leg_ideology != "other" and coworker_ideology != "other":
+                    weighted_score += count * 3
+                # 같은 이념 성향의 다른 정당과의 협력은 낮은 가중치
+                elif legislator_parties.get(leg_id) != legislator_parties.get(coworker_id):
+                    weighted_score += count * 1
+            
+            # 총 협력 수로 나누어 가중 평균 구하기
+            cooperation_score = min((weighted_score / total_cooperations) * 20, 100)
+            
+            # DB 업데이트
+            legislator.cooperation_score = cooperation_score
+        
+        # 변경사항 저장
+        db.commit()
+        print(f"협치/초당적 활동 점수 계산 완료: {len(all_legislators)}명")
+        
+        # 간단한 통계 출력
+        valid_scores = [leg.cooperation_score for leg in all_legislators if leg.cooperation_score is not None]
+        if valid_scores:
+            avg_score = sum(valid_scores) / len(valid_scores)
+            print(f"협치/초당적 활동 점수 평균: {avg_score:.1f}")
+        
+    except Exception as e:
+        db.rollback()
+        print(f"협치/초당적 활동 점수 계산 중 오류 발생: {str(e)}")
+        import traceback
+        traceback.print_exc()
 
 def calculate_overall_scores(db: Session):
     """
