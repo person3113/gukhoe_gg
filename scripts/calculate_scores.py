@@ -366,7 +366,7 @@ def calculate_cooperation_scores(db: Session):
                     weighted_score += count * 1
             
             # 총 협력 수로 나누어 가중 평균 구하기
-            cooperation_score = min((weighted_score / total_cooperations) * 20, 100)
+            cooperation_score = min((weighted_score / total_cooperations) * 33.33, 100)
             
             # DB 업데이트
             legislator.cooperation_score = cooperation_score
@@ -499,19 +499,142 @@ def calculate_overall_scores(db: Session):
 
 def update_tiers(db: Session):
     """
-    티어 업데이트
+    종합 점수 분포에 따른 티어 할당
+    
+    Args:
+        db: 데이터베이스 세션
     """
-    # 호출: TierService(db).update_tiers()로 티어 업데이트
-    # DB 업데이트
-    pass
+    try:
+        print("티어 업데이트 시작...")
+        
+        # 티어 서비스 인스턴스 생성
+        tier_service = TierService(db)
+        
+        # 의원들을 종합점수 기준으로 내림차순 정렬
+        legislators = db.query(Legislator).order_by(Legislator.overall_score.desc()).all()
+        
+        if not legislators:
+            print("티어 업데이트 실패: 의원 데이터가 없습니다.")
+            return
+        
+        total_legislators = len(legislators)
+        print(f"총 {total_legislators}명의 의원 티어를 업데이트합니다.")
+        
+        # 각 티어의 목표 인원수 계산
+        tier_limits = {}
+        accumulated = 0
+        
+        for tier, percentage in tier_service.tiers.items():
+            # 각 티어별 의원 수 계산 (비율에 따라)
+            count = round(total_legislators * percentage / 100)
+            tier_limits[tier] = {
+                'start': accumulated,
+                'end': accumulated + count - 1  # 인덱스는 0부터 시작하므로 -1
+            }
+            accumulated += count
+        
+        # 모든 티어를 합했을 때 전체 의원수와 맞지 않는 경우 보정
+        if accumulated != total_legislators:
+            # 남은 인원을 마지막 티어에 추가
+            last_tier = list(tier_limits.keys())[-1]
+            tier_limits[last_tier]['end'] += (total_legislators - accumulated)
+        
+        # 각 의원의 티어 할당
+        for i, legislator in enumerate(legislators):
+            # 해당 인덱스가 속하는 티어 찾기
+            assigned_tier = None
+            for tier, limit in tier_limits.items():
+                if limit['start'] <= i <= limit['end']:
+                    assigned_tier = tier
+                    break
+            
+            # 티어 업데이트
+            if assigned_tier:
+                legislator.tier = assigned_tier
+        
+        # 변경사항 저장
+        db.commit()
+        
+        # 티어 분포 통계 출력
+        tier_distribution = {}
+        for legislator in legislators:
+            if legislator.tier in tier_distribution:
+                tier_distribution[legislator.tier] += 1
+            else:
+                tier_distribution[legislator.tier] = 1
+        
+        print("티어 분포:")
+        for tier, count in tier_distribution.items():
+            percentage = (count / total_legislators) * 100
+            print(f"  {tier}: {count}명 ({percentage:.1f}%)")
+        
+        print("티어 업데이트 완료")
+        
+    except Exception as e:
+        db.rollback()
+        print(f"티어 업데이트 중 오류 발생: {str(e)}")
+        import traceback
+        traceback.print_exc()
 
 def update_rankings(db: Session):
     """
-    랭킹 업데이트
+    종합 점수 기준 순위(overall_rank) 업데이트
+    
+    Args:
+        db: 데이터베이스 세션
     """
-    # 호출: update_rankings()로 랭킹 업데이트
-    # DB 업데이트
-    pass
+    try:
+        print("랭킹 업데이트 시작...")
+        
+        # 종합 점수 기준으로 의원들을 내림차순 정렬
+        legislators = db.query(Legislator).order_by(Legislator.overall_score.desc()).all()
+        
+        if not legislators:
+            print("랭킹 업데이트 실패: 의원 데이터가 없습니다.")
+            return
+        
+        # 순위 할당 (동점자는 같은 순위 적용)
+        current_rank = 1
+        previous_score = None
+        skipped_ranks = 0
+        
+        for i, legislator in enumerate(legislators):
+            current_score = legislator.overall_score
+            
+            # 점수가 없는 경우 가장 낮은 순위 부여
+            if current_score is None:
+                legislator.overall_rank = len(legislators)
+                continue
+            
+            # 이전 점수와 비교 (첫 번째 의원 또는 점수가 다른 경우)
+            if previous_score is None or current_score != previous_score:
+                # 새로운 순위 = 현재 기본 순위 + 건너뛴 순위 수
+                current_rank = i + 1
+                skipped_ranks = 0
+            else:
+                # 동점자는 같은 순위 유지 (skipped_ranks는 증가하지 않음)
+                skipped_ranks += 1
+            
+            # 순위 업데이트
+            legislator.overall_rank = current_rank
+            
+            # 현재 점수를 이전 점수로 저장
+            previous_score = current_score
+        
+        # 변경사항 저장
+        db.commit()
+        
+        # 간단한 통계 출력
+        min_rank = min(leg.overall_rank for leg in legislators if leg.overall_rank is not None)
+        max_rank = max(leg.overall_rank for leg in legislators if leg.overall_rank is not None)
+        
+        print(f"총 {len(legislators)}명의 의원 랭킹 업데이트 완료 (순위 범위: {min_rank}-{max_rank})")
+        
+    except Exception as e:
+        db.rollback()
+        print(f"랭킹 업데이트 중 오류 발생: {str(e)}")
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
     calculate_all_scores()
