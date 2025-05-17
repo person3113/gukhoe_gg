@@ -157,12 +157,54 @@ def calculate_legislation_scores(db: Session):
 def calculate_speech_scores(db: Session):
     """
     의정발언 점수 계산
+    - 발언 횟수 정규화: (의원 발언 수 / 최대 발언 수) × 100
     """
-    # DB에서 발언 데이터 조회
-    # 의원별 발언 횟수, 키워드 다양성 등 계산
-    # 점수 산출 알고리즘 적용
-    # DB 업데이트
-    pass
+    try:
+        # 모든 의원 조회
+        legislators = db.query(Legislator).all()
+        
+        # 발언 데이터 조회 (SpeechByMeeting 테이블)
+        speech_data = {}
+        max_speech_count = 0
+        
+        # 모든 의원의 발언 횟수 조회
+        for legislator in legislators:
+            # 의원별 발언 횟수 조회
+            speech_record = db.query(SpeechByMeeting).filter(
+                SpeechByMeeting.legislator_id == legislator.id
+            ).first()
+            
+            # 발언 횟수 저장
+            speech_count = speech_record.count if speech_record else 0
+            speech_data[legislator.id] = speech_count
+            
+            # 최대 발언 횟수 갱신
+            if speech_count > max_speech_count:
+                max_speech_count = speech_count
+        
+        # 최대값이 0인 경우 처리 (0으로 나누기 방지)
+        if max_speech_count == 0:
+            max_speech_count = 1
+            print("경고: 최대 발언 횟수가 0입니다!")
+        
+        # 각 의원별 점수 계산 및 DB 업데이트
+        for legislator in legislators:
+            # 발언 횟수 정규화 (100점 만점)
+            speech_count = speech_data.get(legislator.id, 0)
+            normalized_score = (speech_count / max_speech_count) * 100
+            
+            # DB 업데이트
+            legislator.speech_score = normalized_score
+        
+        # 변경사항 저장
+        db.commit()
+        print(f"의정발언 점수 계산 완료: {len(legislators)}명")
+        
+    except Exception as e:
+        db.rollback()
+        print(f"의정발언 점수 계산 중 오류 발생: {str(e)}")
+        import traceback
+        traceback.print_exc()
 
 def calculate_voting_scores(db: Session):
     """
@@ -186,64 +228,87 @@ def calculate_cooperation_scores(db: Session):
 
 def calculate_overall_scores(db: Session):
     """
-    종합 점수 계산 (모든 스탯에 스케일링 적용)
+    종합 점수 계산 - 시각적 효과를 위한 재스케일링 적용
     """
     try:
         # 모든 의원 조회
         legislators = db.query(Legislator).all()
         
-        # 전체 스탯의 현재 최대값 찾기
-        max_participation = db.query(func.max(Legislator.participation_score)).scalar() or 1
-        max_legislation = db.query(func.max(Legislator.legislation_score)).scalar() or 1
-        max_speech = db.query(func.max(Legislator.speech_score)).scalar() or 1
-        max_voting = db.query(func.max(Legislator.voting_score)).scalar() or 1
-        max_cooperation = db.query(func.max(Legislator.cooperation_score)).scalar() or 1
+        print("종합 점수 계산 시작...")
         
-        # 스케일링 목표 설정
-        TARGET_MAX = 100       # 목표 최대 점수
-        TARGET_AVG = 40        # 목표 평균 점수
-        BASE_SCORE = 15        # 기본 점수 (최소 15점은 보장)
+        # 각 카테고리별 최대값, 최소값, 평균값 계산 (NULL 제외)
+        max_scores = {}
+        min_scores = {}
+        avg_scores = {}
         
-        # 스케일링 계수 계산 (각 스탯을 100점 만점으로 변환)
-        scale_participation = (TARGET_MAX - BASE_SCORE) / max_participation if max_participation > 0 else 1
-        scale_legislation = (TARGET_MAX - BASE_SCORE) / max_legislation if max_legislation > 0 else 1
-        scale_speech = (TARGET_MAX - BASE_SCORE) / max_speech if max_speech > 0 else 1
-        scale_voting = (TARGET_MAX - BASE_SCORE) / max_voting if max_voting > 0 else 1
-        scale_cooperation = (TARGET_MAX - BASE_SCORE) / max_cooperation if max_cooperation > 0 else 1
+        # 각 카테고리 점수 통계 계산
+        categories = ['participation_score', 'legislation_score', 'speech_score', 
+                      'voting_score', 'cooperation_score']
         
-        print(f"스케일링 계수 - 참여: {scale_participation:.2f}, 입법: {scale_legislation:.2f}, "
-              f"발언: {scale_speech:.2f}, 표결: {scale_voting:.2f}, 협치: {scale_cooperation:.2f}")
+        for category in categories:
+            # NULL이 아닌 점수만 필터링
+            non_null_scores = [getattr(leg, category) for leg in legislators 
+                              if getattr(leg, category) is not None]
+            
+            if non_null_scores:
+                max_scores[category] = max(non_null_scores)
+                min_scores[category] = min(non_null_scores)
+                avg_scores[category] = sum(non_null_scores) / len(non_null_scores)
+                print(f"{category} - 최대: {max_scores[category]:.1f}, 최소: {min_scores[category]:.1f}, 평균: {avg_scores[category]:.1f}")
+            else:
+                max_scores[category] = 0
+                min_scores[category] = 0
+                avg_scores[category] = 0
+                print(f"{category} - 계산된 점수 없음")
         
-        # 의원별 점수 계산 및 DB 업데이트
+        # 시각적 효과를 위한 목표 분포 설정
+        TARGET_MIN = 15  # 최소 점수
+        TARGET_MAX = 100  # 최대 점수
+        TARGET_AVG = 40  # 목표 평균 점수
+        
+        # 각 카테고리별 스케일링 함수 생성
+        def scale_score(score, category):
+            if score is None or max_scores[category] == min_scores[category]:
+                return TARGET_MIN  # NULL이거나 모든 점수가 같으면 최소값 반환
+                
+            # 최소-최대 정규화 후 목표 범위로 스케일링
+            normalized = (score - min_scores[category]) / (max_scores[category] - min_scores[category])
+            scaled = TARGET_MIN + normalized * (TARGET_MAX - TARGET_MIN)
+            return scaled
+        
+        # 의원별 종합 점수 계산 및 DB 업데이트
         for legislator in legislators:
-            # 기존 각 카테고리 점수 (None인 경우 0으로 처리)
-            participation = legislator.participation_score or 0
-            legislation = legislator.legislation_score or 0
-            speech = legislator.speech_score or 0
-            voting = legislator.voting_score or 0
-            cooperation = legislator.cooperation_score or 0
+            # 각 카테고리 점수 스케일링
+            participation = scale_score(legislator.participation_score, 'participation_score') if legislator.participation_score else 0
+            legislation = scale_score(legislator.legislation_score, 'legislation_score') if legislator.legislation_score else 0
+            speech = scale_score(legislator.speech_score, 'speech_score') if legislator.speech_score else 0
+            voting = scale_score(legislator.voting_score, 'voting_score') if legislator.voting_score else 0
+            cooperation = scale_score(legislator.cooperation_score, 'cooperation_score') if legislator.cooperation_score else 0
             
-            # 스케일링 적용 (기본 점수 + 스케일링된 점수)
-            participation_scaled = min(BASE_SCORE + (participation * scale_participation), 100)
-            legislation_scaled = min(BASE_SCORE + (legislation * scale_legislation), 100)
-            speech_scaled = min(BASE_SCORE + (speech * scale_speech), 100)
-            voting_scaled = min(BASE_SCORE + (voting * scale_voting), 100)
-            cooperation_scaled = min(BASE_SCORE + (cooperation * scale_cooperation), 100)
+            # 계산된 카테고리 점수가 없으면 기본값 사용
+            if not any([legislator.participation_score, legislator.legislation_score, 
+                       legislator.speech_score, legislator.voting_score, legislator.cooperation_score]):
+                print(f"의원 ID {legislator.id}: 계산된 카테고리 점수 없음, 기본값 사용")
+                participation = TARGET_MIN
+                legislation = TARGET_MIN
+                speech = TARGET_MIN
+                voting = TARGET_MIN
+                cooperation = TARGET_MIN
             
-            # 스케일링된 점수 저장
-            legislator.participation_score = participation_scaled
-            legislator.legislation_score = legislation_scaled
-            legislator.speech_score = speech_scaled
-            legislator.voting_score = voting_scaled
-            legislator.cooperation_score = cooperation_scaled
+            # 스케일링된 점수 저장 (원본은 유지하고 시각화용으로만 사용할 경우 이 부분 주석 처리)
+            # legislator.participation_score = participation
+            # legislator.legislation_score = legislation
+            # legislator.speech_score = speech
+            # legislator.voting_score = voting
+            # legislator.cooperation_score = cooperation
             
             # 가중치에 따른 종합 점수 계산
             overall_score = (
-                participation_scaled * 0.15 +  # 참여도 (15%)
-                legislation_scaled * 0.4 +     # 입법활동 (40%)
-                speech_scaled * 0.25 +         # 의정발언 (25%)
-                voting_scaled * 0.1 +          # 표결 책임성 (10%)
-                cooperation_scaled * 0.1       # 협치/초당적 활동 (10%)
+                participation * 0.15 +  # 참여도 (15%)
+                legislation * 0.4 +     # 입법활동 (40%)
+                speech * 0.25 +         # 의정발언 (25%)
+                voting * 0.1 +          # 표결 책임성 (10%)
+                cooperation * 0.1       # 협치/초당적 활동 (10%)
             )
             
             # 종합 점수 저장
@@ -252,6 +317,11 @@ def calculate_overall_scores(db: Session):
         # 변경사항 저장
         db.commit()
         print(f"종합 점수 계산 완료: {len(legislators)}명")
+        
+        # 결과 샘플 출력
+        if legislators:
+            sample = legislators[0]
+            print(f"샘플 의원(ID: {sample.id}) - 종합 점수: {sample.overall_score:.1f}")
         
     except Exception as e:
         db.rollback()
