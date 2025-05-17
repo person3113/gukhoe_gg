@@ -108,7 +108,7 @@
             <div class="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-3">
                 {% for committee in committees %}
                 <div class="col">
-                    <a href="/misc-ranking/committee?committee_name={{ committee }}" class="btn btn-outline-primary w-100 {% if committee_name == committee %}active{% endif %}">{{ committee }}</a>
+                    <a href="/misc-ranking/committee?committee_name={{ committee }}" class="btn btn-outline-primary w-100 {% if committee_name == committee %}active{% endif %}" title="{{ committee }}">{{ committee[:5] }}</a>
                 </div>
                 {% endfor %}
             </div>
