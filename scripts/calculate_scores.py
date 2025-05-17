@@ -224,12 +224,71 @@ def calculate_speech_scores(db: Session):
 def calculate_voting_scores(db: Session):
     """
     표결 책임성 점수 계산
+    - 표결 참여율 계산: (기권표+불참 제외 나머지) / 전체 표결 × 100
+    - 감점 요소 반영: 표결 참여율 - (기권 횟수 × 0.5 + 불참 횟수 × 1.0) / 전체 표결 수 × 10
+    - 최소 0점, 최대 100점으로 제한
     """
-    # DB에서 표결 데이터 조회
-    # 의원별 기권률, 불참률 계산
-    # 점수 산출 알고리즘 적용 (낮을수록 높은 점수)
-    # DB 업데이트
-    pass
+    try:
+        # 모든 의원 조회
+        legislators = db.query(Legislator).all()
+        
+        # 의원별 표결 데이터 처리
+        for legislator in legislators:
+            # 해당 의원의 모든 표결 결과 조회
+            vote_results = db.query(VoteResult).filter(
+                VoteResult.legislator_id == legislator.id
+            ).all()
+            
+            # 표결 데이터가 없는 경우
+            if not vote_results:
+                # 데이터 없음 = 0점 처리
+                legislator.voting_score = 0
+                continue
+            
+            # 전체 표결 수
+            total_votes = len(vote_results)
+            
+            # 각 유형별 표결 수 계산
+            participation_count = 0  # 참여 (찬성 또는 반대)
+            abstention_count = 0     # 기권
+            absent_count = 0         # 불참
+            
+            for result in vote_results:
+                if result.result_vote_mod in ["찬성", "반대"]:
+                    participation_count += 1
+                elif result.result_vote_mod == "기권":
+                    abstention_count += 1
+                else:  # 불참 또는 기타
+                    absent_count += 1
+            
+            # 표결 참여율 계산 (0-100 범위)
+            participation_rate = (participation_count / total_votes) * 100 if total_votes > 0 else 0
+            
+            # 감점 요소 계산 (0-100 범위)
+            penalty = ((abstention_count * 0.5 + absent_count * 1.0) / total_votes) * 10 if total_votes > 0 else 0
+            
+            # 최종 표결 책임성 점수 계산 (감점 적용)
+            voting_score = participation_rate - penalty
+            
+            # 최소 0점, 최대 100점으로 제한
+            voting_score = max(0, min(100, voting_score))
+            
+            # DB에 점수 업데이트
+            legislator.voting_score = voting_score
+        
+        # 변경사항 저장
+        db.commit()
+        print(f"표결 책임성 점수 계산 완료: {len(legislators)}명")
+        
+        # 간단한 통계 출력
+        avg_score = sum(leg.voting_score for leg in legislators if leg.voting_score is not None) / len([leg for leg in legislators if leg.voting_score is not None])
+        print(f"표결 책임성 점수 평균: {avg_score:.1f}")
+        
+    except Exception as e:
+        db.rollback()
+        print(f"표결 책임성 점수 계산 중 오류 발생: {str(e)}")
+        import traceback
+        traceback.print_exc()
 
 def calculate_cooperation_scores(db: Session):
     """
