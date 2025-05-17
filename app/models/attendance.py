@@ -11,10 +11,10 @@ class Attendance(Base):
     id = Column(Integer, primary_key=True, index=True)
     legislator_id = Column(Integer, ForeignKey("legislators.id"), index=True)
     committee_id = Column(Integer, ForeignKey("committees.id"), nullable=True, index=True)
-    meeting_date = Column(String)  # 회의일자
+    meeting_date = Column(String)  # 회의일자 
     meeting_type = Column(String)  # 회의구분 (본회의/상임위)
     status = Column(String)  # 출석상태 (출석/결석/청가/출장/결석신고서)
-    
+    count = Column(Integer, default=0)  # 카운트 필드 추가
     # 관계 정의 - 단방향으로 변경하기 위해 제거
     # legislator = relationship("Legislator", back_populates="attendances")
     # committee = relationship("Committee", back_populates="attendances")

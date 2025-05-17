@@ -10,10 +10,16 @@ from app.models.sns import LegislatorSNS
 # 프로젝트 루트 디렉토리 추가
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+from app.db.database import SessionLocal
+from app.models.sns import LegislatorSNS
+
 from app.models.legislator import Legislator
 from app.services.api_service import ApiService
 from app.utils.excel_parser import parse_attendance_excel, parse_speech_keywords_excel, parse_speech_by_meeting_excel
 from app.services.data_processing import process_attendance_data, process_speech_data, process_bill_data, process_vote_data
+from app.services.data_processing import process_keyword_data
+from scripts.calculate_scores import calculate_speech_scores
+from app.models.attendance import Attendance
 
 def fetch_all_data():
     """
@@ -663,7 +669,161 @@ def fetch_excel_data(db: Session):
     # 호출: excel_parser.parse_speech_by_meeting_excel()로 회의별 발언 데이터 수집
     # 호출: process_attendance_data(), process_speech_data()로 데이터 처리
     # DB에 저장
-    pass
+    """
+    엑셀 파일에서 데이터 수집
+    """
+    import os
+    import glob
+    from app.utils.excel_parser import parse_speech_by_meeting_excel
+    from app.services.data_processing import process_speech_data
+    
+    print("엑셀 데이터 수집 시작...")
+
+    # 1. 회의별 발언 데이터 처리 
+    # 엑셀 파일 경로 설정
+    speech_by_meeting_dir = "data/excel/speech/speech_by_meeting"
+    
+    # 폴더가 존재하는지 확인하고 없으면 생성
+    if not os.path.exists(speech_by_meeting_dir):
+        os.makedirs(speech_by_meeting_dir, exist_ok=True)
+        print(f"폴더 생성: {speech_by_meeting_dir}")
+        print("발언 데이터가 없습니다. 먼저 엑셀 파일을 넣으세요.")
+        return
+    
+    # 회의별 발언 엑셀 파일 처리
+    processed_count = 0
+    speech_files = glob.glob(os.path.join(speech_by_meeting_dir, "*_speech_by_meeting.xlsx"))
+    total_files = len(speech_files)
+    
+    print(f"총 {total_files}개의 회의별 발언 파일 발견됨")
+    
+    for file_path in speech_files:
+        filename = os.path.basename(file_path)
+        print(f"파일 처리 중 ({processed_count+1}/{total_files}): {filename}")
+        
+        try:
+            # 회의별 발언 데이터 파싱
+            speech_data = parse_speech_by_meeting_excel(file_path)
+            
+            # 데이터 확인
+            if not speech_data:
+                print(f"  - 파일에서 데이터를 찾을 수 없음: {filename}")
+                continue
+                
+            print(f"  - {len(speech_data)}개의 회의별 발언 데이터 발견")
+            
+            # 데이터 처리 및 DB 저장
+            process_speech_data(speech_data, db)
+            processed_count += 1
+            
+        except Exception as e:
+            print(f"  - 파일 처리 오류: {filename}, 오류: {str(e)}")
+    
+    print(f"회의별 발언 데이터 처리 완료: {processed_count}/{total_files}개 파일")
+
+    # 2. 키워드 데이터 처리
+    keywords_dir = "data/excel/speech/keywords"
+    
+    if os.path.exists(keywords_dir):
+        processed_count = 0
+        keyword_files = glob.glob(os.path.join(keywords_dir, "*_speech_keywords.xlsx"))
+        total_files = len(keyword_files)
+        
+        print(f"\n총 {total_files}개의 키워드 파일 발견됨")
+        
+        for file_path in keyword_files:
+            filename = os.path.basename(file_path)
+            print(f"파일 처리 중 ({processed_count+1}/{total_files}): {filename}")
+            
+            try:
+                keyword_data = parse_speech_keywords_excel(file_path)
+                
+                if not keyword_data:
+                    print(f"  - 파일에서 데이터를 찾을 수 없음: {filename}")
+                    continue
+                    
+                print(f"  - {len(keyword_data)}개의 키워드 데이터 발견")
+                process_keyword_data(keyword_data, db)
+                processed_count += 1
+                
+            except Exception as e:
+                print(f"  - 파일 처리 오류: {filename}, 오류: {str(e)}")
+        
+        print(f"키워드 데이터 처리 완료: {processed_count}/{total_files}개 파일")
+    else:
+        print(f"키워드 폴더가 없습니다: {keywords_dir}")
+    
+
+    # 3. 출석 데이터 처리
+    print("\n=== 출석 데이터 수집 ===")
+    attendance_plenary_dir = "data/excel/attendance/plenary"
+    attendance_standing_dir = "data/excel/attendance/standing_committee"
+    
+    # 폴더 존재 확인 및 생성
+    for dir_path in [attendance_plenary_dir, attendance_standing_dir]:
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path, exist_ok=True)
+            print(f"폴더 생성: {dir_path}")
+    
+    # 본회의와 상임위 파일 목록 가져오기
+    plenary_files = glob.glob(os.path.join(attendance_plenary_dir, "*.xlsx"))
+    standing_files = glob.glob(os.path.join(attendance_standing_dir, "*.xlsx"))
+    
+    # 임시 파일 필터링 (파일명에 ~$가 포함된 경우)
+    plenary_files = [f for f in plenary_files if '~$' not in os.path.basename(f)]
+    standing_files = [f for f in standing_files if '~$' not in os.path.basename(f)]
+    
+    print(f"본회의 출석 파일: {len(plenary_files)}개")
+    print(f"상임위 출석 파일: {len(standing_files)}개")
+    
+    # 모든 출석 데이터 수집
+    all_attendance_data = []
+    processed_count = 0
+    
+    # 본회의 파일 처리
+    for file_path in plenary_files:
+        filename = os.path.basename(file_path)
+        print(f"파일 처리 중 ({processed_count+1}/{len(plenary_files) + len(standing_files)}): {filename}")
+        
+        try:
+            attendance_data = parse_attendance_excel(file_path)
+            if attendance_data:
+                all_attendance_data.extend(attendance_data)
+                processed_count += 1
+                print(f"  - {len(attendance_data)}개의 출석 데이터 추출")
+        except Exception as e:
+            print(f"  - 파일 처리 오류: {filename}, 오류: {str(e)}")
+    
+    # 상임위 파일 처리
+    for file_path in standing_files:
+        filename = os.path.basename(file_path)
+        print(f"파일 처리 중 ({processed_count+1}/{len(plenary_files) + len(standing_files)}): {filename}")
+        
+        try:
+            attendance_data = parse_attendance_excel(file_path)
+            if attendance_data:
+                all_attendance_data.extend(attendance_data)
+                processed_count += 1
+                print(f"  - {len(attendance_data)}개의 출석 데이터 추출")
+        except Exception as e:
+            print(f"  - 파일 처리 오류: {filename}, 오류: {str(e)}")
+    
+    # 출석 데이터 처리
+    if all_attendance_data:
+        print(f"\n총 {len(all_attendance_data)}개의 출석 데이터 처리 중...")
+        
+        # 기존 출석 데이터 모두 초기화
+        deleted_count = db.query(Attendance).delete()
+        db.commit()
+        print(f"기존 출석 데이터 {deleted_count}개 삭제됨")
+        
+        # 모든 출석 데이터 한 번에 처리
+        process_attendance_data(all_attendance_data, db)
+    else:
+        print("처리할 출석 데이터가 없습니다.")
+    
+    print(f"출석 데이터 처리 완료: {processed_count}개 파일")
+    print("\n엑셀 데이터 수집 완료")
 
 if __name__ == "__main__":
     fetch_all_data()
