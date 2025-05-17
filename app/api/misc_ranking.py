@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, Request
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from typing import Optional
 from fastapi.templating import Jinja2Templates
@@ -58,9 +59,18 @@ async def party_ranking(request: Request, db: Session = Depends(get_db), party_n
     Returns:
         템플릿 렌더링
     """
-    # 정당 목록 미리 조회 (공통)
-    party_query = db.query(Legislator.poly_nm).distinct().all()
-    parties = [party[0] for party in party_query]
+    # 정당별 인원수로 정렬된 정당 목록 조회
+    party_counts_query = db.query(
+        Legislator.poly_nm,
+        func.count(Legislator.id).label("count")
+    ).group_by(
+        Legislator.poly_nm
+    ).order_by(
+        func.count(Legislator.id).desc()
+    ).all()
+    
+    # 정당명만 추출
+    parties = [party_name for party_name, count in party_counts_query if party_name]
     
     # 정당별 평균 종합점수 조회 (항상 필요)
     party_scores = stats_service.get_party_average_scores(db)
@@ -186,7 +196,13 @@ async def term_ranking(request: Request, db: Session = Depends(get_db), term: Op
     """
     # 초선/재선 목록 미리 조회 (공통)
     term_query = db.query(Legislator.reele_gbn_nm).distinct().all()
-    terms = [term[0] for term in term_query if term[0]]
+    unsorted_terms = [term[0] for term in term_query if term[0]]
+    
+    # 선수 순서 정의 (초선부터 5선까지)
+    term_order = {"초선": 1, "재선": 2, "3선": 3, "4선": 4, "5선": 5, "6선": 6, "7선": 7, "8선": 8, "9선": 9}
+    
+    # 정렬된 선수 목록 생성
+    terms = sorted(unsorted_terms, key=lambda x: term_order.get(x, 999))
     
     # 선수별 티어 분포 조회 (항상 필요)
     tier_distribution = stats_service.get_tier_distribution_by_term(db)
@@ -312,6 +328,9 @@ async def gender_ranking(request: Request, db: Session = Depends(get_db), gender
     # 성별 목록 미리 조회 (공통)
     gender_query = db.query(Legislator.sex_gbn_nm).distinct().all()
     genders = [gender[0] for gender in gender_query if gender[0]]
+    # 성별을 '남', '여' 순서로 정렬
+    if '남' in genders and '여' in genders:
+        genders = ['남', '여']
     
     # 성별 티어 분포 조회 (항상 필요)
     tier_distribution = stats_service.get_tier_distribution_by_gender(db)
