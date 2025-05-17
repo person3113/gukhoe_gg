@@ -190,7 +190,7 @@
                             <select class="form-select" id="committee" name="committee">
                                 <option value="">전체</option>
                                 {% for committee in committees %}
-                                <option value="{{ committee }}" {% if current_filters.committee == committee %}selected{% endif %}>{{ committee }}</option>
+                                <option value="{{ committee }}" {% if current_filters.committee == committee %}selected{% endif %}>{{ committee[:5] }}{% if committee|length > 5 %}{% endif %}</option>
                                 {% endfor %}
                             </select>
                         </div>
