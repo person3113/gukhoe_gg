@@ -1088,3 +1088,52 @@ class ApiService:
             import traceback
             traceback.print_exc()
             return None
+
+    def fetch_speech_counts(self, legislator_names=None):
+        """
+        국회회의록 빅데이터 사이트에서 의원별 발언 횟수 수집
+        
+        Args:
+            legislator_names: 발언 횟수를 수집할 의원 이름 목록 (None인 경우 DB에서 조회)
+        
+        Returns:
+            List[Dict[str, Any]]: 의원 이름과 발언 횟수 리스트
+        """
+        from app.db.database import SessionLocal
+        from app.models.legislator import Legislator
+        from app.utils.speech_parser import parse_speech_count_from_nanet
+        from time import sleep
+        
+        try:
+            print("국회회의록 빅데이터 사이트에서 의원 발언 횟수 수집 시작...")
+            
+            # 없으면 DB에서 의원 이름 조회
+            if not legislator_names:
+                db = SessionLocal()
+                try:
+                    query = db.query(Legislator.hg_nm).all()
+                    legislator_names = [name[0] for name in query if name[0]]
+                finally:
+                    db.close()
+            
+            # 결과 리스트 초기화
+            speech_counts = []
+            
+            # 의원별 발언 횟수 파싱
+            for i, name in enumerate(legislator_names):
+                count = parse_speech_count_from_nanet(name)
+                speech_counts.append({
+                    "name": name,
+                    "count": count
+                })
+                print(f"[{i+1}/{len(legislator_names)}] {name}: {count}회")
+                
+                # 서버 부하 방지를 위한 지연
+                sleep(1)
+            
+            print(f"발언 횟수 수집 완료: {len(speech_counts)}명")
+            return speech_counts
+        
+        except Exception as e:
+            print(f"발언 횟수 수집 중 오류 발생: {str(e)}")
+            return []

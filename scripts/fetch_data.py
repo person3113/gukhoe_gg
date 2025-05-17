@@ -42,9 +42,12 @@ def fetch_all_data():
         # 위원회 정보 수집 (의원-위원회 매핑)
         fetch_committees(db)
 
-        # 위원회 경력 정보 수집 (추가)
+        # 위원회 경력 정보 수집 
         fetch_committee_history(db)
         
+        # 발언 횟수 수집 및 업데이트 
+        fetch_speech_counts(db)
+
         # 엑셀 데이터 수집
         fetch_excel_data(db)
         
@@ -559,6 +562,97 @@ def fetch_committee_history(db: Session):
     # 마지막 커밋
     db.commit()
     print(f"위원회 경력 정보 수집 완료: {processed_count}개")
+
+def fetch_speech_counts(db: Session):
+    """
+    국회회의록 빅데이터 사이트에서 의원 발언 횟수 수집 및 DB 업데이트
+    
+    Args:
+        db: 데이터베이스 세션
+    """
+    from app.models.legislator import Legislator
+    from app.models.speech import SpeechByMeeting
+    from app.utils.speech_parser import parse_speech_count_from_nanet
+    from time import sleep
+    
+    try:
+        print("국회회의록 발언 횟수 업데이트를 시작합니다...")
+        
+        # 처음 3명의 의원 조회
+        sample_legislators = db.query(Legislator).limit(3).all()
+        
+        # 샘플 의원들의 발언 수 파싱하여 기존 데이터와 비교
+        all_same = True
+        for legislator in sample_legislators:
+            # 발언 횟수 파싱
+            speech_count = parse_speech_count_from_nanet(legislator.hg_nm)
+            
+            # 기존 발언 횟수 데이터 찾기
+            existing_record = db.query(SpeechByMeeting).filter(
+                SpeechByMeeting.legislator_id == legislator.id
+            ).first()
+            
+            # 기존 기록이 있고 값이 같으면 계속 진행
+            if existing_record and existing_record.count == speech_count:
+                print(f"{legislator.hg_nm}: 발언 수 {speech_count}회 (변경 없음)")
+            else:
+                all_same = False
+                print(f"{legislator.hg_nm}: 발언 수 {speech_count}회 (업데이트 필요)")
+        
+        # 모든 샘플 의원의 데이터가 같으면 나머지 의원 스킵
+        if all_same:
+            print("샘플 의원들의 발언 수가 모두 동일합니다. 나머지 의원들도 변경 없을 것으로 판단하여 업데이트를 스킵합니다.")
+            return
+        
+        # 전체 의원 조회
+        legislators = db.query(Legislator).all()
+        
+        updated_count = 0
+        
+        for i, legislator in enumerate(legislators):
+            try:
+                # 발언 횟수 파싱
+                speech_count = parse_speech_count_from_nanet(legislator.hg_nm)
+                
+                # 발언 횟수 저장
+                existing_record = db.query(SpeechByMeeting).filter(
+                    SpeechByMeeting.legislator_id == legislator.id
+                ).first()
+                
+                if existing_record:
+                    # 기존 데이터 업데이트
+                    existing_record.count = speech_count
+                else:
+                    # 새 데이터 생성 (meeting_type은 빈 문자열로 설정하여 실질적으로 사용하지 않음)
+                    new_record = SpeechByMeeting(
+                        legislator_id=legislator.id,
+                        meeting_type="",  # 빈 문자열로 설정
+                        count=speech_count
+                    )
+                    db.add(new_record)
+                
+                updated_count += 1
+                print(f"[{i+1}/{len(legislators)}] {legislator.hg_nm}: {speech_count}회")
+                
+                # 20명마다 커밋
+                if updated_count % 20 == 0:
+                    db.commit()
+                    print(f"{updated_count}명 업데이트 완료, 중간 저장")
+                
+                # 서버 부하 방지를 위한 지연
+                sleep(1)
+                
+            except Exception as e:
+                print(f"{legislator.hg_nm} 의원 업데이트 중 오류 발생: {str(e)}")
+                continue
+        
+        # 최종 변경사항 저장
+        db.commit()
+        print(f"발언 횟수 업데이트 완료: 총 {updated_count}명 업데이트됨")
+        
+    except Exception as e:
+        print(f"발언 횟수 업데이트 중 오류 발생: {str(e)}")
+        db.rollback()
 
 def fetch_excel_data(db: Session):
     """
