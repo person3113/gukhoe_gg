@@ -132,11 +132,11 @@ async def category_ranking(
     # 카테고리별 템플릿 정보
     category_info = {
         "overall": {"title": "종합", "score_field": "overall_score"},
-        "participation": {"title": "참여", "score_field": "participation_score"},
+        "participation": {"title": "참여도", "score_field": "participation_score"},
         "legislation": {"title": "입법활동", "score_field": "legislation_score"},
         "speech": {"title": "의정발언", "score_field": "speech_score"},
         "voting": {"title": "표결 책임성", "score_field": "voting_score"},
-        "cooperation": {"title": "협치/초당적 활동", "score_field": "cooperation_score"}
+        "cooperation": {"title": "정당 간 협력", "score_field": "cooperation_score"}
     }
     
     # 현재 카테고리 점수 추가 (표시용)
