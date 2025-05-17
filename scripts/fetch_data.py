@@ -266,12 +266,6 @@ def fetch_excel_data(db: Session):
     
     print(f"회의별 발언 데이터 처리 완료: {processed_count}/{total_files}개 파일")
 
-    # speech_score 계산 
-    if processed_count > 0:
-        print("\n발언 점수 계산 시작...")
-        calculate_speech_scores(db)
-        print("발언 점수 계산 완료")
-
     # 2. 키워드 데이터 처리
     keywords_dir = "data/excel/speech/keywords"
     

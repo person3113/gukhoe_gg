@@ -113,7 +113,6 @@ def process_attendance_data(raw_data: List[Dict[str, Any]], db: Session) -> None
         import traceback
         traceback.print_exc()
 
-
 def process_speech_data(raw_data, db: Session):
     # 발언 데이터 정리 및 가공
     # 발언 횟수, 키워드 분석
