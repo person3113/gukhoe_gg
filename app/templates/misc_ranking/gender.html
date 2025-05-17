@@ -6,28 +6,8 @@
 <div class="container">
     <h1 class="mb-4">성별 랭킹</h1>
     
-    <!-- 성별 선택 영역 -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5>성별 선택</h5>
-        </div>
-        <div class="card-body">
-            <div class="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-3">
-                <div class="col">
-                    <a href="/misc-ranking/gender" class="btn btn-outline-primary w-100 {% if gender is none %}active{% endif %}">전체 비교</a>
-                </div>
-                {% for gender_option in genders %}
-                <div class="col">
-                    <a href="/misc-ranking/gender?gender={{ gender_option }}" class="btn btn-outline-primary w-100 {% if gender == gender_option %}active{% endif %}">{{ gender_option }}</a>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-    
-    {% if gender is none %}
-    <!-- 성별 비교 홈 화면 -->
-    <div class="row">
+    <!-- 성별 비교 차트 영역 (항상 표시) -->
+    <div class="row mb-4">
         <!-- 성별 티어 분포 -->
         <div class="col-md-6 mb-4">
             <div class="card h-100">
@@ -43,7 +23,7 @@
                 </div>
                 <div class="card-body">
                     <div id="tier-chart-view">
-                        <canvas id="tierChart" height="300"></canvas>
+                        <canvas id="tierChart"></canvas>
                     </div>
                     <div id="tier-table-view" class="d-none">
                         <table class="table table-striped">
@@ -86,7 +66,7 @@
                 </div>
                 <div class="card-body">
                     <div id="asset-chart-view">
-                        <canvas id="assetChart" height="300"></canvas>
+                        <canvas id="assetChart"></canvas>
                     </div>
                     <div id="asset-table-view" class="d-none">
                         <table class="table table-striped">
@@ -110,134 +90,151 @@
             </div>
         </div>
     </div>
-    {% else %}
+    
+    <!-- 성별 선택 영역 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>성별 선택</h5>
+        </div>
+        <div class="card-body">
+            <div class="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-3">
+                {% for gender_option in genders %}
+                <div class="col">
+                    <a href="/misc-ranking/gender?gender={{ gender_option }}" class="btn btn-outline-primary w-100 {% if gender == gender_option %}active{% endif %}">{{ gender_option }}</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    {% if gender %}
     <!-- 특정 성별 상세 화면 -->
-    <div class="row">
-        <!-- 성별 통계 요약 -->
-        <div class="col-md-4 mb-4">
-            <div class="card h-100">
-                <div class="card-header">
-                    <h5>{{ gender }} 통계 요약</h5>
-                </div>
-                <div class="card-body">
-                    <table class="table table-striped">
+    <!-- 성별 통계 요약 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>{{ gender }} 통계 요약</h5>
+        </div>
+        <div class="card-body">
+            <!-- 기본 통계 정보 -->
+            <table class="table table-striped">
+                <tr>
+                    <th>평균 종합점수</th>
+                    <td>{{ gender_stats.avg }}</td>
+                </tr>
+                <tr>
+                    <th>최고 점수</th>
+                    <td>{{ gender_stats.max }}</td>
+                </tr>
+                <tr>
+                    <th>최저 점수</th>
+                    <td>{{ gender_stats.min }}</td>
+                </tr>
+                <tr>
+                    <th>평균 재산 (억원)</th>
+                    <td>{{ gender_stats.avg_asset }}</td>
+                </tr>
+                <tr>
+                    <th>인원 수</th>
+                    <td>{{ gender_stats.count }}</td>
+                </tr>
+            </table>
+            
+            <!-- 티어 분포 -->
+            <h6 class="mt-4">티어 분포</h6>
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered">
+                    <thead>
                         <tr>
-                            <th>평균 종합점수</th>
-                            <td>{{ gender_stats.avg }}</td>
-                        </tr>
-                        <tr>
-                            <th>최고 점수</th>
-                            <td>{{ gender_stats.max }}</td>
-                        </tr>
-                        <tr>
-                            <th>최저 점수</th>
-                            <td>{{ gender_stats.min }}</td>
-                        </tr>
-                        <tr>
-                            <th>평균 재산 (억원)</th>
-                            <td>{{ gender_stats.avg_asset }}</td>
-                        </tr>
-                        <tr>
+                            <th>티어</th>
                             <th>인원 수</th>
-                            <td>{{ gender_stats.count }}</td>
                         </tr>
-                    </table>
-                    
-                    <h6 class="mt-4">티어 분포</h6>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>티어</th>
-                                    <th>인원 수</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for tier, count in gender_stats.tier_distribution.items() %}
-                                <tr>
-                                    <td>{{ tier }}</td>
-                                    <td>{{ count }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                    </thead>
+                    <tbody>
+                        {% for tier, count in gender_stats.tier_distribution.items() %}
+                        <tr>
+                            <td>{{ tier }}</td>
+                            <td>{{ count }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
-        
-        <!-- 성별 소속 의원 목록 -->
-        <div class="col-md-8 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5>{{ gender }} 의원 목록</h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                      <table class="table table-striped" id="legislators-table">
-                          <thead>
-                              <tr>
-                                  <th data-sort="overall_rank">순위 <i class="sort-icon"></i></th>
-                                  <th>의원명</th>
-                                  <th>정당</th>
-                                  <th>티어</th>
-                                  <th data-sort="overall_score">종합점수 <i class="sort-icon"></i></th>
-                                  <th data-sort="participation_score">참여 <i class="sort-icon"></i></th>
-                                  <th data-sort="legislation_score">입법활동 <i class="sort-icon"></i></th>
-                                  <th data-sort="speech_score">의정발언 <i class="sort-icon"></i></th>
-                                  <th data-sort="voting_score">표결책임성 <i class="sort-icon"></i></th>
-                                  <th data-sort="cooperation_score">협치/초당적활동 <i class="sort-icon"></i></th>
-                              </tr>
-                          </thead>
-                          <tbody>
-                              {% for legislator in legislators %}
-                              <tr data-overall_rank="{{ legislator.overall_rank }}"
-                                  data-overall_score="{{ legislator.overall_score }}"
-                                  data-participation_score="{{ legislator.participation_score }}"
-                                  data-legislation_score="{{ legislator.legislation_score }}"
-                                  data-speech_score="{{ legislator.speech_score }}"
-                                  data-voting_score="{{ legislator.voting_score }}"
-                                  data-cooperation_score="{{ legislator.cooperation_score }}">
-                                  <td>{{ legislator.overall_rank }}</td>
-                                  <td>
-                                      <a href="/champions/{{ legislator.id }}">
-                                          {{ legislator.name }}
-                                      </a>
-                                  </td>
-                                  <td>{{ legislator.party }}</td>
-                                  <td>
-                                      <span class="badge 
-                                          {% if legislator.tier == 'Challenger' %}bg-danger{% 
-                                          elif legislator.tier == 'Master' %}bg-warning{% 
-                                          elif legislator.tier == 'Diamond' %}bg-info{% 
-                                          elif legislator.tier == 'Platinum' %}bg-success{% 
-                                          elif legislator.tier == 'Gold' %}bg-warning text-dark{% 
-                                          elif legislator.tier == 'Silver' %}bg-secondary{% 
-                                          else %}bg-dark{% endif %}">
-                                          {{ legislator.tier }}
-                                      </span>
-                                  </td>
-                                  <td>{{ legislator.overall_score }}</td>
-                                  <td>{{ legislator.participation_score }}</td>
-                                  <td>{{ legislator.legislation_score }}</td>
-                                  <td>{{ legislator.speech_score }}</td>
-                                  <td>{{ legislator.voting_score }}</td>
-                                  <td>{{ legislator.cooperation_score }}</td>
-                              </tr>
-                              {% endfor %}
-                          </tbody>
-                      </table>
-                    </div>
-                </div>
+    </div>
+    
+    <!-- 성별 소속 의원 목록 -->
+    <div class="card">
+        <div class="card-header">
+            <h5>{{ gender }} 의원 목록</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped" id="legislators-table">
+                    <thead>
+                        <tr>
+                            <th data-sort="overall_rank">순위 <i class="sort-icon"></i></th>
+                            <th>의원명</th>
+                            <th>정당</th>
+                            <th>티어</th>
+                            <th data-sort="overall_score">종합점수 <i class="sort-icon"></i></th>
+                            <th data-sort="participation_score">참여 <i class="sort-icon"></i></th>
+                            <th data-sort="legislation_score">입법활동 <i class="sort-icon"></i></th>
+                            <th data-sort="speech_score">의정발언 <i class="sort-icon"></i></th>
+                            <th data-sort="voting_score">표결책임성 <i class="sort-icon"></i></th>
+                            <th data-sort="cooperation_score">협치/초당적활동 <i class="sort-icon"></i></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for legislator in legislators %}
+                        <tr data-overall_rank="{{ legislator.overall_rank }}"
+                            data-overall_score="{{ legislator.overall_score }}"
+                            data-participation_score="{{ legislator.participation_score }}"
+                            data-legislation_score="{{ legislator.legislation_score }}"
+                            data-speech_score="{{ legislator.speech_score }}"
+                            data-voting_score="{{ legislator.voting_score }}"
+                            data-cooperation_score="{{ legislator.cooperation_score }}">
+                            <td>{{ legislator.overall_rank }}</td>
+                            <td>
+                                <a href="/champions/{{ legislator.id }}">
+                                    {{ legislator.name }}
+                                </a>
+                            </td>
+                            <td>{{ legislator.party }}</td>
+                            <td>
+                                <span class="badge 
+                                    {% if legislator.tier == 'Challenger' %}bg-danger{% 
+                                    elif legislator.tier == 'Master' %}bg-warning{% 
+                                    elif legislator.tier == 'Diamond' %}bg-info{% 
+                                    elif legislator.tier == 'Platinum' %}bg-success{% 
+                                    elif legislator.tier == 'Gold' %}bg-warning text-dark{% 
+                                    elif legislator.tier == 'Silver' %}bg-secondary{% 
+                                    else %}bg-dark{% endif %}">
+                                    {{ legislator.tier }}
+                                </span>
+                            </td>
+                            <td>{{ legislator.overall_score }}</td>
+                            <td>{{ legislator.participation_score }}</td>
+                            <td>{{ legislator.legislation_score }}</td>
+                            <td>{{ legislator.speech_score }}</td>
+                            <td>{{ legislator.voting_score }}</td>
+                            <td>{{ legislator.cooperation_score }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
+    </div>
+    {% else %}
+    <!-- 성별이 선택되지 않았을 때 안내 메시지 -->
+    <div class="alert alert-info">
+        위에서 성별을 선택하면 해당 성별의 상세 정보를 볼 수 있습니다.
     </div>
     {% endif %}
 </div>
 {% endblock %}
 
 {% block extra_scripts %}
-{% if gender is none %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // 성별 티어 분포 차트
@@ -334,11 +331,9 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('asset-chart-view').classList.add('d-none');
         document.getElementById('asset-table-view').classList.remove('d-none');
     });
-});
-</script>
-{% else %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
+
+    {% if gender %}
+    // 테이블 정렬 관련 코드 (정당 선택 시에만 필요)
     // 정렬 관련 변수
     let currentSortColumn = 'overall_rank';  // 기본 정렬 컬럼
     let currentSortOrder = 'asc';  // 기본 정렬 방향
@@ -411,7 +406,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 페이지 로드 시 기본 정렬 아이콘 표시
     updateSortIcons();
+    {% endif %}
 });
 </script>
-{% endif %}
 {% endblock %}

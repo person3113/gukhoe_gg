@@ -6,28 +6,8 @@
 <div class="container">
     <h1 class="mb-4">재산별 랭킹</h1>
     
-    <!-- 재산 구간 선택 영역 -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5>재산 구간 선택</h5>
-        </div>
-        <div class="card-body">
-            <div class="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-3">
-                <div class="col">
-                    <a href="/misc-ranking/asset" class="btn btn-outline-primary w-100 {% if asset_group is none %}active{% endif %}">전체 비교</a>
-                </div>
-                {% for asset in asset_groups %}
-                <div class="col">
-                    <a href="/misc-ranking/asset?asset_group={{ asset }}" class="btn btn-outline-primary w-100 {% if asset_group == asset %}active{% endif %}">{{ asset }}</a>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-    
-    {% if asset_group is none %}
-    <!-- 재산 비교 홈 화면 -->
-    <div class="row">
+    <!-- 점수-재산 상관관계 및 정당별 재산 비율 차트 (항상 표시) -->
+    <div class="row mb-4">
         <!-- 점수-재산 상관관계 -->
         <div class="col-md-6 mb-4">
             <div class="card h-100">
@@ -118,16 +98,41 @@
             </div>
         </div>
     </div>
-    {% else %}
+    
+    <!-- 재산 구간 선택 영역 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>재산 구간 선택</h5>
+        </div>
+        <div class="card-body">
+            <div class="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-3">
+                {% for asset in asset_groups %}
+                <div class="col">
+                    <a href="/misc-ranking/asset?asset_group={{ asset }}" class="btn btn-outline-primary w-100 {% if asset_group == asset %}active{% endif %}">{{ asset }}</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 안내 문구 - 재산 구간 선택이 없을 때만 표시 -->
+    {% if not asset_group %}
+    <div class="alert alert-info mb-4">
+        위에서 재산 구간을 선택하면 해당 구간의 상세 정보를 볼 수 있습니다.
+    </div>
+    {% endif %}
+    
+    {% if asset_group %}
     <!-- 특정 재산 구간 상세 화면 -->
     <div class="row">
         <!-- 재산 구간 통계 요약 -->
-        <div class="col-md-4 mb-4">
-            <div class="card h-100">
+        <div class="col-12 mb-4">
+            <div class="card">
                 <div class="card-header">
                     <h5>{{ asset_group }} 통계 요약</h5>
                 </div>
                 <div class="card-body">
+                    <!-- 기본 통계 정보 (평균, 최고, 최저 등) -->
                     <table class="table table-striped">
                         <tr>
                             <th>평균 종합점수</th>
@@ -151,6 +156,7 @@
                         </tr>
                     </table>
                     
+                    <!-- 티어 분포 -->
                     <h6 class="mt-4">티어 분포</h6>
                     <div class="table-responsive">
                         <table class="table table-sm table-bordered">
@@ -175,7 +181,7 @@
         </div>
         
         <!-- 재산 구간 의원 목록 -->
-        <div class="col-md-8 mb-4">
+        <div class="col-12">
             <div class="card">
                 <div class="card-header">
                     <h5>{{ asset_group }} 의원 목록</h5>
@@ -248,8 +254,6 @@
 {% endblock %}
 
 {% block extra_scripts %}
-{% if asset_group is none %}
-<!-- 재산 비교 홈 화면 스크립트 -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // 점수-재산 상관관계 차트 (산점도)
@@ -339,12 +343,9 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('party-ratio-chart-view').classList.add('d-none');
         document.getElementById('party-ratio-table-view').classList.remove('d-none');
     });
-});
-</script>
-{% else %}
-<!-- 특정 재산 구간 상세 화면 스크립트 - 테이블 정렬 기능 -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
+
+    {% if asset_group %}
+    // 특정 재산 구간 상세 화면 스크립트 - 테이블 정렬 기능
     // 정렬 관련 변수
     let currentSortColumn = 'overall_rank';  // 기본 정렬 컬럼
     let currentSortOrder = 'asc';  // 기본 정렬 방향
@@ -417,7 +418,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 페이지 로드 시 기본 정렬 아이콘 표시
     updateSortIcons();
+    {% endif %}
 });
 </script>
-{% endif %}
 {% endblock %}
