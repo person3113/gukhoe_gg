@@ -17,26 +17,31 @@
     <!-- 기본 스타일 -->
     <style>
         body {
-            padding-top: 20px;
+            padding: 0;
+            margin: 0;
             display: flex;
             min-height: 100vh;
+            overflow-x: hidden;
         }
         
         /* 사이드바 전체 스타일 */
         .sidebar {
-            width: 200px;
+            width: 220px;
             background-color: #212529;
             color: white;
-            padding-top: 20px;
             position: fixed;
             height: 100vh;
             display: flex;
             flex-direction: column;
+            z-index: 1000;
+            overflow-y: auto;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
         
         /* 상단 메뉴 영역 */
         .sidebar-top {
             flex-grow: 0;
+            padding-top: 20px;
         }
         
         /* 하단 소개 링크 영역 */
@@ -50,28 +55,35 @@
         .sidebar .nav-link {
             color: rgba(255, 255, 255, 0.75);
             padding: 0.5rem 1rem;
+            transition: all 0.2s ease;
         }
         
         .sidebar .nav-link:hover {
             color: rgba(255, 255, 255, 1);
+            background-color: rgba(255, 255, 255, 0.05);
         }
         
         .sidebar .nav-link.active {
             color: #fff;
             background-color: rgba(255, 255, 255, 0.1);
+            border-left: 3px solid #fff;
         }
 
         .main-content {
             flex: 1;
-            margin-left: 200px;
-            padding: 20px;
+            margin-left: 220px;
+            width: calc(100% - 220px);
+            min-height: 100vh;
         }
         
         .search-container {
-            padding: 15px;
+            padding: 15px 20px;
             background-color: #f8f9fa;
             border-bottom: 1px solid #e9ecef;
             margin-bottom: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 900;
         }
 
         .sub-menu {
