@@ -48,7 +48,7 @@ def generate_comparison_chart_data(stats: Dict[str, Any], avg_stats: Optional[Di
         차트 데이터 딕셔너리
     """
     # 차트 라벨 (카테고리)
-    labels = ["참여", "입법활동", "의정발언", "표결 책임성", "협치/초당적 활동"]
+    labels = ["참여도", "입법활동", "의정발언", "표결 책임성", "정당 간 협력"]
     
     # 의원 스탯 데이터
     personal_data = [
@@ -460,15 +460,16 @@ def generate_committee_processing_chart_data(ratios: Dict[str, Any]) -> Dict[str
     Returns:
         차트 데이터 딕셔너리
     """
-    # 차트에 표시할 라벨(위원회명) 추출
-    labels = list(ratios.keys())
+    # 차트에 표시할 라벨(위원회명) 추출 및 5글자만 표시하도록 수정
+    labels = [committee[:5] for committee in ratios.keys()]
     
     # 데이터값(처리 비율) 추출
-    values = [ratios[committee]['ratio'] for committee in labels]
+    values = [ratios[committee]['ratio'] for committee in ratios.keys()]
     
     # 색상 목록 생성 (처리 비율에 따라 색상 변경)
     colors = []
-    for committee in labels:
+    i = 0
+    for committee in ratios.keys():
         ratio = ratios[committee]['ratio']
         if ratio >= 80:
             colors.append('rgba(75, 192, 192, 0.6)')  # 높은 비율: 초록색
@@ -476,6 +477,7 @@ def generate_committee_processing_chart_data(ratios: Dict[str, Any]) -> Dict[str
             colors.append('rgba(255, 206, 86, 0.6)')  # 중간 비율: 노란색
         else:
             colors.append('rgba(255, 99, 132, 0.6)')  # 낮은 비율: 빨간색
+        i += 1
     
     # 테두리 색상 생성
     border_colors = [color.replace('0.6', '1') for color in colors]
@@ -504,11 +506,11 @@ def generate_committee_scores_chart_data(scores: Dict[str, float]) -> Dict[str, 
     Returns:
         차트 데이터 딕셔너리
     """
-    # 차트에 표시할 라벨(위원회명) 추출
-    labels = list(scores.keys())
+    # 차트에 표시할 라벨(위원회명) 추출 및 5글자만 표시하도록 수정
+    labels = [committee[:5] for committee in scores.keys()]
     
     # 데이터값(평균 종합점수) 추출
-    values = [scores[committee] for committee in labels]
+    values = [scores[committee] for committee in scores.keys()]
     
     # 색상 목록 생성
     colors = [

@@ -23,7 +23,7 @@ class SpeechByMeeting(Base):
     # 컬럼 정의
     id = Column(Integer, primary_key=True, index=True)
     legislator_id = Column(Integer, ForeignKey("legislators.id"), index=True)
-    meeting_type = Column(String)  # 회의구분
+    meeting_type = Column(String)  # 사용x
     count = Column(Integer)  # 발언 횟수
     
     # 관계 정의 - 단방향으로 변경하기 위해 제거

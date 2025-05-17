@@ -250,7 +250,7 @@
         <div class="col-12 mb-4">
             <div class="card">
                 <div class="card-header">
-                    <h5>본회의 표결 결과</h5>
+                    <h5>본회의 표결 결과 (총 {{ tab_data.vote_results_count }}건)</h5>
                 </div>
                 <div class="card-body">
                     {% if tab_data.vote_results %}
@@ -304,7 +304,7 @@
         <div class="col-12 mb-4">
             <div class="card">
                 <div class="card-header">
-                    <h5>대표발의안 목록</h5>
+                    <h5 class="card-title">대표발의안 목록 (총 {{ tab_data.representative_bills_count }}건)</h5>
                 </div>
                 <div class="card-body">
                     {% if tab_data.representative_bills %}
@@ -360,7 +360,7 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h5>공동발의안 목록</h5>
+                    <h5 class="card-title">공동발의안 목록 (총 {{ tab_data.co_bills_count }}건)</h5>
                 </div>
                 <div class="card-body">
                     {% if tab_data.co_bills %}

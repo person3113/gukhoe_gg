@@ -6,28 +6,8 @@
 <div class="container">
     <h1 class="mb-4">위원회별 랭킹</h1>
     
-    <!-- 위원회 선택 영역 -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5>위원회 선택</h5>
-        </div>
-        <div class="card-body">
-            <div class="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-3">
-                <div class="col">
-                    <a href="/misc-ranking/committee" class="btn btn-outline-primary w-100 {% if committee_name is none %}active{% endif %}">전체 비교</a>
-                </div>
-                {% for committee in committees %}
-                <div class="col">
-                    <a href="/misc-ranking/committee?committee_name={{ committee }}" class="btn btn-outline-primary w-100 {% if committee_name == committee %}active{% endif %}">{{ committee }}</a>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-    
-    {% if committee_name is none %}
-    <!-- 위원회 비교 홈 화면 -->
-    <div class="row">
+    <!-- 위원회별 차트 영역 (항상 표시) -->
+    <div class="row mb-4">
         <!-- 위원회별 법안 처리 비율 -->
         <div class="col-md-6 mb-4">
             <div class="card h-100">
@@ -118,12 +98,29 @@
             </div>
         </div>
     </div>
-    {% else %}
+    
+    <!-- 위원회 선택 영역 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>위원회 선택</h5>
+        </div>
+        <div class="card-body">
+            <div class="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-3">
+                {% for committee in committees %}
+                <div class="col">
+                    <a href="/misc-ranking/committee?committee_name={{ committee }}" class="btn btn-outline-primary w-100 {% if committee_name == committee %}active{% endif %}" title="{{ committee }}">{{ committee[:5] }}</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    {% if committee_name %}
     <!-- 특정 위원회 상세 화면 -->
     <div class="row">
-        <!-- 위원회 통계 요약 -->
-        <div class="col-md-4 mb-4">
-            <div class="card h-100">
+        <!-- 위원회 통계 요약 - 전체 너비로 상단에 배치 -->
+        <div class="col-12 mb-4">
+            <div class="card">
                 <div class="card-header">
                     <h5>{{ committee_name }} 통계 요약</h5>
                 </div>
@@ -174,8 +171,8 @@
             </div>
         </div>
         
-        <!-- 위원회 소속 의원 목록 -->
-        <div class="col-md-8 mb-4">
+        <!-- 위원회 소속 의원 목록 - 전체 너비로 통계 요약 아래에 배치 -->
+        <div class="col-12">
             <div class="card">
                 <div class="card-header">
                     <h5>{{ committee_name }} 소속 의원 목록</h5>
@@ -240,13 +237,16 @@
             </div>
         </div>
     </div>
+    {% else %}
+    <!-- 위원회가 선택되지 않았을 때 안내 메시지 -->
+    <div class="alert alert-info">
+        위에서 위원회를 선택하면 해당 위원회의 상세 정보를 볼 수 있습니다.
+    </div>
     {% endif %}
 </div>
 {% endblock %}
 
 {% block extra_scripts %}
-{% if committee_name is none %}
-<!-- 위원회 비교 홈 화면 스크립트 -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // 처리 비율 차트
@@ -324,12 +324,9 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('scores-chart-view').classList.add('d-none');
         document.getElementById('scores-table-view').classList.remove('d-none');
     });
-});
-</script>
-{% else %}
-<!-- 특정 위원회 상세 화면 스크립트 -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
+
+    {% if committee_name %}
+    // 테이블 정렬 관련 코드 (위원회 선택 시에만 필요)
     // 정렬 관련 변수
     let currentSortColumn = 'overall_rank';  // 기본 정렬 컬럼
     let currentSortOrder = 'asc';  // 기본 정렬 방향
@@ -402,7 +399,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 페이지 로드 시 기본 정렬 아이콘 표시
     updateSortIcons();
+    {% endif %}
 });
 </script>
-{% endif %}
 {% endblock %}

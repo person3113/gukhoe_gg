@@ -17,59 +17,170 @@
     <!-- 기본 스타일 -->
     <style>
         body {
-            padding-top: 20px;
+            padding: 0;
+            margin: 0;
             display: flex;
             min-height: 100vh;
+            overflow-x: hidden;
+            flex-direction: column;
         }
+        
+        /* 사이드바 전체 스타일 */
         .sidebar {
-            width: 200px;
+            width: 220px;
             background-color: #212529;
             color: white;
-            padding-top: 20px;
             position: fixed;
             height: 100vh;
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+            overflow-y: auto;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
         }
+        
+        /* 상단 메뉴 영역 */
+        .sidebar-top {
+            flex-grow: 0;
+            padding-top: 20px;
+        }
+        
+        /* 하단 소개 링크 영역 */
+        .sidebar-bottom {
+            margin-top: auto;
+            padding-bottom: 50px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 15px;
+        }
+        
         .sidebar .nav-link {
             color: rgba(255, 255, 255, 0.75);
             padding: 0.5rem 1rem;
+            transition: all 0.2s ease;
         }
+        
         .sidebar .nav-link:hover {
             color: rgba(255, 255, 255, 1);
+            background-color: rgba(255, 255, 255, 0.05);
         }
+        
         .sidebar .nav-link.active {
             color: #fff;
             background-color: rgba(255, 255, 255, 0.1);
+            border-left: 3px solid #fff;
         }
 
         .main-content {
             flex: 1;
-            margin-left: 200px;
-            padding: 20px;
+            margin-left: 220px;
+            width: calc(100% - 220px);
+            min-height: 100vh;
+            transition: margin-left 0.3s ease, width 0.3s ease;
         }
+        
         .search-container {
-            padding: 15px;
+            padding: 15px 20px;
             background-color: #f8f9fa;
             border-bottom: 1px solid #e9ecef;
             margin-bottom: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 900;
         }
 
         .sub-menu {
             margin-left: 1rem;
             font-size: 0.9rem;
         }
+        
         .sub-link {
             padding: 0.3rem 1rem !important;
             color: rgba(255, 255, 255, 0.65) !important;
         }
+        
         .sub-link:hover, .sub-link.active {
             color: rgba(255, 255, 255, 0.9) !important;
             background-color: rgba(255, 255, 255, 0.1);
         }
+        
         /* 활성화된 서브 링크 강조 */
         .sub-link.active {
             color: #fff !important;
             background-color: rgba(255, 255, 255, 0.2);
             font-weight: bold;
+        }
+        
+        /* 모바일 메뉴 토글 버튼 */
+        .mobile-toggle {
+            display: none;
+            background-color: #212529;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 1100;
+            border-radius: 5px;
+        }
+        
+        .mobile-header {
+            display: none;
+            background-color: #212529;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 999;
+        }
+        
+        /* 반응형 스타일 */
+        @media (max-width: 1200px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: fixed;
+                top: 0;
+                left: 0;
+                transform: translateY(-100%);
+                box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+                max-height: 80vh;
+                overflow-y: auto;
+            }
+            
+            .sidebar.show {
+                transform: translateY(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                margin-top: 60px; /* 모바일 헤더 높이 */
+            }
+            
+            .mobile-toggle {
+                display: block;
+            }
+            
+            .mobile-header {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            
+            .search-container {
+                display: none;
+            }
+            
+            .sidebar-bottom {
+                padding-bottom: 20px;
+            }
         }
     </style>
     
@@ -93,66 +204,88 @@
     {% endblock %}
 </head>
 <body>
+    <!-- 모바일 헤더 -->
+    <div class="mobile-header">
+        <h2 class="m-0">국회.gg</h2>
+    </div>
+    
+    <!-- 모바일 토글 버튼 -->
+    <button class="mobile-toggle" id="mobile-menu-toggle">
+        <i class="fas fa-bars"></i>
+    </button>
+    
     <!-- 좌측 세로 네비게이션 -->
-    <div class="sidebar">
-        <h2 class="text-center mb-4">국회.gg</h2>
-        <ul class="nav flex-column">
-            <li class="nav-item">
-                <a class="nav-link" href="/">홈</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/champions">챔피언</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/ranking">활동 랭킹</a>
-                <!-- 활동 랭킹 하위 메뉴 -->
-                {% if request.path.startswith('/ranking') %}
-                <ul class="nav flex-column sub-menu">
-                    <li class="nav-item">
-                        <a class="nav-link sub-link {% if request.path == '/ranking/participation' %}active{% endif %}" href="/ranking/participation">참여</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link sub-link {% if request.path == '/ranking/legislation' %}active{% endif %}" href="/ranking/legislation">입법활동</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link sub-link {% if request.path == '/ranking/speech' %}active{% endif %}" href="/ranking/speech">의정발언</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link sub-link {% if request.path == '/ranking/voting' %}active{% endif %}" href="/ranking/voting">표결 책임성</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link sub-link {% if request.path == '/ranking/cooperation' %}active{% endif %}" href="/ranking/cooperation">협치/초당적 활동</a>
-                    </li>
-                </ul>
-                {% endif %}
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/misc-ranking">잡다한 랭킹</a>
-                <!-- 잡다한 랭킹 하위 메뉴 -->
-                {% if request.path.startswith('/misc-ranking') %}
-                <ul class="nav flex-column sub-menu">
-                    <li class="nav-item">
-                        <a class="nav-link sub-link {% if request.path == '/misc-ranking/party' %}active{% endif %}" href="/misc-ranking/party">정당별</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link sub-link {% if request.path == '/misc-ranking/committee' %}active{% endif %}" href="/misc-ranking/committee">위원회별</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link sub-link {% if request.path == '/misc-ranking/term' %}active{% endif %}" href="/misc-ranking/term">초선/재선+</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link sub-link {% if request.path == '/misc-ranking/age' %}active{% endif %}" href="/misc-ranking/age">나이별</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link sub-link {% if request.path == '/misc-ranking/gender' %}active{% endif %}" href="/misc-ranking/gender">성별</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link sub-link {% if request.path == '/misc-ranking/asset' %}active{% endif %}" href="/misc-ranking/asset">재산</a>
-                    </li>
-                </ul>
-                {% endif %}
-            </li>
-        </ul>
+    <div class="sidebar" id="sidebar">
+        <!-- 상단 내용 -->
+        <div class="sidebar-top">
+            <h2 class="text-center mb-4">국회.gg</h2>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">홈</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/champions">국회의원</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/ranking">활동 랭킹</a>
+                    <!-- 활동 랭킹 하위 메뉴 -->
+                    {% if request.path.startswith('/ranking') %}
+                    <ul class="nav flex-column sub-menu">
+                        <li class="nav-item">
+                            <a class="nav-link sub-link {% if request.path == '/ranking/participation' %}active{% endif %}" href="/ranking/participation">참여도</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link sub-link {% if request.path == '/ranking/legislation' %}active{% endif %}" href="/ranking/legislation">입법활동</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link sub-link {% if request.path == '/ranking/speech' %}active{% endif %}" href="/ranking/speech">의정발언</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link sub-link {% if request.path == '/ranking/voting' %}active{% endif %}" href="/ranking/voting">표결 책임성</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link sub-link {% if request.path == '/ranking/cooperation' %}active{% endif %}" href="/ranking/cooperation">정당 간 협력</a>
+                        </li>
+                    </ul>
+                    {% endif %}
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/misc-ranking">잡다한 랭킹</a>
+                    <!-- 잡다한 랭킹 하위 메뉴 -->
+                    {% if request.path.startswith('/misc-ranking') %}
+                    <ul class="nav flex-column sub-menu">
+                        <li class="nav-item">
+                            <a class="nav-link sub-link {% if request.path == '/misc-ranking/party' %}active{% endif %}" href="/misc-ranking/party">정당별</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link sub-link {% if request.path == '/misc-ranking/committee' %}active{% endif %}" href="/misc-ranking/committee">위원회별</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link sub-link {% if request.path == '/misc-ranking/term' %}active{% endif %}" href="/misc-ranking/term">의원 경력별</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link sub-link {% if request.path == '/misc-ranking/age' %}active{% endif %}" href="/misc-ranking/age">나이별</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link sub-link {% if request.path == '/misc-ranking/gender' %}active{% endif %}" href="/misc-ranking/gender">성별</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link sub-link {% if request.path == '/misc-ranking/asset' %}active{% endif %}" href="/misc-ranking/asset">재산</a>
+                        </li>
+                    </ul>
+                    {% endif %}
+                </li>
+            </ul>
+        </div>
+        
+        <!-- 하단 소개 링크 -->
+        <div class="sidebar-bottom">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/about' %}active{% endif %}" href="/about">국회.gg 소개</a>
+                </li>
+            </ul>
+        </div>
     </div>
 
     <!-- 메인 컨텐츠 영역 -->
@@ -174,8 +307,9 @@
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     
-    {% block extra_scripts %}
+    <!-- 기본 스크립트: 토글 기능 등 -->
     <script>
+    // 페이지 로드 완료 후 실행 (모든 페이지에서 공통으로 동작)
     document.addEventListener('DOMContentLoaded', function() {
         // 현재 경로 가져오기
         const currentPath = window.location.pathname;
@@ -201,7 +335,46 @@
             }
         });
     });
+
+    // 모바일 메뉴 토글 기능 (별도의 즉시 실행 함수로 분리)
+    (function setupMobileToggle() {
+        // 토글 버튼과 사이드바 요소 가져오기
+        const mobileToggle = document.getElementById('mobile-menu-toggle');
+        const sidebar = document.getElementById('sidebar');
+        
+        if (mobileToggle && sidebar) {
+            // 토글 버튼 클릭 이벤트 리스너
+            mobileToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('show');
+                const isOpen = sidebar.classList.contains('show');
+                mobileToggle.innerHTML = isOpen ? '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
+            });
+            
+            // 모든 링크에 이벤트 리스너 등록 - 클릭 시 메뉴 닫기
+            const allLinks = sidebar.querySelectorAll('a');
+            allLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth <= 1200) {
+                        setTimeout(() => {
+                            sidebar.classList.remove('show');
+                            mobileToggle.innerHTML = '<i class="fas fa-bars"></i>';
+                        }, 100); // 약간의 딜레이를 두어 링크 이벤트가 먼저 처리되도록 함
+                    }
+                });
+            });
+            
+            // 화면 크기 변경 시 사이드바 상태 초기화
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 1200) {
+                    sidebar.classList.remove('show');
+                    mobileToggle.innerHTML = '<i class="fas fa-bars"></i>';
+                }
+            });
+        }
+    })();
     </script>
-    {% endblock %}
+    
+    <!-- 추가 스크립트 블록 -->
+    {% block extra_scripts %}{% endblock %}
 </body>
 </html>

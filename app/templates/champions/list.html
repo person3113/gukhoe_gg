@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
-{% block title %}국회.gg - 챔피언 목록{% endblock %}
+{% block title %}국회.gg - 국회의원 목록{% endblock %}
 
 {% block content %}
 <div class="container">
-    <h1 class="mb-4">챔피언 목록</h1>
+    <h1 class="mb-4">국회의원 목록</h1>
     
     <!-- 필터 영역 -->
     <div class="card mb-4">
@@ -40,7 +40,7 @@
                 
                 <!-- 초선/재선 필터 -->
                 <div class="col-md-3">
-                    <label for="term" class="form-label">초선/재선</label>
+                    <label for="term" class="form-label">의원 경력</label>
                     <select class="form-select" id="term" name="term">
                         <option value="">전체</option>
                         {% for term in filter_options.terms %}

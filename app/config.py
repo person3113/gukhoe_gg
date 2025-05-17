@@ -8,8 +8,8 @@ class Settings(BaseSettings):
     if os.getenv("DB_MODE") == "memory":
         DATABASE_URL = "sqlite:///:memory:"
     
-    # API 키 설정
-    API_KEY: str = os.getenv("ASSEMBLY_API_KEY", "sample")
+    # API 키 설정 (수정된 부분)
+    ASSEMBLY_API_KEY: str = "sample"
     
     # API 기본 URL
     BASE_API_URL: str = "https://open.assembly.go.kr/portal/openapi/"
@@ -26,7 +26,8 @@ class Settings(BaseSettings):
         "processed_bills": "nzpltgfqabtcpsmai",   # 법률안 심사 및 처리(처리의안)
         "processed_assembly_bills": "nwbpacrgavhjryiph", # 본회의 처리안건_법률안
         "vote_results": "nojepdqqaweusdfbi",      # 국회의원 본회의 표결정보
-        "committee_history": "nyzrglyvagmrypezq"  # 국회의원 위원회 경력
+        "committee_history": "nyzrglyvagmrypezq",  # 국회의원 위원회 경력
+        "tvbpmbill11": "TVBPMBILL11"                # 법률안 심사 및 처리(의안검색) - 추가됨
     }
     
     # 공통 API 요청 인자
@@ -49,5 +50,10 @@ class Settings(BaseSettings):
         env_file=".env",
         extra="ignore"  # 추가 필드 허용 (assembly_api_key 등)
     )
+
+  # 호환성을 위한 property (추가된 부분)
+    @property
+    def API_KEY(self) -> str:
+        return self.ASSEMBLY_API_KEY
 
 settings = Settings()

@@ -190,14 +190,14 @@
                             <select class="form-select" id="committee" name="committee">
                                 <option value="">전체</option>
                                 {% for committee in committees %}
-                                <option value="{{ committee }}" {% if current_filters.committee == committee %}selected{% endif %}>{{ committee }}</option>
+                                <option value="{{ committee }}" {% if current_filters.committee == committee %}selected{% endif %}>{{ committee[:5] }}{% if committee|length > 5 %}{% endif %}</option>
                                 {% endfor %}
                             </select>
                         </div>
                         
-                        <!-- 초선/재선 필터 -->
+                        <!-- 의원 경력 필터 -->
                         <div class="col-md-3">
-                            <label for="term" class="form-label">초선/재선</label>
+                            <label for="term" class="form-label">의원 경력</label>
                             <select class="form-select" id="term" name="term">
                                 <option value="">전체</option>
                                 {% for term in terms %}
@@ -237,7 +237,7 @@
                             <th>티어</th>
                             <th class="sortable" onclick="sortTableByColumn(5)">
                                 <span class="{{ 'font-weight-bold' if current_category == 'participation' else '' }}">
-                                    참여
+                                    참여도
                                     <span id="sort-5" class="sort-icon"></span>
                                 </span>
                             </th>
@@ -261,7 +261,7 @@
                             </th>
                             <th class="sortable" onclick="sortTableByColumn(9)">
                                 <span class="{{ 'font-weight-bold' if current_category == 'cooperation' else '' }}">
-                                    협치/초당적 활동
+                                    정당 간 협력
                                     <span id="sort-9" class="sort-icon"></span>
                                 </span>
                             </th>

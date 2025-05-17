@@ -6,68 +6,13 @@
 <div class="container">
     <h1 class="mb-4">잡다한 랭킹</h1>
     
-    <!-- 카테고리 선택 영역 -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5>랭킹 카테고리</h5>
-        </div>
-        <div class="card-body">
-            <div class="row row-cols-2 row-cols-md-3 g-4">
-                <div class="col">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h5 class="card-title">정당별</h5>
-                            <p class="card-text">정당별 활동 점수와 법안 발의 수 비교</p>
-                            <a href="/misc-ranking/party" class="btn btn-primary">보기</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h5 class="card-title">위원회별</h5>
-                            <p class="card-text">위원회별 법안 처리 비율 및 점수 비교</p>
-                            <a href="/misc-ranking/committee" class="btn btn-primary">보기</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h5 class="card-title">초선/재선+</h5>
-                            <p class="card-text">초선/재선별 티어 분포 및 재산 비교</p>
-                            <a href="/misc-ranking/term" class="btn btn-primary">보기</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h5 class="card-title">나이별</h5>
-                            <p class="card-text">나이대별 평균 점수 및 재산 비교</p>
-                            <a href="/misc-ranking/age" class="btn btn-primary">보기</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h5 class="card-title">성별</h5>
-                            <p class="card-text">성별 티어 분포 및 재산 비교</p>
-                            <a href="/misc-ranking/gender" class="btn btn-primary">보기</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h5 class="card-title">재산</h5>
-                            <p class="card-text">점수-재산 상관관계 및 정당별 재산 비율</p>
-                            <a href="/misc-ranking/asset" class="btn btn-primary">보기</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <!-- 캐치프레이즈 영역 (배경 이미지 포함) -->
+    <div class="hero-section text-center py-5 mb-4" style="background-image: url('/static/images/congress.jpg'); background-size: cover; background-position: center; color: white; position: relative;">
+        <!-- 어두운 오버레이 추가 -->
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6);"></div>
+        <div class="container position-relative py-5">
+            <h1 class="display-4 fw-bold">잡다한 랭킹</h1>
+            <p class="lead">여러 기준으로 국회의원들을 비교해보세요. 정당, 위원회, 나이, 성별 등 다양한 관점에서 살펴볼 수 있습니다.</p>
         </div>
     </div>
     
@@ -111,11 +56,11 @@
             </div>
         </div>
         
-        <!-- 초선/재선별 평균 점수 -->
+        <!--의원 경력별 평균 점수 -->
         <div class="col-md-6 mb-4">
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5>초선/재선별 평균 점수</h5>
+                    <h5>의원 경력별 평균 점수</h5>
                     <div class="btn-group" role="group">
                         <input type="radio" class="btn-check" name="term-score-view" id="term-score-chart-btn" autocomplete="off" checked>
                         <label class="btn btn-outline-primary btn-sm" for="term-score-chart-btn">차트</label>

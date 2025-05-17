@@ -6,28 +6,8 @@
 <div class="container">
     <h1 class="mb-4">나이별 랭킹</h1>
     
-    <!-- 나이대 선택 영역 -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5>나이대 선택</h5>
-        </div>
-        <div class="card-body">
-            <div class="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-3">
-                <div class="col">
-                    <a href="/misc-ranking/age" class="btn btn-outline-primary w-100 {% if age_group is none %}active{% endif %}">전체 비교</a>
-                </div>
-                {% for age in age_groups %}
-                <div class="col">
-                    <a href="/misc-ranking/age?age_group={{ age }}" class="btn btn-outline-primary w-100 {% if age_group == age %}active{% endif %}">{{ age }}</a>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-    
-    {% if age_group is none %}
-    <!-- 나이대별 비교 홈 화면 -->
-    <div class="row">
+    <!-- 나이별 평균 종합점수 & 재산 차트 - 항상 표시 -->
+    <div class="row mb-4">
         <!-- 나이대별 평균 종합점수 -->
         <div class="col-md-6 mb-4">
             <div class="card h-100">
@@ -43,7 +23,7 @@
                 </div>
                 <div class="card-body">
                     <div id="score-chart-view">
-                        <canvas id="scoreChart" height="300"></canvas>
+                        <canvas id="scoreChart"></canvas>
                     </div>
                     <div id="score-table-view" class="d-none">
                         <table class="table table-striped">
@@ -86,7 +66,7 @@
                 </div>
                 <div class="card-body">
                     <div id="asset-chart-view">
-                        <canvas id="assetChart" height="300"></canvas>
+                        <canvas id="assetChart"></canvas>
                     </div>
                     <div id="asset-table-view" class="d-none">
                         <table class="table table-striped">
@@ -114,16 +94,34 @@
             </div>
         </div>
     </div>
-    {% else %}
+    
+    <!-- 나이대 선택 영역 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>나이대 선택</h5>
+        </div>
+        <div class="card-body">
+            <div class="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-3">
+                {% for age in age_groups %}
+                <div class="col">
+                    <a href="/misc-ranking/age?age_group={{ age }}" class="btn btn-outline-primary w-100 {% if age_group == age %}active{% endif %}">{{ age }}</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    {% if age_group %}
     <!-- 특정 나이대 상세 화면 -->
+    <!-- 나이대 통계 요약 (전체 너비) -->
     <div class="row">
-        <!-- 나이대 통계 요약 -->
-        <div class="col-md-4 mb-4">
-            <div class="card h-100">
+        <div class="col-12 mb-4">
+            <div class="card">
                 <div class="card-header">
                     <h5>{{ age_group }} 통계 요약</h5>
                 </div>
                 <div class="card-body">
+                    <!-- 통계 요약 테이블 -->
                     <table class="table table-striped">
                         <tr>
                             <th>평균 종합점수</th>
@@ -147,6 +145,7 @@
                         </tr>
                     </table>
                     
+                    <!-- 티어 분포 테이블 -->
                     <h6 class="mt-4">티어 분포</h6>
                     <div class="table-responsive">
                         <table class="table table-sm table-bordered">
@@ -171,7 +170,7 @@
         </div>
         
         <!-- 해당 나이대 의원 목록 -->
-        <div class="col-md-8 mb-4">
+        <div class="col-12 mb-4">
             <div class="card">
                 <div class="card-header">
                     <h5>{{ age_group }} 의원 목록</h5>
@@ -191,6 +190,7 @@
                                   <th data-sort="speech_score">의정발언 <i class="sort-icon"></i></th>
                                   <th data-sort="voting_score">표결책임성 <i class="sort-icon"></i></th>
                                   <th data-sort="cooperation_score">협치/초당적활동 <i class="sort-icon"></i></th>
+                                  <th data-sort="asset">재산 <i class="sort-icon"></i></th>
                               </tr>
                           </thead>
                           <tbody>
@@ -201,7 +201,8 @@
                                   data-legislation_score="{{ legislator.legislation_score }}"
                                   data-speech_score="{{ legislator.speech_score }}"
                                   data-voting_score="{{ legislator.voting_score }}"
-                                  data-cooperation_score="{{ legislator.cooperation_score }}">
+                                  data-cooperation_score="{{ legislator.cooperation_score }}"
+                                  data-asset="{{ legislator.asset }}">
                                   <td>{{ legislator.overall_rank }}</td>
                                   <td>
                                       <a href="/champions/{{ legislator.id }}">
@@ -227,6 +228,7 @@
                                   <td>{{ legislator.speech_score }}</td>
                                   <td>{{ legislator.voting_score }}</td>
                                   <td>{{ legislator.cooperation_score }}</td>
+                                  <td>{{ legislator.asset }}</td>
                               </tr>
                               {% endfor %}
                           </tbody>
@@ -236,16 +238,19 @@
             </div>
         </div>
     </div>
+    {% else %}
+    <!-- 안내 메시지 -->
+    <div class="alert alert-info">
+        위에서 나이대를 선택하면 해당 나이대의 상세 정보를 볼 수 있습니다.
+    </div>
     {% endif %}
 </div>
 {% endblock %}
 
 {% block extra_scripts %}
-{% if age_group is none %}
-<!-- 나이대별 비교 홈 화면 스크립트 -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // 나이대별 평균 종합점수 차트
+    // 나이별 평균 종합점수 차트
     var scoreCtx = document.getElementById('scoreChart').getContext('2d');
     var scoreData = {{ score_chart|tojson }};
     
@@ -272,7 +277,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // 나이대별 평균 재산 차트
+    // 나이별 평균 재산 차트
     var assetCtx = document.getElementById('assetChart').getContext('2d');
     var assetData = {{ asset_chart|tojson }};
     
@@ -320,12 +325,9 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('asset-chart-view').classList.add('d-none');
         document.getElementById('asset-table-view').classList.remove('d-none');
     });
-});
-</script>
-{% else %}
-<!-- 특정 나이대 상세 화면 스크립트 - 테이블 정렬 기능 -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
+
+    {% if age_group %}
+    // 테이블 정렬 기능
     // 정렬 관련 변수
     let currentSortColumn = 'overall_rank';  // 기본 정렬 컬럼
     let currentSortOrder = 'asc';  // 기본 정렬 방향
@@ -398,7 +400,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 페이지 로드 시 기본 정렬 아이콘 표시
     updateSortIcons();
+    {% endif %}
 });
 </script>
-{% endif %}
 {% endblock %}
