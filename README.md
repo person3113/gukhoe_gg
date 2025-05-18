@@ -16,6 +16,7 @@
 > - venv\Scripts\activate (가상환경 활성화)
 > - pip install -r requirements.txt (의존성 설치)
 > - pip install xmltodict
+> - pip install beautifulsoup4 (Beautiful Soup 라이브러리가 설치 -> 함수 실행 시 "No module named 'bs4'" 오류)
 > - 처음 클론했다면 .env 파일을 만들어야 함 (.env 파일에 open api에서 발급받은 키를 넣어야 함.)
 > - ASSEMBLY_API_KEY=your_api_key_here
 </details>
