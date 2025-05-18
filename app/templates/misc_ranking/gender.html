@@ -169,6 +169,7 @@
                     <thead>
                         <tr>
                             <th data-sort="overall_rank">순위 <i class="sort-icon"></i></th>
+                            <th>사진</th>
                             <th>의원명</th>
                             <th>정당</th>
                             <th>티어</th>
@@ -190,6 +191,10 @@
                             data-voting_score="{{ legislator.voting_score }}"
                             data-cooperation_score="{{ legislator.cooperation_score }}">
                             <td>{{ legislator.overall_rank }}</td>
+                            <td>
+                                <img src="{{ legislator.profile_image_url }}" alt="{{ legislator.name }}" 
+                                     class="rounded-circle" width="40" height="40">
+                            </td>
                             <td>
                                 <a href="/champions/{{ legislator.id }}">
                                     {{ legislator.name }}
