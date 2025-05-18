@@ -1,21 +1,20 @@
 {% extends "base.html" %}
 
-{% block title %}국회.gg - 소개{% endblock %}
+{% block title %}국회.gg - 평가 시스템 소개{% endblock %}
 
 {% block content %}
 <div class="container">
-    <h1 class="mb-4">국회.gg 소개</h1>
-    
-    <!-- 서비스 목표 -->
+    <h1 class="mb-4">국회.gg 평가 시스템 소개</h1>
+
+    <!-- 서비스 목표 및 소개 -->
     <div class="card mb-4">
         <div class="card-header">
-            <h3>국회.gg의 목표</h3>
+            <h3>국회.gg란?</h3>
         </div>
         <div class="card-body">
-            <p>국회.gg는 국회의원들의 의정활동을 게임의 티어 시스템처럼 직관적으로 보여주는 서비스입니다. 
-            복잡한 의정활동 데이터를 시각화하고 누구나 쉽게 이해할 수 있도록 하는 것이 목표입니다.</p>
+            <p>국회.gg는 국회의원들의 의정활동을 게임 캐릭터의 스탯처럼 직관적으로 평가하고 시각화합니다. 여러분이 좋아하는 게임의 챔피언처럼, 각 국회의원의 활동을 다양한 측면에서 평가하고 티어와 랭킹을 부여합니다. 이 페이지에서는 국회의원 평가 시스템의 작동 원리를 소개합니다.</p>
             
-            <p>주요 목표:</p>
+            <p><strong>주요 목표:</strong></p>
             <ul>
                 <li>국회의원들의 활동을 쉽고 재미있게 확인할 수 있는 플랫폼 제공</li>
                 <li>시민들의 정치 참여와 관심을 높이는 새로운 방식 제안</li>
@@ -23,35 +22,153 @@
             </ul>
         </div>
     </div>
-    
-    <!-- 평가 방식 -->
+
+    <!-- 평가 시스템 상세 -->
     <div class="card mb-4">
         <div class="card-header">
-            <h3>평가 방식 및 티어 시스템</h3>
+            <h3>국회.gg 평가 시스템 상세 안내</h3>
         </div>
         <div class="card-body">
-            <p>국회.gg는 다양한 의정활동 지표를 바탕으로 국회의원들을 평가하고 티어를 부여합니다.</p>
             
-            <h5>주요 평가 항목</h5>
-            <div class="row">
-                <div class="col-md-6">
+            <h4>기본 스탯 소개</h4>
+            <p>국회.gg는 다음 5가지 기본 스탯으로 국회의원의 의정활동을 평가합니다:</p>
+            <ol>
+                <li><strong>참여도</strong> (비중: 10%)</li>
+                <li><strong>입법활동</strong> (비중: 40%)</li>
+                <li><strong>의정발언</strong> (비중: 30%)</li>
+                <li><strong>표결 책임성</strong> (비중: 10%)</li>
+                <li><strong>협치/초당적 활동</strong> (비중: 10%)</li>
+            </ol>
+            <p>각 스탯은 100점 만점으로 평가되며, 종합점수는 각 스탯의 가중 평균으로 계산됩니다. (단, 종합점수 계산 시 가중치는 아래 "종합점수와 티어 시스템" 항목의 최종 가중치를 따릅니다.)</p>
+
+            <hr>
+
+            <h4>각 스탯의 계산 방식</h4>
+
+            <h5>1. 참여도 (10%)</h5>
+            <p><strong>무엇을 평가하나요?</strong><br>
+            본회의와 상임위 회의에 성실하게 출석했는지 평가합니다.</p>
+            <p><strong>어떻게 계산하나요?</strong></p>
+            <pre><code class="language-plaintext">참여도 = (본회의 출석 + 상임위 출석) / (본회의 회의 수 + 상임위 회의 수) × 100</code></pre>
+            <p><strong>예시</strong><br>
+            만약 어떤 의원이 본회의 30회 중 27회 출석하고, 상임위 회의 50회 중 40회 출석했다면:</p>
+            <pre><code class="language-plaintext">참여도 = (27 + 40) / (30 + 50) × 100 = 67 / 80 × 100 = 83.75점</code></pre>
+
+            <h5 class="mt-4">2. 입법활동 (40%)</h5>
+            <p><strong>무엇을 평가하나요?</strong><br>
+            법안 발의와 통과 실적을 종합적으로 평가합니다. 대표발의, 공동발의, 법안 통과 여부가 모두 점수에 반영됩니다.</p>
+            <p><strong>어떻게 계산하나요?</strong><br>
+            입법활동 점수는 세 가지 요소를 가중 평균하여 계산합니다:</p>
+            <ul>
+                <li><strong>대표발의 활동량(60%)</strong>: 대표발의한 법안 수를 평가합니다.
+                    <pre><code class="language-plaintext">대표발의 활동량 = 의원의 대표발의안 수 / 최다 대표발의 의원의 발의안 수 × 100 × 0.6</code></pre>
+                </li>
+                <li><strong>공동발의 활동량(20%)</strong>: 공동발의한 법안 수를 평가합니다.
+                    <pre><code class="language-plaintext">공동발의 활동량 = 의원의 공동발의안 수 / 최다 공동발의 의원의 발의안 수 × 100 × 0.2</code></pre>
+                </li>
+                <li><strong>법안 통과 성공률(20%)</strong>: 발의한 법안이 얼마나 통과되었는지 평가합니다.
+                    <pre><code class="language-plaintext">통과 성공률 = (원안가결×1.2 + 수정가결×1.0 + 대안반영×0.8) / 대표발의안 수 × 100 × 0.2</code></pre>
+                </li>
+            </ul>
+            <p><strong>예시</strong><br>
+            만약 어떤 의원이 10건의 법안을 대표발의(최다 의원은 50건)하고, 30건의 법안을 공동발의(최다 의원은 120건)했으며, 10건 중 2건이 원안가결, 3건이 수정가결, 1건이 대안반영폐기되었다면:</p>
+            <pre><code class="language-plaintext">대표발의 활동량 = 10 / 50 × 100 × 0.6 = 12점
+공동발의 활동량 = 30 / 120 × 100 × 0.2 = 5점
+통과 성공률 = ((2×1.2) + (3×1.0) + (1×0.8)) / 10 × 100 × 0.2 = 6.4 / 10 × 100 × 0.2 = 12.8점
+입법활동 점수 = 12 + 5 + 12.8 = 29.8점</code></pre>
+
+            <h5 class="mt-4">3. 의정발언 (30%)</h5>
+            <p><strong>무엇을 평가하나요?</strong><br>
+            국회에서 얼마나 적극적으로 발언했는지 평가합니다. 본회의, 상임위, 소위원회 등 다양한 회의에서의 발언을 모두 포함합니다.</p>
+            <p><strong>어떻게 계산하나요?</strong><br>
+            발언 횟수는 의원마다 차이가 매우 크기 때문에, 로그 스케일을 적용하여 격차를 완화합니다.</p>
+            <pre><code class="language-plaintext">의정발언 점수 = (log(의원 발언 수 + 1) / log(최다 발언 의원의 발언 수 + 1)) × 100
+최소 점수는 5점으로 보장</code></pre>
+            <p>로그 스케일을 사용하는 이유는, 발언 횟수가 10배 차이나도 점수 차이는 훨씬 작게 만들기 위함입니다. 이를 통해 발언 횟수가 적은 의원도 적절한 점수를 받을 수 있습니다.</p>
+            <p><strong>예시</strong><br>
+            만약 어떤 의원이 100회 발언했고, 최다 발언 의원이 1,000회 발언했다면:</p>
+            <pre><code class="language-plaintext">의정발언 점수 = (log(100+1) / log(1000+1)) × 100 = log(101) / log(1001) × 100 ≈ 66.5점</code></pre>
+
+            <h5 class="mt-4">4. 표결 책임성 (10%)</h5>
+            <p><strong>무엇을 평가하나요?</strong><br>
+            본회의 표결에 성실히 참여하고 명확한 의사 표현(찬성/반대)을 했는지 평가합니다. 기권이나 불참은 감점 요소가 됩니다.</p>
+            <p><strong>어떻게 계산하나요?</strong><br>
+            기본 참여율에서 기권과 불참에 대한 감점을 적용합니다.</p>
+            <pre><code class="language-plaintext">기본 참여율 = (찬성 + 반대 표결 수) / 전체 표결 수 × 100
+감점 = ((기권 수 × 0.5 + 불참 수 × 1.0) / 전체 표결 수) × 10
+표결 책임성 점수 = 기본 참여율 - 감점</code></pre>
+            <p>기권은 표결에 참여는 했으나 의사 표현을 하지 않은 것이므로 불참보다는 낮은 감점을 적용합니다.</p>
+            <p><strong>예시</strong><br>
+            만약 어떤 의원이 총 100번의 표결 중 70번 찬성, 10번 반대, 10번 기권, 10번 불참했다면:</p>
+            <pre><code class="language-plaintext">기본 참여율 = (70 + 10) / 100 × 100 = 80점
+감점 = ((10 × 0.5 + 10 × 1.0) / 100) × 10 = (5 + 10) / 100 × 10 = 1.5점
+표결 책임성 점수 = 80 - 1.5 = 78.5점</code></pre>
+
+            <h5 class="mt-4">5. 협치/초당적 활동 (10%)</h5>
+            <p><strong>무엇을 평가하나요?</strong><br>
+            다른 정당, 특히 다른 이념 성향을 가진 의원들과 얼마나 협력했는지 평가합니다. 법안 공동발의 관계를 기준으로 평가합니다.</p>
+            <p><strong>어떻게 계산하나요?</strong><br>
+            의원 간 공동발의 관계에 이념 성향에 따른 가중치를 적용합니다.</p>
+            <ul>
+                <li>다른 이념 성향 의원과의 협력: 가중치 3</li>
+                <li>같은 이념 성향의 다른 정당 의원과의 협력: 가중치 1</li>
+                <li>같은 정당 의원과의 협력: 가중치 0 (계산에 포함되지 않음)</li>
+            </ul>
+            <pre><code class="language-plaintext">협치/초당적 활동 점수 = (가중합계 / 총 협력 수) × 33.33</code></pre>
+            <p>가중치 3은 최대 가중치이므로, 33.33을 곱하면 모든 협력이 다른 이념 성향 의원과의 협력일 경우 100점이 됩니다(3 × 33.33 ≈ 100).</p>
+            <p><strong>예시</strong><br>
+            만약 국민의힘 소속 의원이 다음과 같은 협력 관계를 가진다면:</p>
+            <ul>
+                <li>더불어민주당 의원과 5회 협력 (다른 이념: 가중치 3)</li>
+                <li>개혁신당 의원과 10회 협력 (같은 이념 다른 정당: 가중치 1)</li>
+                <li>국민의힘 의원과 15회 협력 (같은 정당: 가중치 0)</li>
+            </ul>
+            <pre><code class="language-plaintext">가중합계 = (5 × 3) + (10 × 1) = 15 + 10 = 25
+총 협력 수 = 5 + 10 + 15 = 30 (주: 계산 시 가중치 0인 협력도 총 협력 수에는 포함)
+협치/초당적 활동 점수 = (25 / 30) × 33.33 ≈ 27.78점 
+(예시 수정: 총 협력 수에 가중치 0인 경우도 포함하여 분모로 사용해야 의미가 맞습니다. 원문 텍스트에도 이렇게 되어있네요.)
+</code></pre>
+            
+            <hr>
+
+            <h4>스탯 점수 표준화 과정</h4>
+            <p>각 스탯은 서로 다른 기준과 방식으로 계산되기 때문에, 그대로 종합하면 불균형한 결과가 나올 수 있습니다. 예를 들어 의정발언 점수는 로그 스케일을 적용해도 높은 점수 범위에 분포할 수 있고, 협치/초당적 활동 점수는 낮은 범위에 분포할 수 있습니다.</p>
+            <p>이러한 불균형을 해소하기 위해 모든 스탯 점수는 종합점수 계산 전에 표준화 과정을 거칩니다.</p>
+            
+            <h5>표준화 방식</h5>
+            <ol>
+                <li><strong>통계 분석</strong>: 각 스탯별로 의원들의 점수 분포를 분석합니다(최소값, 최대값, 평균값 등).</li>
+                <li><strong>범위 변환</strong>: 모든 스탯을 동일한 범위(5~100점)로 변환합니다.
+                    <pre><code class="language-plaintext">표준화된 점수 = 5 + (원래 점수 - 최소값) / (최대값 - 최소값) × 95</code></pre>
+                </li>
+                <li><strong>특수 케이스 처리</strong>:
                     <ul>
-                        <li>참여도 점수 (출석률, 회의 참여)</li>
-                        <li>입법활동 점수 (대표발의안, 공동발의안)</li>
-                        <li>의정발언 점수 (발언 횟수, 다양성)</li>
+                        <li>데이터가 없는 경우(NULL): 0점으로 처리</li>
+                        <li>단일 값만 있는 경우: 최소 점수(5점)로 처리</li>
                     </ul>
-                </div>
-                <div class="col-md-6">
-                    <ul>
-                        <li>표결 책임성 점수 (본회의 표결 참여)</li>
-                        <li>정당 간 협력 점수 (여야 협력도)</li>
-                    </ul>
-                </div>
-            </div>
+                </li>
+            </ol>
+            <h5>예시</h5>
+            <p>예를 들어, 의정발언 점수의 분포가 다음과 같다고 가정합니다:</p>
+            <ul>
+                <li>최소값: 10점</li>
+                <li>최대값: 200점</li>
+                <li>의원 A의 점수: 50점</li>
+            </ul>
+            <p>표준화 과정을 거치면:</p>
+            <pre><code class="language-plaintext">표준화된 점수 = 5 + (50 - 10) / (200 - 10) × 95 ≈ 25.05점</code></pre>
+            <p>이처럼 의원 A의 의정발언 점수는 종합점수 계산 시 25.05점으로 반영됩니다. 이 표준화 과정을 통해 모든 스탯이 동일한 척도에서 비교 가능하게 되고, 각 스탯에 부여된 가중치가 의도한 대로 종합점수에 반영됩니다.</p>
+
+            <hr>
+
+            <h4>종합점수와 티어 시스템</h4>
+            <h5>종합점수 계산</h5>
+            <p>각 스탯은 0-100점 범위로 표준화된 후, 가중치를 적용하여 종합점수를 계산합니다.</p>
+            <p><strong>주의:</strong> 아래 종합점수 가중치는 "기본 스탯 소개"의 비중과 다를 수 있습니다. 이는 서비스 초기 설계와 실제 데이터 분포 및 중요도 조정을 거쳐 최종 결정된 가중치입니다.</p>
+            <pre><code class="language-plaintext">종합점수 = (참여도 × 0.15) + (입법활동 × 0.4) + (의정발언 × 0.25) + (표결 책임성 × 0.1) + (협치/초당적 활동 × 0.1)</code></pre>
             
             <h5 class="mt-4">티어 시스템</h5>
-            <p>종합 점수를 기준으로 다음과 같은 티어로 분류됩니다:</p>
-            
+            <p>종합점수를 기준으로 상위 비율에 따라 티어를 할당합니다. 티어는 게임 리그 오브 레전드의 티어 시스템을 참고했습니다.</p>
             <div class="table-responsive">
                 <table class="table table-bordered">
                     <thead>
@@ -62,40 +179,63 @@
                     </thead>
                     <tbody>
                         <tr><td><span class="badge bg-danger">Challenger</span></td><td>상위 0.03%</td></tr>
-                        <tr><td><span class="badge bg-warning">Grandmaster</span></td><td>상위 0.08%</td></tr>
-                        <tr><td><span class="badge bg-warning">Master</span></td><td>상위 0.67%</td></tr>
-                        <tr><td><span class="badge bg-info">Diamond</span></td><td>상위 2.65%</td></tr>
-                        <tr><td><span class="badge bg-info">Emerald</span></td><td>상위 8.76%</td></tr>
-                        <tr><td><span class="badge bg-success">Platinum</span></td><td>상위 11.97%</td></tr>
-                        <tr><td><span class="badge bg-warning text-dark">Gold</span></td><td>상위 17.81%</td></tr>
-                        <tr><td><span class="badge bg-secondary">Silver</span></td><td>상위 19.40%</td></tr>
-                        <tr><td><span class="badge bg-secondary">Bronze</span></td><td>상위 19.85%</td></tr>
+                        <tr><td><span class="badge" style="background-color: #AA00FF; color: white;">Grandmaster</span></td><td>상위 0.08%</td></tr>
+                        <tr><td><span class="badge" style="background-color: #FF00FF; color: white;">Master</span></td><td>상위 0.67%</td></tr>
+                        <tr><td><span class="badge bg-primary">Diamond</span></td><td>상위 2.65%</td></tr>
+                        <tr><td><span class="badge" style="background-color: #00C7AB; color: white;">Emerald</span></td><td>상위 8.76%</td></tr>
+                        <tr><td><span class="badge" style="background-color: #4E637A; color: white;">Platinum</span></td><td>상위 11.97%</td></tr>
+                        <tr><td><span class="badge" style="background-color: #CD7F32; color: white;">Gold</span></td><td>상위 17.81%</td></tr>
+                        <tr><td><span class="badge" style="background-color: #C0C0C0; color: black;">Silver</span></td><td>상위 19.40%</td></tr>
+                        <tr><td><span class="badge" style="background-color: #B08D57; color: white;">Bronze</span></td><td>상위 19.85%</td></tr>
                         <tr><td><span class="badge bg-dark">Iron</span></td><td>나머지 18.79%</td></tr>
                     </tbody>
                 </table>
             </div>
+            <p class="small">이 티어 구조는 의원들의 상대적 위치를 쉽게 이해할 수 있게 해줍니다. 예를 들어, Challenger 티어는 300명의 의원 중 단 1명만 받을 수 있는 최고의 등급입니다.</p>
+
+            <hr>
             
-            <div class="alert alert-warning mt-3">
-                <strong>주의사항:</strong> 이 티어 시스템은 직관적인 이해를 위한 도구일 뿐, 국회의원의 활동을 온전히 평가하기는 어렵습니다. 
-                다양한 상황과 맥락을 고려하여 참고용으로만 활용해 주시기 바랍니다.
+            <h4>랭킹 시스템</h4>
+            <p>종합점수를 기준으로 내림차순 정렬하여 순위를 부여합니다. 동점인 경우 같은 순위를 부여하고, 다음 순위는 해당 인원수만큼 건너뜁니다.</p>
+
+            <div class="alert alert-warning mt-4">
+                <strong>주의사항:</strong> 이 평가 시스템과 티어는 의정활동에 대한 직관적인 이해를 돕기 위한 도구입니다. 국회의원의 모든 활동과 그 질적인 측면을 완벽하게 반영하기는 어렵습니다. 다양한 상황과 맥락을 고려하여 참고용으로만 활용해 주시기 바랍니다.
             </div>
         </div>
     </div>
-    
-    <!-- 자료 출처 -->
+
+    <!-- 자료 출처 및 FAQ -->
     <div class="card mb-4">
         <div class="card-header">
-            <h3>자료 출처 및 한계점</h3>
+            <h3>데이터 소스 및 자주 묻는 질문 (FAQ)</h3>
         </div>
         <div class="card-body">
-            <h5>주요 자료 출처</h5>
+            <h5>데이터 소스</h5>
+            <p>국회.gg의 평가는 다음과 같은 다양한 데이터 소스를 기반으로 합니다:</p>
             <ul>
-                <li>국회 의안정보시스템 Open API</li>
-                <li>국회 회의록 시스템</li>
-                <li>국회의원 인적사항 API</li>
-                <li>본회의 표결 정보</li>
+                <li><strong>출석 정보</strong>: 국회 본회의 및 상임위원회 출석 기록</li>
+                <li><strong>법안 정보</strong>: 국회 의안정보시스템 API를 통한 발의 및 처리 정보</li>
+                <li><strong>발언 정보</strong>: 국회회의록 시스템의 발언 기록</li>
+                <li><strong>표결 정보</strong>: 국회 본회의 전자표결 시스템 기록</li>
+                <li>국회의원 인적사항 API (정당 정보 등)</li>
             </ul>
+
+            <h5 class="mt-4">자주 묻는 질문 (FAQ)</h5>
+            <p><strong>Q: 왜 발언 점수는 로그 스케일을 사용하나요?</strong></p>
+            <p>A: 발언 횟수는 의원마다 매우 큰 차이가 있어 그대로 반영하면 발언 많은 일부 의원만 높은 점수를 받게 됩니다. 로그 스케일을 적용하면 발언 횟수 차이가 있더라도 점수 격차를 완화할 수 있습니다.</p>
             
+            <p><strong>Q: 표결 책임성에서 기권은 왜 불참보다 덜 감점되나요?</strong></p>
+            <p>A: 기권은 표결에 참석은 했지만 의사 표현을 하지 않은 것이고, 불참은 표결 자체에 참여하지 않은 것입니다. 최소한 회의에 참석한 것은 인정하여 기권이 불참보다 덜 감점됩니다.</p>
+            
+            <p><strong>Q: 협치/초당적 활동에서 이념 성향은 어떻게 구분하나요?</strong></p>
+            <p>A: 정당을 기준으로 진보(더불어민주당, 조국혁신당 등)와 보수(국민의힘, 개혁신당 등)로 구분합니다. 다른 이념 성향 의원과의 협력에 더 높은 가중치를 부여합니다.</p>
+            
+            <p><strong>Q: 직책이나 역할에 따른 보정이 있나요?</strong></p>
+            <p>A: 현재 시스템은 모든 의원을 동일한 기준으로 평가합니다. 향후 위원장, 원내대표 등 특수 직책에 대한 보정을 고려할 수 있습니다.</p>
+            
+            <p><strong>Q: 평가 주기는 어떻게 되나요?</strong></p>
+            <p>A: 데이터는 정기적으로 업데이트되며, 스탯과 티어는 새로운 데이터가 반영될 때마다 재계산됩니다.</p>
+
             <h5 class="mt-4">서비스의 한계점</h5>
             <div class="alert alert-info">
                 <p>국회.gg는 공개된 데이터를 바탕으로 가능한 객관적인 평가를 제공하려 노력하고 있으나, 다음과 같은 한계점이 있습니다:</p>
@@ -133,7 +273,7 @@
         </div>
     </div>
     
-    <!-- 면책 조항 및 정보 -->
+    <!-- 면책 조항 -->
     <div class="card mb-4">
         <div class="card-header">
             <h3>면책 조항</h3>
@@ -145,5 +285,43 @@
             <p>더 정확하고 상세한 정보는 공식 국회 홈페이지와 관련 기관을 통해 확인해 주시기 바랍니다.</p>
         </div>
     </div>
+
 </div>
+<style>
+    /* 기존 HTML에 있던 티어 색상 일부 적용 및 추가 */
+    .badge.bg-danger { /* Challenger */ }
+    .badge.bg-warning { /* Grandmaster, Master (original) - 이들은 개별 스타일로 대체 */ }
+    .badge.bg-info { /* Diamond, Emerald (original) - 이들은 개별 스타일로 대체 */ }
+    .badge.bg-success { /* Platinum (original) - 이들은 개별 스타일로 대체 */ }
+    .badge.text-dark { /* Gold (original) - 이들은 개별 스타일로 대체 */ }
+    .badge.bg-secondary { /* Silver, Bronze (original) - 이들은 개별 스타일로 대체 */ }
+    .badge.bg-dark { /* Iron */ }
+
+    /* 텍스트 파일에서 제시된 티어 색상으로 일부 조정/추가 (LoL 스타일 참고) */
+    /* Challenger: bg-danger (기존 유지) */
+    /* Grandmaster: #AA00FF (보라색 계열) */
+    /* Master: #FF00FF (마젠타 계열) */
+    /* Diamond: bg-primary (파란색 계열, Bootstrap 기본) */
+    /* Emerald: #00C7AB (청록색 계열) */
+    /* Platinum: #4E637A (어두운 청회색) */
+    /* Gold: #CD7F32 (금색/동색 계열) */
+    /* Silver: #C0C0C0 (은색 계열) */
+    /* Bronze: #B08D57 (브론즈색 계열) */
+    /* Iron: bg-dark (기존 유지) */
+
+    /* 코드 블록 가독성 향상 */
+    pre {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        padding: 1rem;
+        border-radius: 0.25rem;
+        white-space: pre-wrap; /* 줄바꿈 허용 */
+        word-break: break-all; /* 긴 단어 줄바꿈 */
+    }
+    pre code {
+        background-color: transparent;
+        border: none;
+        padding: 0;
+    }
+</style>
 {% endblock %}
