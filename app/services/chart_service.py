@@ -153,6 +153,9 @@ def generate_speech_chart_data(speeches: List[Dict[str, Any]]) -> Dict[str, Any]
     Returns:
         차트 데이터 딕셔너리
     """
+    # 필터링된 데이터로 차트 생성
+    # meetings/speeches의 데이터는 speech_service에서 이미 필터링되었다고 가정
+    
     # 차트에 표시할 라벨(회의 구분) 추출
     labels = [speech["meeting_type"] for speech in speeches]
     

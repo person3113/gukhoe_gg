@@ -18,15 +18,6 @@ from app.models.vote import Vote, VoteResult
 from app.db.database import SessionLocal
 from app.services.tier_service import TierService
 
-# 먼저 모든 모델을 명시적으로 임포트하여 순환 참조 문제 해결
-from app.models.legislator import Legislator
-from app.models.sns import LegislatorSNS
-from app.models.committee import Committee, CommitteeHistory, CommitteeMember
-from app.models.speech import SpeechKeyword, SpeechByMeeting
-from app.models.attendance import Attendance
-from app.models.bill import Bill, BillCoProposer
-from app.models.vote import Vote, VoteResult
-
 def calculate_all_scores():
     """
     모든 점수 계산 함수 호출
@@ -123,7 +114,6 @@ def calculate_participation_scores(db: Session):
         print(f"참여 점수 계산 오류: {str(e)}")
         import traceback
         traceback.print_exc()
-
 
 def calculate_legislation_scores(db: Session):
     """
@@ -297,7 +287,6 @@ def calculate_speech_scores(db: Session):
         print(f"의정발언 점수 계산 중 오류 발생: {str(e)}")
         import traceback
         traceback.print_exc()
-
 
 def calculate_voting_scores(db: Session):
     """
