@@ -201,14 +201,7 @@
                             </td>
                             <td>{{ legislator.party }}</td>
                             <td>
-                                <span class="badge 
-                                    {% if legislator.tier == 'Challenger' %}bg-danger{% 
-                                    elif legislator.tier == 'Master' %}bg-warning{% 
-                                    elif legislator.tier == 'Diamond' %}bg-info{% 
-                                    elif legislator.tier == 'Platinum' %}bg-success{% 
-                                    elif legislator.tier == 'Gold' %}bg-warning text-dark{% 
-                                    elif legislator.tier == 'Silver' %}bg-secondary{% 
-                                    else %}bg-dark{% endif %}">
+                                <span class="badge tier-{{ legislator.tier.lower() }}">
                                     {{ legislator.tier }}
                                 </span>
                             </td>
@@ -240,6 +233,35 @@ document.addEventListener('DOMContentLoaded', function() {
     // 성별 티어 분포 차트
     var tierCtx = document.getElementById('tierChart').getContext('2d');
     var tierData = {{ tier_chart|tojson }};
+    
+    // CSS 변수에서 티어별 색상 가져오기
+    if (tierData && tierData.datasets) {
+        // CSS 변수에서 색상값 가져오는 함수
+        function getCssVariableValue(variableName) {
+            return getComputedStyle(document.documentElement).getPropertyValue(variableName).trim();
+        }
+        
+        // 티어별 색상 매핑
+        const tierColors = {
+            "Challenger": getCssVariableValue('--tier-challenger'),
+            "Master": getCssVariableValue('--tier-master'),
+            "Diamond": getCssVariableValue('--tier-diamond'),
+            "Platinum": getCssVariableValue('--tier-platinum'),
+            "Gold": getCssVariableValue('--tier-gold'),
+            "Silver": getCssVariableValue('--tier-silver'),
+            "Bronze": getCssVariableValue('--tier-bronze'),
+            "Iron": getCssVariableValue('--tier-iron')
+        };
+        
+        // 각 데이터셋에 색상 지정
+        tierData.datasets.forEach(dataset => {
+            const tier = dataset.label;
+            if (tierColors[tier]) {
+                dataset.backgroundColor = tierColors[tier];
+                dataset.borderColor = tierColors[tier];
+            }
+        });
+    }
     
     var tierChart = new Chart(tierCtx, {
         type: 'bar',
