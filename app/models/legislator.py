@@ -36,5 +36,7 @@ class Legislator(Base):
     asset = Column(BigInteger)  # 재산
     
     # 관계 정의 - 단방향 관계로 유지할 것들만 남기고 나머지 제거
-    sns = relationship("LegislatorSNS", uselist=False, back_populates=None)
-    bills_proposed = relationship("Bill", foreign_keys="[Bill.main_proposer_id]", back_populates=None)
+    sns = relationship("LegislatorSNS", uselist=False, back_populates=None, overlaps="legislator")
+    
+    # 이거 관계를 완전히 제거하고 직접 필요할 때만 수행하라는데 - 엑셀 파싱을 위헤 fetch_data.py 실행하는데 순환참조땜에 오류남
+    # bills_proposed = relationship("Bill", foreign_keys="[Bill.main_proposer_id]", back_populates=None, overlaps="main_proposer")

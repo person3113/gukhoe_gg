@@ -6,6 +6,15 @@ from sqlalchemy.orm import Session
 # 프로젝트 루트 디렉토리 추가
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+# 순환 참조 해결을 위해 모든 모델을 명시적으로 import
+from app.models.legislator import Legislator
+from app.models.sns import LegislatorSNS
+from app.models.committee import Committee, CommitteeHistory, CommitteeMember
+from app.models.speech import SpeechKeyword, SpeechByMeeting
+from app.models.attendance import Attendance
+from app.models.bill import Bill, BillCoProposer
+from app.models.vote import Vote, VoteResult
+
 from app.db.database import SessionLocal
 from app.services.tier_service import TierService
 
@@ -40,13 +49,81 @@ def calculate_all_scores():
 
 def calculate_participation_scores(db: Session):
     """
-    참여 점수 계산
+    의원별 참여 점수(출석률) 계산하여 DB 업데이트
+    
+    참여 점수 = (본회의 출석 + 상임위 출석) / (본회의 회의 수 + 상임위 회의 수) × 100
+    
+    Args:
+        db: 데이터베이스 세션
     """
-    # DB에서 출석 데이터 조회
-    # 의원별 출석률 계산
-    # 점수 산출 알고리즘 적용
-    # DB 업데이트
-    pass
+    try:
+        print("참여 점수(출석률) 계산 시작...")
+        
+        # 모든 의원 조회
+        legislators = db.query(Legislator).all()
+        print(f"총 {len(legislators)}명의 의원 점수 계산")
+        
+        updated_count = 0
+        for legislator in legislators:
+            # 1. 본회의 출석 정보
+            plenary_attendance_record = db.query(Attendance).filter(
+                Attendance.legislator_id == legislator.id,
+                Attendance.meeting_type == "본회의",
+                Attendance.status == "출석"
+            ).first()
+            
+            plenary_meetings_record = db.query(Attendance).filter(
+                Attendance.legislator_id == legislator.id,
+                Attendance.meeting_type == "본회의",
+                Attendance.status == "회의일수"
+            ).first()
+            
+            plenary_attendance = plenary_attendance_record.count if plenary_attendance_record else 0
+            plenary_meetings = plenary_meetings_record.count if plenary_meetings_record else 0
+            
+            # 2. 상임위 출석 정보 - committee_id 조건 제거
+            standing_attendance_record = db.query(Attendance).filter(
+                Attendance.legislator_id == legislator.id,
+                Attendance.meeting_type == "상임위",
+                Attendance.status == "출석"
+            ).first()
+            
+            standing_meetings_record = db.query(Attendance).filter(
+                Attendance.legislator_id == legislator.id,
+                Attendance.meeting_type == "상임위",
+                Attendance.status == "회의일수"
+            ).first()
+            
+            standing_attendance = standing_attendance_record.count if standing_attendance_record else 0
+            standing_meetings = standing_meetings_record.count if standing_meetings_record else 0
+            
+            # 3. 출석 점수 계산
+            total_attendance = plenary_attendance + standing_attendance
+            total_meetings = plenary_meetings + standing_meetings
+            
+            if total_meetings > 0:
+                participation_score = (total_attendance / total_meetings) * 100
+                participation_score = round(participation_score, 1)
+            else:
+                participation_score = 0
+            
+            # 4. DB 업데이트
+            legislator.participation_score = participation_score
+            updated_count += 1
+            
+            # 5. 로그 출력
+            print(f"{legislator.hg_nm}: 본회의({plenary_attendance}/{plenary_meetings}), 상임위({standing_attendance}/{standing_meetings}) -> 참여 점수: {participation_score}")
+        
+        # 변경사항 저장
+        db.commit()
+        print(f"참여 점수 계산 완료: {updated_count}명 업데이트")
+        
+    except Exception as e:
+        db.rollback()
+        print(f"참여 점수 계산 오류: {str(e)}")
+        import traceback
+        traceback.print_exc()
+
 
 def calculate_legislation_scores(db: Session):
     """
@@ -220,6 +297,7 @@ def calculate_speech_scores(db: Session):
         print(f"의정발언 점수 계산 중 오류 발생: {str(e)}")
         import traceback
         traceback.print_exc()
+
 
 def calculate_voting_scores(db: Session):
     """
@@ -638,3 +716,4 @@ def update_rankings(db: Session):
 
 if __name__ == "__main__":
     calculate_all_scores()
+   
