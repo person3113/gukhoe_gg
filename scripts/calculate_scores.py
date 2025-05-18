@@ -544,9 +544,9 @@ def calculate_overall_scores(db: Session):
             
             # 가중치에 따른 종합 점수 계산
             overall_score = (
-                participation * 0.15 +  # 참여도 (15%)
+                participation * 0.1 +  # 참여도 (10%)
                 legislation * 0.4 +     # 입법활동 (40%)
-                speech * 0.25 +         # 의정발언 (25%)
+                speech * 0.3 +         # 의정발언 (30%)
                 voting * 0.1 +          # 표결 책임성 (10%)
                 cooperation * 0.1       # 협치/초당적 활동 (10%)
             )
