@@ -189,14 +189,7 @@
                                     </a>
                                 </td>
                                 <td>
-                                    <span class="badge 
-                                        {% if legislator.tier == 'Challenger' %}bg-danger{% 
-                                        elif legislator.tier == 'Master' %}bg-warning{% 
-                                        elif legislator.tier == 'Diamond' %}bg-info{% 
-                                        elif legislator.tier == 'Platinum' %}bg-success{% 
-                                        elif legislator.tier == 'Gold' %}bg-warning text-dark{% 
-                                        elif legislator.tier == 'Silver' %}bg-secondary{% 
-                                        else %}bg-dark{% endif %}">
+                                    <span class="badge tier-{{ legislator.tier.lower() }}">
                                         {{ legislator.tier }}
                                     </span>
                                 </td>

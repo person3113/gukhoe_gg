@@ -551,30 +551,30 @@ def generate_committee_scores_chart_data(scores: Dict[str, float]) -> Dict[str, 
 ### 잡다한 랭킹 - 초선/재선+ ###
 def generate_term_tier_chart_data(term_tier_data: Dict[str, Dict[str, int]]) -> Dict[str, Any]:
     """
-    초선/재선별 티어 분포 데이터를 차트 데이터로 변환
+    기수별 티어 분포 데이터를 차트 데이터로 변환
     
     Args:
-        term_tier_data: 초선/재선별 티어 분포 딕셔너리
+        term_tier_data: 기수별 티어 분포 딕셔너리
         
     Returns:
         차트 데이터 딕셔너리
     """
-    # 차트에 표시할 라벨(선수) 추출
+    # 차트에 표시할 라벨(기수) 추출
     labels = list(term_tier_data.keys())
     
     # 티어 목록 (모든 가능한 티어)
     all_tiers = ["Challenger", "Master", "Diamond", "Platinum", "Gold", "Silver", "Bronze", "Iron"]
     
-    # 티어별 색상 매핑
+    # 티어별 색상 매핑 (CSS 변수 사용)
     tier_colors = {
-        "Challenger": 'rgba(255, 0, 0, 0.6)',       # 빨강
-        "Master": 'rgba(255, 165, 0, 0.6)',         # 주황
-        "Diamond": 'rgba(0, 191, 255, 0.6)',        # 하늘
-        "Platinum": 'rgba(50, 205, 50, 0.6)',       # 연두
-        "Gold": 'rgba(255, 215, 0, 0.6)',           # 금색
-        "Silver": 'rgba(192, 192, 192, 0.6)',       # 은색
-        "Bronze": 'rgba(205, 127, 50, 0.6)',        # 동색
-        "Iron": 'rgba(169, 169, 169, 0.6)'          # 회색
+        "Challenger": 'var(--tier-challenger)',
+        "Master": 'var(--tier-master)',
+        "Diamond": 'var(--tier-diamond)',
+        "Platinum": 'var(--tier-platinum)',
+        "Gold": 'var(--tier-gold)',
+        "Silver": 'var(--tier-silver)',
+        "Bronze": 'var(--tier-bronze)',
+        "Iron": 'var(--tier-iron)'
     }
     
     # 데이터셋 생성
@@ -595,7 +595,7 @@ def generate_term_tier_chart_data(term_tier_data: Dict[str, Dict[str, int]]) -> 
             "label": tier,
             "data": data,
             "backgroundColor": tier_colors.get(tier, 'rgba(200, 200, 200, 0.6)'),
-            "borderColor": tier_colors.get(tier, 'rgba(200, 200, 200, 1)').replace('0.6', '1'),
+            "borderColor": tier_colors.get(tier, 'rgba(200, 200, 200, 1)'),
             "borderWidth": 1
         })
     

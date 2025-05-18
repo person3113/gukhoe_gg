@@ -45,6 +45,7 @@ data/images/*
 *.swp
 *.swo
 .DS_Store
+.cursor
 
 # 빌드 결과물
 build/

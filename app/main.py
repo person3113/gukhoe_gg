@@ -44,7 +44,6 @@ def setup_routes(app):
 def setup_static(app):
     # 정적 파일 디렉토리 설정
     app.mount("/static", StaticFiles(directory="app/static"), name="static")
-    pass
 
 def setup_templates(app):
     # Jinja2 템플릿 엔진 설정
