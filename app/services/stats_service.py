@@ -134,17 +134,26 @@ def get_term_average_stats(db: Session, stat: str = 'overall_score') -> Dict[str
 ### 잡다한 랭킹 - 정당 ###
 def get_party_average_scores(db: Session) -> Dict[str, float]:
     """
-    정당별 평균 종합점수 조회
+    정당별 평균 종합점수 조회 (의원 수 기준 정렬)
     
     Args:
         db: 데이터베이스 세션
     
     Returns:
-        정당별 평균 종합점수 딕셔너리
+        정당별 평균 종합점수 딕셔너리 (의원 수 기준 정렬)
     """
-    # 정당 목록 조회
-    parties = db.query(Legislator.poly_nm).distinct().all()
-    party_list = [party[0] for party in parties]
+    # 정당별 의원 수 조회 및 내림차순 정렬
+    party_counts = db.query(
+        Legislator.poly_nm, 
+        func.count(Legislator.id).label('count')
+    ).group_by(
+        Legislator.poly_nm
+    ).order_by(  # 이 부분이 빠져있었습니다!
+        func.count(Legislator.id).desc()
+    ).all()
+    
+    # 의원 수 기준으로 정렬된 정당 목록 생성
+    party_list = [party[0] for party in party_counts if party[0]]
     
     # 정당별 평균 종합점수 계산
     result = {}
@@ -161,17 +170,26 @@ def get_party_average_scores(db: Session) -> Dict[str, float]:
 
 def get_party_average_bill_counts(db: Session) -> Dict[str, float]:
     """
-    정당별 평균 대표발의안수 조회
+    정당별 평균 대표발의안수 조회 (의원 수 기준 정렬)
     
     Args:
         db: 데이터베이스 세션
     
     Returns:
-        정당별 평균 대표발의안수 딕셔너리
+        정당별 평균 대표발의안수 딕셔너리 (의원 수 기준 정렬)
     """
-    # 정당 목록 조회
-    parties = db.query(Legislator.poly_nm).distinct().all()
-    party_list = [party[0] for party in parties]
+    # 정당별 의원 수 조회
+    party_counts = db.query(
+        Legislator.poly_nm, 
+        func.count(Legislator.id).label('count')
+    ).group_by(
+        Legislator.poly_nm
+    ).order_by(
+        func.count(Legislator.id).desc()
+    ).all()
+    
+    # 의원 수 기준으로 정렬된 정당 목록 생성
+    party_list = [party[0] for party in party_counts if party[0]]
     
     # 정당별 평균 대표발의안수 계산
     result = {}

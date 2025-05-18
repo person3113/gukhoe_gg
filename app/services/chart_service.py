@@ -364,30 +364,53 @@ def generate_party_scores_chart_data(party_scores: Dict[str, float]) -> Dict[str
     Returns:
         차트 데이터 딕셔너리
     """
+    # 정당별 대표 색상 정의
+    party_colors = {
+        "더불어민주당": 'rgba(0, 102, 204, 0.6)',  # 파랑색
+        "국민의힘": 'rgba(220, 0, 0, 0.6)',      # 빨강색
+        "조국혁신당": 'rgba(51, 153, 255, 0.6)',  # 파랑색 계열(더불어민주당과 구분)
+        "개혁신당": 'rgba(255, 153, 0, 0.6)',    # 오렌지색
+        "무소속": 'rgba(128, 128, 128, 0.6)',    # 회색
+        # 기타 정당들은 구분되는 색상으로
+        "기본소득당": 'rgba(102, 51, 153, 0.6)',  # 보라색
+        "진보당": 'rgba(51, 204, 51, 0.6)',      # 녹색
+        "사회민주당": 'rgba(255, 51, 153, 0.6)',  # 분홍색
+    }
+    
+    # 테두리 색상 생성 (채우기 색상보다 진하게)
+    party_border_colors = {
+        party: color.replace('0.6', '1') 
+        for party, color in party_colors.items()
+    }
+    
     # 차트에 표시할 라벨(정당명) 추출
     labels = list(party_scores.keys())
     
     # 데이터값(평균 점수) 추출
     scores = [party_scores[party] for party in labels]
     
-    # 색상 목록 생성
-    colors = [
-        'rgba(54, 162, 235, 0.6)',
-        'rgba(255, 99, 132, 0.6)',
-        'rgba(255, 206, 86, 0.6)',
-        'rgba(75, 192, 192, 0.6)',
-        'rgba(153, 102, 255, 0.6)',
-        'rgba(255, 159, 64, 0.6)',
-        'rgba(199, 199, 199, 0.6)',
-        'rgba(83, 102, 255, 0.6)'
-    ]
+    # 색상 리스트 생성
+    colors = []
+    border_colors = []
     
-    # 색상이 부족한 경우 반복 사용
-    if len(labels) > len(colors):
-        colors = colors * (len(labels) // len(colors) + 1)
-    
-    # 테두리 색상 생성
-    border_colors = [color.replace('0.6', '1') for color in colors[:len(labels)]]
+    for party in labels:
+        # 미리 정의된 정당 색상이 있으면 사용, 없으면 기본 색상 사용
+        if party in party_colors:
+            colors.append(party_colors[party])
+            border_colors.append(party_border_colors[party])
+        else:
+            # 정의되지 않은 정당은 기본 색상 중 하나 선택
+            default_colors = [
+                'rgba(153, 102, 255, 0.6)',
+                'rgba(75, 192, 192, 0.6)',
+                'rgba(255, 206, 86, 0.6)',
+                'rgba(54, 162, 235, 0.6)',
+                'rgba(255, 99, 132, 0.6)'
+            ]
+            # 인덱스를 사용하여 정당마다 다른 색상 선택
+            color_index = len(colors) % len(default_colors)
+            colors.append(default_colors[color_index])
+            border_colors.append(default_colors[color_index].replace('0.6', '1'))
     
     # 차트 데이터 구성
     chart_data = {
@@ -395,7 +418,7 @@ def generate_party_scores_chart_data(party_scores: Dict[str, float]) -> Dict[str
         "datasets": [{
             "label": "평균 종합점수",
             "data": scores,
-            "backgroundColor": colors[:len(labels)],
+            "backgroundColor": colors,
             "borderColor": border_colors,
             "borderWidth": 1
         }]
@@ -413,30 +436,53 @@ def generate_party_bills_chart_data(party_bills: Dict[str, float]) -> Dict[str, 
     Returns:
         차트 데이터 딕셔너리
     """
+    # 정당별 대표 색상 정의 (동일한 색상 유지)
+    party_colors = {
+        "더불어민주당": 'rgba(0, 102, 204, 0.6)',  # 파랑색
+        "국민의힘": 'rgba(220, 0, 0, 0.6)',      # 빨강색
+        "조국혁신당": 'rgba(51, 153, 255, 0.6)',  # 파랑색 계열(더불어민주당과 구분)
+        "개혁신당": 'rgba(255, 153, 0, 0.6)',    # 오렌지색
+        "무소속": 'rgba(128, 128, 128, 0.6)',    # 회색
+        # 기타 정당들은 구분되는 색상으로
+        "기본소득당": 'rgba(102, 51, 153, 0.6)',  # 보라색
+        "진보당": 'rgba(51, 204, 51, 0.6)',      # 녹색
+        "사회민주당": 'rgba(255, 51, 153, 0.6)',  # 분홍색
+    }
+    
+    # 테두리 색상 생성 (채우기 색상보다 진하게)
+    party_border_colors = {
+        party: color.replace('0.6', '1') 
+        for party, color in party_colors.items()
+    }
+    
     # 차트에 표시할 라벨(정당명) 추출
     labels = list(party_bills.keys())
     
     # 데이터값(평균 발의안수) 추출
     counts = [party_bills[party] for party in labels]
     
-    # 색상 목록 생성
-    colors = [
-        'rgba(75, 192, 192, 0.6)',
-        'rgba(153, 102, 255, 0.6)',
-        'rgba(255, 159, 64, 0.6)',
-        'rgba(54, 162, 235, 0.6)',
-        'rgba(255, 99, 132, 0.6)',
-        'rgba(255, 206, 86, 0.6)',
-        'rgba(199, 199, 199, 0.6)',
-        'rgba(83, 102, 255, 0.6)'
-    ]
+    # 색상 리스트 생성
+    colors = []
+    border_colors = []
     
-    # 색상이 부족한 경우 반복 사용
-    if len(labels) > len(colors):
-        colors = colors * (len(labels) // len(colors) + 1)
-    
-    # 테두리 색상 생성
-    border_colors = [color.replace('0.6', '1') for color in colors[:len(labels)]]
+    for party in labels:
+        # 미리 정의된 정당 색상이 있으면 사용, 없으면 기본 색상 사용
+        if party in party_colors:
+            colors.append(party_colors[party])
+            border_colors.append(party_border_colors[party])
+        else:
+            # 정의되지 않은 정당은 기본 색상 중 하나 선택
+            default_colors = [
+                'rgba(153, 102, 255, 0.6)',
+                'rgba(75, 192, 192, 0.6)',
+                'rgba(255, 206, 86, 0.6)',
+                'rgba(54, 162, 235, 0.6)',
+                'rgba(255, 99, 132, 0.6)'
+            ]
+            # 인덱스를 사용하여 정당마다 다른 색상 선택
+            color_index = len(colors) % len(default_colors)
+            colors.append(default_colors[color_index])
+            border_colors.append(default_colors[color_index].replace('0.6', '1'))
     
     # 차트 데이터 구성
     chart_data = {
@@ -444,7 +490,7 @@ def generate_party_bills_chart_data(party_bills: Dict[str, float]) -> Dict[str, 
         "datasets": [{
             "label": "평균 대표발의안수",
             "data": counts,
-            "backgroundColor": colors[:len(labels)],
+            "backgroundColor": colors,
             "borderColor": border_colors,
             "borderWidth": 1
         }]
