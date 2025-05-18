@@ -136,10 +136,6 @@
                             <td>{{ age_stats.min }}</td>
                         </tr>
                         <tr>
-                            <th>평균 재산 (억원)</th>
-                            <td>{{ age_stats.avg_asset }}</td>
-                        </tr>
-                        <tr>
                             <th>인원 수</th>
                             <td>{{ age_stats.count }}</td>
                         </tr>
@@ -190,7 +186,6 @@
                                   <th data-sort="speech_score">의정발언 <i class="sort-icon"></i></th>
                                   <th data-sort="voting_score">표결책임성 <i class="sort-icon"></i></th>
                                   <th data-sort="cooperation_score">협치/초당적활동 <i class="sort-icon"></i></th>
-                                  <th data-sort="asset">재산 <i class="sort-icon"></i></th>
                               </tr>
                           </thead>
                           <tbody>
@@ -221,7 +216,6 @@
                                   <td>{{ legislator.speech_score }}</td>
                                   <td>{{ legislator.voting_score }}</td>
                                   <td>{{ legislator.cooperation_score }}</td>
-                                  <td>{{ legislator.asset }}</td>
                               </tr>
                               {% endfor %}
                           </tbody>
