@@ -241,9 +241,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // 티어 분포 차트
     var tierCtx = document.getElementById('tierChart').getContext('2d');
     var tierData = {{ tier_chart|tojson }};
-    
-    // CSS 변수에서 티어별 색상 가져오기
-    if (tierData && tierData.datasets) {
+
+    // 데이터를 백분율로 변환
+    if (tierData && tierData.datasets && tierData.datasets.length > 0) {
         // CSS 변수에서 색상값 가져오는 함수
         function getCssVariableValue(variableName) {
             return getComputedStyle(document.documentElement).getPropertyValue(variableName).trim();
@@ -260,17 +260,34 @@ document.addEventListener('DOMContentLoaded', function() {
             "Bronze": getCssVariableValue('--tier-bronze'),
             "Iron": getCssVariableValue('--tier-iron')
         };
-        
-        // 각 데이터셋에 색상 지정
+
+        // 각 경력별 전체 인원 수 계산
+        const totalCounts = {};
+        tierData.labels.forEach((label, labelIndex) => {
+            totalCounts[label] = 0;
+            tierData.datasets.forEach(dataset => {
+                totalCounts[label] += dataset.data[labelIndex] || 0;
+            });
+        });
+
+        // 각 데이터셋을 비율로 변환
         tierData.datasets.forEach(dataset => {
             const tier = dataset.label;
+            // 티어별 색상 적용
             if (tierColors[tier]) {
                 dataset.backgroundColor = tierColors[tier];
                 dataset.borderColor = tierColors[tier];
             }
+            
+            // 데이터를 백분율로 변환
+            dataset.data = dataset.data.map((value, index) => {
+                const label = tierData.labels[index];
+                const total = totalCounts[label];
+                return total > 0 ? (value / total * 100) : 0; // 백분율로 변환
+            });
         });
     }
-    
+
     var tierChart = new Chart(tierCtx, {
         type: 'bar',
         data: tierData,
@@ -280,6 +297,14 @@ document.addEventListener('DOMContentLoaded', function() {
             plugins: {
                 legend: {
                     position: 'top',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            // 툴팁에 백분율 표시
+                            return context.dataset.label + ': ' + context.raw.toFixed(1) + '%';
+                        }
+                    }
                 }
             },
             scales: {
@@ -289,6 +314,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 y: {
                     stacked: true,
                     beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: '비율 (%)'
+                    },
+                    max: 100 // Y축 최대값을 100%로 설정
                 }
             }
         }
