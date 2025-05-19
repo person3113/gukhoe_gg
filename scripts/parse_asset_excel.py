@@ -64,17 +64,32 @@ def display_legislator_assets(db, legislator_name):
         for idx, item in enumerate(items, 1):
             # 자산 유형의 상세 정보 출력
             print(f"  {idx}. {item.asset_type} - {item.asset_current:,}천원")
-            print(f"     소유: {item.relation_to_self}, 소재지: {item.location}")
-            if item.area_sqm:
-                print(f"     면적: {item.area_sqm}")
-            if item.rights_detail:
-                print(f"     권리사항: {item.rights_detail}")
+            print(f"     소유: {item.relation_to_self}")
+            
+            # 소재지 면적 등 권리의 명세 출력
+            if item.location:
+                print(f"     소재지 면적 등 권리의 명세: {item.location}")
+            
+            # 자산 변동 정보 출력
             if item.asset_increase > 0 or item.asset_decrease > 0:
-                print(f"     변동: {'+' if item.asset_increase > 0 else ''}{item.asset_increase:,}천원 "
-                      f"{'-' if item.asset_decrease > 0 else ''}{item.asset_decrease:,}천원")
+                increase_str = f"+{item.asset_increase:,}천원" if item.asset_increase > 0 else ""
+                decrease_str = f"-{item.asset_decrease:,}천원" if item.asset_decrease > 0 else ""
+                
+                print(f"     변동: {increase_str} {decrease_str}".strip())
+                
+                # 실거래 가격 정보 (있는 경우에만)
+                if item.asset_increase_real is not None and item.asset_increase_real > 0:
+                    print(f"     증가 실거래가: {item.asset_increase_real:,}천원")
+                if item.asset_decrease_real is not None and item.asset_decrease_real > 0:
+                    print(f"     감소 실거래가: {item.asset_decrease_real:,}천원")
+            
+            # 변동 사유 출력
             if item.reason_for_change:
                 print(f"     변동사유: {item.reason_for_change}")
-            print()
+            
+            print()  # 자산 항목 간 구분을 위한 빈 줄
+    
+    print("\n* 모든 금액은 천원 단위입니다.")
 
 def parse_asset_files():
     """
@@ -133,7 +148,7 @@ def parse_asset_files():
                     else:
                         print(f"'{view_legislator}' 이름을 가진 의원을 찾을 수 없습니다.")
             else:
-                print("저장된 의원 데이터가, 없습니다.")
+                print("저장된 의원 데이터가 없습니다.")
         
     except Exception as e:
         print(f"재산 데이터 처리 중 오류 발생: {str(e)}")

@@ -394,6 +394,16 @@ def parse_asset_excel(file_path: str, db: Session) -> int:
         print(f"엑셀 파일 형태: {df.shape}")
         print(f"컬럼명: {df.columns.tolist()}")
         
+        # 컬럼명 출력 (디버깅용)
+        for i, col in enumerate(df.columns):
+            print(f"{i}: {col}")
+        
+        # 샘플 데이터 출력 (디버깅용)
+        print("\n첫 번째 행의 데이터:")
+        first_row = df.iloc[0]
+        for col in df.columns:
+            print(f"{col}: {first_row.get(col, 'N/A')}")
+        
         # 연월 정보 설정 (파일에서 직접 가져옴)
         year_month = ""
         if '연월' in df.columns and not pd.isna(df['연월'].iloc[0]):
@@ -413,17 +423,23 @@ def parse_asset_excel(file_path: str, db: Session) -> int:
                 asset_previous = _safe_int_conversion(row.get('종전가액', 0))
                 asset_increase = _safe_int_conversion(row.get('증가액', 0))
                 asset_increase_real = _safe_int_conversion(row.get('증가액실거래가격', None))
-                asset_decrease = _safe_int_conversion(row.get('감소액', 0))
+                
+                # 파일에 따라 '감소액' 또는 '감 소액'으로 컬럼명이 다를 수 있음
+                decrease_col = '감소액' if '감소액' in df.columns else '감 소액'
+                asset_decrease = _safe_int_conversion(row.get(decrease_col, 0))
+                
                 asset_decrease_real = _safe_int_conversion(row.get('감소액실거래가격', None))
                 asset_current = _safe_int_conversion(row.get('현재가액', 0))
                 
-                # 소재지 데이터 처리 
-                location = row.get('소재지', '')
-                if pd.isna(location) or location == '':
-                    location = ''
-                else:
-                    location = str(location).strip()
-
+                # 소재지 데이터 처리 - '소재지 면적 등 권리의 명세' 컬럼에서 추출
+                location = ""
+                if '소재지 면적 등 권리의 명세' in df.columns:
+                    location_val = row.get('소재지 면적 등 권리의 명세')
+                    if pd.notna(location_val):
+                        location = str(location_val).strip()
+                        # 디버깅용 출력
+                        print(f"행 {idx}: 소재지 면적 등 권리의 명세 = '{location}'")
+                
                 # AssetDetailed 모델에 매핑
                 asset_detail = AssetDetailed(
                     report_year_month=year_month,
@@ -436,9 +452,9 @@ def parse_asset_excel(file_path: str, db: Session) -> int:
                     asset_category=row.get('재산구분', ''),
                     relation_to_self=row.get('본인과의 관계', ''),
                     asset_type=row.get('재산의종류', ''),
-                    location=location,  # 정리된 소재지 값 사용
-                    area_sqm=row.get('면적', ''),
-                    rights_detail=row.get('등 권리의 명세', ''),
+                    location=location,  # '소재지 면적 등 권리의 명세' 컬럼 값 사용
+                    area_sqm="",  # 통합 컬럼을 사용하므로 빈 문자열
+                    rights_detail="",  # 통합 컬럼을 사용하므로 빈 문자열
                     asset_previous=asset_previous,
                     asset_increase=asset_increase,
                     asset_increase_real=asset_increase_real,
@@ -451,14 +467,13 @@ def parse_asset_excel(file_path: str, db: Session) -> int:
                 db.add(asset_detail)
                 processed_count += 1
                 
-                # 100개마다 커밋
-                if processed_count % 100 == 0:
+                # 20개마다 커밋 및 로그 출력
+                if processed_count % 20 == 0:
                     db.commit()
                     print(f"{processed_count}개 처리 완료...")
                 
             except Exception as e:
                 print(f"행 {idx} 처리 중 오류 발생: {str(e)}")
-                print(f"행 데이터: {row}")
                 continue
         
         # 마지막 커밋
