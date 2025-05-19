@@ -94,6 +94,10 @@ async def champion_detail(
         tab_data["speeches_by_meeting"] = speech_service.get_speech_by_meeting_type(db, legislator_id)
         tab_data["speech_chart"] = chart_service.generate_speech_chart_data(tab_data["speeches_by_meeting"])
         
+        # 총 발언 회의록수 계산 (추가된 부분)
+        total_speech_count = sum(speech["count"] for speech in tab_data["speeches_by_meeting"])
+        tab_data["total_speech_count"] = total_speech_count
+        
         # 본회의 표결 결과 조회 (수정된 부분)
         vote_data = vote_service.get_vote_results(db, legislator_id)
         tab_data["vote_results"] = vote_data["vote_results"]

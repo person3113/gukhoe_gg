@@ -48,12 +48,14 @@ def get_speech_by_meeting_type(db: Session, legislator_id: int) -> List[Dict[str
         SpeechByMeeting.legislator_id == legislator_id
     ).all()
     
-    # 결과 데이터 구성
+    # 결과 데이터 구성 - Total과 빈 문자열 제외
     result = []
     for speech in speeches:
-        result.append({
-            "meeting_type": speech.meeting_type,
-            "count": speech.count
-        })
+        # Total이나 빈 문자열 제외
+        if speech.meeting_type != "Total" and speech.meeting_type != "":
+            result.append({
+                "meeting_type": speech.meeting_type,
+                "count": speech.count
+            })
     
     return result

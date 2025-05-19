@@ -2,6 +2,10 @@
 
 {% block title %}국회.gg - {{ legislator.name }} 상세 정보{% endblock %}
 
+{% block extra_head %}
+<link rel="stylesheet" href="/static/css/bill_status.css">
+{% endblock %}
+
 {% block content %}
 <div class="container">
     <!-- 의원 기본 정보 헤더  -->
@@ -16,7 +20,12 @@
                 <h1>{{ legislator.name }}</h1>
                 <p class="text-muted">{{ legislator.eng_name }}</p>
                 <h4 class="text-primary">{{ legislator.party }}</h4>
-                <h3>{{ legislator.tier }}</h3>
+                
+                <hr class="my-3" style="border-top: 1px solid rgba(0,0,0,0.1); margin-left: 0; width: 80%;">
+                
+                <div class="mb-2">
+                    <span class="badge badge-tier-large tier-{{ legislator.tier.lower() }}">{{ legislator.tier }}</span>
+                </div>
                 <p class="text-muted">전체 {{ legislator.overall_rank }}위</p>
             </div>
         </div>
@@ -166,11 +175,11 @@
     <!-- 성향 탭 컨텐츠 -->
     {% if tab == 'tendency' %}
     <div class="row">
-        <!-- 발언 키워드 TOP 10 -->
+        <!-- 회의 발언 키워드 TOP 10 -->
         <div class="col-md-6 mb-4">
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5>발언 키워드 TOP 10</h5>
+                    <h5>회의 발언 키워드 TOP 10</h5>
                     <div class="btn-group" role="group">
                         <input type="radio" class="btn-check" name="keyword-view" id="keyword-chart-btn" autocomplete="off" checked>
                         <label class="btn btn-outline-primary btn-sm" for="keyword-chart-btn">차트</label>
@@ -207,11 +216,11 @@
             </div>
         </div>
 
-        <!-- 회의 구분별 발언 수 -->
+        <!-- 회의별 발언한 회의록수 -->
         <div class="col-md-6 mb-4">
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5>회의 구분별 발언 수</h5>
+                    <h5>회의별 발언한 회의록수 (총 {{ tab_data.total_speech_count }}개)</h5>
                     <div class="btn-group" role="group">
                         <input type="radio" class="btn-check" name="speech-view" id="speech-chart-btn" autocomplete="off" checked>
                         <label class="btn btn-outline-primary btn-sm" for="speech-chart-btn">차트</label>
@@ -331,12 +340,13 @@
                                     <td>{{ bill.committee }}</td>
                                     <td>{{ bill.propose_dt }}</td>
                                     <td>
-                                        <span class="badge 
-                                            {% if bill.status == '가결' %}bg-success{% 
-                                            elif bill.status == '폐기' %}bg-danger{% 
-                                            elif bill.status == '철회' %}bg-warning{% 
-                                            elif bill.status == '대안반영' %}bg-info{% 
-                                            else %}bg-secondary{% endif %}">
+                                        <span class="bill-status 
+                                            {% if bill.status == '원안가결' or bill.status == '수정가결' or bill.status == '가결' %}bill-status-success{% 
+                                            elif bill.status == '폐기' or bill.status == '부결' or bill.status == '임기만료폐기' %}bill-status-failure{% 
+                                            elif bill.status == '철회' %}bill-status-withdrawn{% 
+                                            elif bill.status == '대안반영' %}bill-status-alternative{% 
+                                            elif bill.status == '계류중' %}bill-status-pending{% 
+                                            else %}bill-status-other{% endif %}">
                                             {{ bill.status }}
                                         </span>
                                     </td>
@@ -389,11 +399,13 @@
                                     <td>{{ bill.committee }}</td>
                                     <td>{{ bill.propose_dt }}</td>
                                     <td>
-                                        <span class="badge 
-                                            {% if bill.status == '원안가결' or bill.status == '수정가결' %}bg-success{% 
-                                            elif bill.status == '대안반영' %}bg-primary{% 
-                                            elif bill.status == '계류중' %}bg-warning{% 
-                                            else %}bg-secondary{% endif %}">
+                                        <span class="bill-status 
+                                            {% if bill.status == '원안가결' or bill.status == '수정가결' or bill.status == '가결' %}bill-status-success{% 
+                                            elif bill.status == '폐기' or bill.status == '부결' or bill.status == '임기만료폐기' %}bill-status-failure{% 
+                                            elif bill.status == '철회' %}bill-status-withdrawn{% 
+                                            elif bill.status == '대안반영' %}bill-status-alternative{% 
+                                            elif bill.status == '계류중' %}bill-status-pending{% 
+                                            else %}bill-status-other{% endif %}">
                                             {{ bill.status }}
                                         </span>
                                     </td>

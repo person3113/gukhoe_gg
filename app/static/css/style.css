@@ -1,0 +1,67 @@
+:root {
+    /* 티어 색상 */
+    --tier-challenger: #e7811d;  /* 밝은 오렌지/골드 */
+    --tier-grandmaster: #c12d4e; /* 진한 빨강 */
+    --tier-master: #ab47bc;      /* 보라 */
+    --tier-diamond: #43e9f6;     /* 밝은 하늘 */
+    --tier-emerald: #00c7ab;     /* 에메랄드 */
+    --tier-platinum: #27e2a4;    /* 연두 */
+    --tier-gold: #f9e076;        /* 금색 */
+    --tier-silver: #b8b8b8;      /* 은색 */
+    --tier-bronze: #a97142;      /* 동색 */
+    --tier-iron: #6e6259;        /* 어두운 회색/갈색 */
+}
+
+/* 티어 배지 스타일 */
+.badge.tier-challenger { 
+    background-color: var(--tier-challenger); 
+    color: white;
+}
+.badge.tier-grandmaster { 
+    background-color: var(--tier-grandmaster); 
+    color: white;
+}
+.badge.tier-master { 
+    background-color: var(--tier-master); 
+    color: white;
+}
+.badge.tier-diamond { 
+    background-color: var(--tier-diamond); 
+    color: black;
+}
+.badge.tier-emerald { 
+    background-color: var(--tier-emerald); 
+    color: white;
+}
+.badge.tier-platinum { 
+    background-color: var(--tier-platinum); 
+    color: black;
+}
+.badge.tier-gold { 
+    background-color: var(--tier-gold); 
+    color: black;
+}
+.badge.tier-silver { 
+    background-color: var(--tier-silver); 
+    color: black;
+}
+.badge.tier-bronze { 
+    background-color: var(--tier-bronze); 
+    color: white;
+}
+.badge.tier-iron { 
+    background-color: var(--tier-iron); 
+    color: white;
+}
+
+/* 큰 티어 배지 스타일 */
+.badge-tier-large {
+    font-size: 1.5rem !important;
+    padding: 8px 15px !important;
+    margin-bottom: 10px;
+    border-radius: 0.5rem;
+    box-shadow: 0px 4px 8px rgba(0,0,0,0.15);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid rgba(255,255,255,0.2);
+} 

@@ -136,10 +136,6 @@
                             <td>{{ age_stats.min }}</td>
                         </tr>
                         <tr>
-                            <th>평균 재산 (억원)</th>
-                            <td>{{ age_stats.avg_asset }}</td>
-                        </tr>
-                        <tr>
                             <th>인원 수</th>
                             <td>{{ age_stats.count }}</td>
                         </tr>
@@ -181,16 +177,16 @@
                           <thead>
                               <tr>
                                   <th data-sort="overall_rank">순위 <i class="sort-icon"></i></th>
+                                  <th>사진</th>
                                   <th>의원명</th>
                                   <th>정당</th>
                                   <th>티어</th>
                                   <th data-sort="overall_score">종합점수 <i class="sort-icon"></i></th>
-                                  <th data-sort="participation_score">참여 <i class="sort-icon"></i></th>
+                                  <th data-sort="participation_score">참여도 <i class="sort-icon"></i></th>
                                   <th data-sort="legislation_score">입법활동 <i class="sort-icon"></i></th>
                                   <th data-sort="speech_score">의정발언 <i class="sort-icon"></i></th>
                                   <th data-sort="voting_score">표결책임성 <i class="sort-icon"></i></th>
-                                  <th data-sort="cooperation_score">협치/초당적활동 <i class="sort-icon"></i></th>
-                                  <th data-sort="asset">재산 <i class="sort-icon"></i></th>
+                                  <th data-sort="cooperation_score">정당 간 협력 <i class="sort-icon"></i></th>
                               </tr>
                           </thead>
                           <tbody>
@@ -205,20 +201,17 @@
                                   data-asset="{{ legislator.asset }}">
                                   <td>{{ legislator.overall_rank }}</td>
                                   <td>
+                                      <img src="{{ legislator.profile_image_url }}" alt="{{ legislator.name }}" 
+                                           class="rounded-circle" width="40" height="40">
+                                  </td>
+                                  <td>
                                       <a href="/champions/{{ legislator.id }}">
                                           {{ legislator.name }}
                                       </a>
                                   </td>
                                   <td>{{ legislator.party }}</td>
                                   <td>
-                                      <span class="badge 
-                                          {% if legislator.tier == 'Challenger' %}bg-danger{% 
-                                          elif legislator.tier == 'Master' %}bg-warning{% 
-                                          elif legislator.tier == 'Diamond' %}bg-info{% 
-                                          elif legislator.tier == 'Platinum' %}bg-success{% 
-                                          elif legislator.tier == 'Gold' %}bg-warning text-dark{% 
-                                          elif legislator.tier == 'Silver' %}bg-secondary{% 
-                                          else %}bg-dark{% endif %}">
+                                      <span class="badge tier-{{ legislator.tier.lower() }}">
                                           {{ legislator.tier }}
                                       </span>
                                   </td>
@@ -228,7 +221,6 @@
                                   <td>{{ legislator.speech_score }}</td>
                                   <td>{{ legislator.voting_score }}</td>
                                   <td>{{ legislator.cooperation_score }}</td>
-                                  <td>{{ legislator.asset }}</td>
                               </tr>
                               {% endfor %}
                           </tbody>

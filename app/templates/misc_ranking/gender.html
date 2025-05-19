@@ -130,10 +130,6 @@
                     <td>{{ gender_stats.min }}</td>
                 </tr>
                 <tr>
-                    <th>평균 재산 (억원)</th>
-                    <td>{{ gender_stats.avg_asset }}</td>
-                </tr>
-                <tr>
                     <th>인원 수</th>
                     <td>{{ gender_stats.count }}</td>
                 </tr>
@@ -173,15 +169,16 @@
                     <thead>
                         <tr>
                             <th data-sort="overall_rank">순위 <i class="sort-icon"></i></th>
+                            <th>사진</th>
                             <th>의원명</th>
                             <th>정당</th>
                             <th>티어</th>
                             <th data-sort="overall_score">종합점수 <i class="sort-icon"></i></th>
-                            <th data-sort="participation_score">참여 <i class="sort-icon"></i></th>
+                            <th data-sort="participation_score">참여도 <i class="sort-icon"></i></th>
                             <th data-sort="legislation_score">입법활동 <i class="sort-icon"></i></th>
                             <th data-sort="speech_score">의정발언 <i class="sort-icon"></i></th>
                             <th data-sort="voting_score">표결책임성 <i class="sort-icon"></i></th>
-                            <th data-sort="cooperation_score">협치/초당적활동 <i class="sort-icon"></i></th>
+                            <th data-sort="cooperation_score">정당 간 협력 <i class="sort-icon"></i></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -195,20 +192,17 @@
                             data-cooperation_score="{{ legislator.cooperation_score }}">
                             <td>{{ legislator.overall_rank }}</td>
                             <td>
+                                <img src="{{ legislator.profile_image_url }}" alt="{{ legislator.name }}" 
+                                     class="rounded-circle" width="40" height="40">
+                            </td>
+                            <td>
                                 <a href="/champions/{{ legislator.id }}">
                                     {{ legislator.name }}
                                 </a>
                             </td>
                             <td>{{ legislator.party }}</td>
                             <td>
-                                <span class="badge 
-                                    {% if legislator.tier == 'Challenger' %}bg-danger{% 
-                                    elif legislator.tier == 'Master' %}bg-warning{% 
-                                    elif legislator.tier == 'Diamond' %}bg-info{% 
-                                    elif legislator.tier == 'Platinum' %}bg-success{% 
-                                    elif legislator.tier == 'Gold' %}bg-warning text-dark{% 
-                                    elif legislator.tier == 'Silver' %}bg-secondary{% 
-                                    else %}bg-dark{% endif %}">
+                                <span class="badge tier-{{ legislator.tier.lower() }}">
                                     {{ legislator.tier }}
                                 </span>
                             </td>
@@ -241,6 +235,52 @@ document.addEventListener('DOMContentLoaded', function() {
     var tierCtx = document.getElementById('tierChart').getContext('2d');
     var tierData = {{ tier_chart|tojson }};
     
+    // 데이터를 백분율로 변환
+    if (tierData && tierData.datasets && tierData.datasets.length > 0) {
+        // CSS 변수에서 색상값 가져오는 함수
+        function getCssVariableValue(variableName) {
+            return getComputedStyle(document.documentElement).getPropertyValue(variableName).trim();
+        }
+        
+        // 티어별 색상 매핑
+        const tierColors = {
+            "Challenger": getCssVariableValue('--tier-challenger'),
+            "Master": getCssVariableValue('--tier-master'),
+            "Diamond": getCssVariableValue('--tier-diamond'),
+            "Platinum": getCssVariableValue('--tier-platinum'),
+            "Gold": getCssVariableValue('--tier-gold'),
+            "Silver": getCssVariableValue('--tier-silver'),
+            "Bronze": getCssVariableValue('--tier-bronze'),
+            "Iron": getCssVariableValue('--tier-iron')
+        };
+
+        // 각 성별 전체 인원 수 계산
+        const totalCounts = {};
+        tierData.labels.forEach((label, labelIndex) => {
+            totalCounts[label] = 0;
+            tierData.datasets.forEach(dataset => {
+                totalCounts[label] += dataset.data[labelIndex] || 0;
+            });
+        });
+
+        // 각 데이터셋을 비율로 변환
+        tierData.datasets.forEach(dataset => {
+            const tier = dataset.label;
+            // 티어별 색상 적용
+            if (tierColors[tier]) {
+                dataset.backgroundColor = tierColors[tier];
+                dataset.borderColor = tierColors[tier];
+            }
+            
+            // 데이터를 백분율로 변환
+            dataset.data = dataset.data.map((value, index) => {
+                const label = tierData.labels[index];
+                const total = totalCounts[label];
+                return total > 0 ? (value / total * 100) : 0; // 백분율로 변환
+            });
+        });
+    }
+    
     var tierChart = new Chart(tierCtx, {
         type: 'bar',
         data: tierData,
@@ -255,7 +295,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            return context.dataset.label + ': ' + context.raw + '명';
+                            // 툴팁에 백분율 표시
+                            return context.dataset.label + ': ' + context.raw.toFixed(1) + '%';
                         }
                     }
                 }
@@ -266,8 +307,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: '인원 수'
-                    }
+                        text: '비율 (%)'
+                    },
+                    max: 100 // X축 최대값을 100%로 설정 (가로 막대는 X축이 값 축)
                 },
                 y: {
                     stacked: true

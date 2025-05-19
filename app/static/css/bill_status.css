@@ -1,0 +1,72 @@
+/* 발의안 상태 색상 정의 */
+.bill-status {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #fff;
+    text-align: center;
+}
+
+/* 가결 관련 상태 */
+.bill-status-success {
+    background-color: #28a745; /* 녹색 */
+}
+
+/* 계류중 상태 */
+.bill-status-pending {
+    background-color: #7d6c75; /* 탁한 보라색 */
+    color: #fff;
+}
+
+/* 대안반영 상태 */
+.bill-status-alternative {
+    background-color: #17a2b8; /* 하늘색 */
+}
+
+/* 폐기 관련 상태 */
+.bill-status-failure {
+    background-color: #695a4e; /* 어두운 갈색 */
+}
+
+/* 철회 상태 */
+.bill-status-withdrawn {
+    background-color: #50636a; /* 어두운 청록색 */
+}
+
+/* 기타 상태 */
+.bill-status-other {
+    background-color: #6c757d; /* 회색 */
+}
+
+/* 개별 상태 매핑 */
+.bill-status-originalpassed,
+.bill-status-modifiedpassed {
+    background-color: #28a745; /* 녹색 - 원안가결, 수정가결 */
+}
+
+.bill-status-alternative {
+    background-color: #17a2b8; /* 하늘색 - 대안반영 */
+}
+
+.bill-status-pending {
+    background-color: #7d6c75; /* 탁한 보라색 - 계류중 */
+    color: #fff;
+}
+
+.bill-status-discarded {
+    background-color: #695a4e; /* 어두운 갈색 - 폐기 */
+}
+
+.bill-status-rejected {
+    background-color: #5d4e3a; /* 더 어두운 갈색 - 부결 */
+}
+
+.bill-status-terminated {
+    background-color: #635045; /* 중간 톤 갈색 - 임기만료폐기 */
+}
+
+.bill-status-withdrawn {
+    background-color: #50636a; /* 어두운 청록색 - 철회 */
+} 

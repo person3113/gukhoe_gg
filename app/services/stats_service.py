@@ -101,6 +101,21 @@ def get_term_average_stats(db: Session, stat: str = 'overall_score') -> Dict[str
     term_query = db.query(Legislator.reele_gbn_nm).distinct().all()
     terms = [term[0] for term in term_query if term[0]]
     
+    # 초선/재선별 순서 정렬
+    def term_sort_key(term):
+        if term == "초선":
+            return 1
+        elif term == "재선":
+            return 2
+        else:
+            # "3선", "4선", "5선" 등에서 숫자만 추출
+            for char in term:
+                if char.isdigit():
+                    return int(char)
+            return 999  # 숫자를 찾지 못한 경우 큰 숫자 반환
+    
+    terms.sort(key=term_sort_key)
+    
     # 초선/재선별 평균 통계 계산
     result = {}
     for term in terms:
@@ -134,17 +149,26 @@ def get_term_average_stats(db: Session, stat: str = 'overall_score') -> Dict[str
 ### 잡다한 랭킹 - 정당 ###
 def get_party_average_scores(db: Session) -> Dict[str, float]:
     """
-    정당별 평균 종합점수 조회
+    정당별 평균 종합점수 조회 (의원 수 기준 정렬)
     
     Args:
         db: 데이터베이스 세션
     
     Returns:
-        정당별 평균 종합점수 딕셔너리
+        정당별 평균 종합점수 딕셔너리 (의원 수 기준 정렬)
     """
-    # 정당 목록 조회
-    parties = db.query(Legislator.poly_nm).distinct().all()
-    party_list = [party[0] for party in parties]
+    # 정당별 의원 수 조회 및 내림차순 정렬
+    party_counts = db.query(
+        Legislator.poly_nm, 
+        func.count(Legislator.id).label('count')
+    ).group_by(
+        Legislator.poly_nm
+    ).order_by(  # 이 부분이 빠져있었습니다!
+        func.count(Legislator.id).desc()
+    ).all()
+    
+    # 의원 수 기준으로 정렬된 정당 목록 생성
+    party_list = [party[0] for party in party_counts if party[0]]
     
     # 정당별 평균 종합점수 계산
     result = {}
@@ -161,17 +185,26 @@ def get_party_average_scores(db: Session) -> Dict[str, float]:
 
 def get_party_average_bill_counts(db: Session) -> Dict[str, float]:
     """
-    정당별 평균 대표발의안수 조회
+    정당별 평균 대표발의안수 조회 (의원 수 기준 정렬)
     
     Args:
         db: 데이터베이스 세션
     
     Returns:
-        정당별 평균 대표발의안수 딕셔너리
+        정당별 평균 대표발의안수 딕셔너리 (의원 수 기준 정렬)
     """
-    # 정당 목록 조회
-    parties = db.query(Legislator.poly_nm).distinct().all()
-    party_list = [party[0] for party in parties]
+    # 정당별 의원 수 조회
+    party_counts = db.query(
+        Legislator.poly_nm, 
+        func.count(Legislator.id).label('count')
+    ).group_by(
+        Legislator.poly_nm
+    ).order_by(
+        func.count(Legislator.id).desc()
+    ).all()
+    
+    # 의원 수 기준으로 정렬된 정당 목록 생성
+    party_list = [party[0] for party in party_counts if party[0]]
     
     # 정당별 평균 대표발의안수 계산
     result = {}
@@ -497,6 +530,21 @@ def get_tier_distribution_by_term(db: Session) -> Dict[str, Dict[str, int]]:
     term_query = db.query(Legislator.reele_gbn_nm).distinct().all()
     terms = [term[0] for term in term_query if term[0]]
     
+    # 순서 정렬 - 선수에 따라 정렬
+    def term_sort_key(term):
+        if term == "초선":
+            return 1
+        elif term == "재선":
+            return 2
+        else:
+            # "3선", "4선", "5선" 등에서 숫자만 추출
+            for char in term:
+                if char.isdigit():
+                    return int(char)
+            return 999  # 숫자를 찾지 못한 경우 큰 숫자 반환
+    
+    terms.sort(key=term_sort_key)
+    
     # 초선/재선별 티어 분포 계산
     result = {}
     for term in terms:
@@ -528,7 +576,37 @@ def get_term_average_assets(db: Session) -> Dict[str, float]:
     Returns:
         초선/재선별 평균 재산 딕셔너리
     """
-    return get_term_average_stats(db, 'asset')
+    # 초선/재선 구분 목록 조회
+    term_query = db.query(Legislator.reele_gbn_nm).distinct().all()
+    terms = [term[0] for term in term_query if term[0]]
+    
+    # 초선/재선별 순서 정렬
+    def term_sort_key(term):
+        if term == "초선":
+            return 1
+        elif term == "재선":
+            return 2
+        else:
+            # "3선", "4선", "5선" 등에서 숫자만 추출
+            for char in term:
+                if char.isdigit():
+                    return int(char)
+            return 999  # 숫자를 찾지 못한 경우 큰 숫자 반환
+    
+    terms.sort(key=term_sort_key)
+    
+    # 초선/재선별 평균 재산 계산
+    result = {}
+    for term in terms:
+        # 해당 선수 의원들의 평균 재산 계산
+        avg_asset = db.query(func.avg(Legislator.asset)).filter(
+            Legislator.reele_gbn_nm == term
+        ).scalar()
+        
+        # 억 단위로 변환
+        result[term] = round(avg_asset / 100000000, 1) if avg_asset else 0
+    
+    return result
 
 def get_term_stats_summary(db: Session, term: str) -> Dict[str, Any]:
     """

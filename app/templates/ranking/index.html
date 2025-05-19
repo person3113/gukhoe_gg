@@ -73,14 +73,7 @@
                                     </td>
                                     <td>{{ legislator.party }}</td>
                                     <td>
-                                        <span class="badge 
-                                            {% if legislator.tier == 'Challenger' %}bg-danger{% 
-                                            elif legislator.tier == 'Master' %}bg-warning{% 
-                                            elif legislator.tier == 'Diamond' %}bg-info{% 
-                                            elif legislator.tier == 'Platinum' %}bg-success{% 
-                                            elif legislator.tier == 'Gold' %}bg-warning text-dark{% 
-                                            elif legislator.tier == 'Silver' %}bg-secondary{% 
-                                            else %}bg-dark{% endif %}">
+                                        <span class="badge tier-{{ legislator.tier.lower() }}">
                                             {{ legislator.tier }}
                                         </span>
                                     </td>
@@ -141,14 +134,7 @@
                                     </td>
                                     <td>{{ legislator.party }}</td>
                                     <td>
-                                        <span class="badge 
-                                            {% if legislator.tier == 'Challenger' %}bg-danger{% 
-                                            elif legislator.tier == 'Master' %}bg-warning{% 
-                                            elif legislator.tier == 'Diamond' %}bg-info{% 
-                                            elif legislator.tier == 'Platinum' %}bg-success{% 
-                                            elif legislator.tier == 'Gold' %}bg-warning text-dark{% 
-                                            elif legislator.tier == 'Silver' %}bg-secondary{% 
-                                            else %}bg-dark{% endif %}">
+                                        <span class="badge tier-{{ legislator.tier.lower() }}">
                                             {{ legislator.tier }}
                                         </span>
                                     </td>
@@ -236,38 +222,38 @@
                             <th>정당</th>
                             <th>티어</th>
                             <th class="sortable" onclick="sortTableByColumn(5)">
-                                <span class="{{ 'font-weight-bold' if current_category == 'participation' else '' }}">
-                                    참여도
+                                <span class="{{ 'font-weight-bold' if current_category == 'overall' else '' }}">
+                                    종합 점수
                                     <span id="sort-5" class="sort-icon"></span>
                                 </span>
                             </th>
                             <th class="sortable" onclick="sortTableByColumn(6)">
-                                <span class="{{ 'font-weight-bold' if current_category == 'legislation' else '' }}">
-                                    입법활동
+                                <span class="{{ 'font-weight-bold' if current_category == 'participation' else '' }}">
+                                    참여도
                                     <span id="sort-6" class="sort-icon"></span>
                                 </span>
                             </th>
                             <th class="sortable" onclick="sortTableByColumn(7)">
-                                <span class="{{ 'font-weight-bold' if current_category == 'speech' else '' }}">
-                                    의정발언
+                                <span class="{{ 'font-weight-bold' if current_category == 'legislation' else '' }}">
+                                    입법활동
                                     <span id="sort-7" class="sort-icon"></span>
                                 </span>
                             </th>
                             <th class="sortable" onclick="sortTableByColumn(8)">
-                                <span class="{{ 'font-weight-bold' if current_category == 'voting' else '' }}">
-                                    표결 책임성
+                                <span class="{{ 'font-weight-bold' if current_category == 'speech' else '' }}">
+                                    의정발언
                                     <span id="sort-8" class="sort-icon"></span>
                                 </span>
                             </th>
                             <th class="sortable" onclick="sortTableByColumn(9)">
-                                <span class="{{ 'font-weight-bold' if current_category == 'cooperation' else '' }}">
-                                    정당 간 협력
+                                <span class="{{ 'font-weight-bold' if current_category == 'voting' else '' }}">
+                                    표결 책임성
                                     <span id="sort-9" class="sort-icon"></span>
                                 </span>
                             </th>
                             <th class="sortable" onclick="sortTableByColumn(10)">
-                                <span class="{{ 'font-weight-bold' if current_category == 'overall' else '' }}">
-                                    종합 점수
+                                <span class="{{ 'font-weight-bold' if current_category == 'cooperation' else '' }}">
+                                    정당 간 협력
                                     <span id="sort-10" class="sort-icon"></span>
                                 </span>
                             </th>
@@ -276,7 +262,7 @@
                     <tbody id="ranking-table-body">
                         {% for legislator in all_legislators %}
                         <tr>
-                            <td>{{ loop.index }}</td>
+                            <td>{{ legislator.overall_rank }}</td>
                             <td>
                                 <img src="{{ legislator.profile_image_url }}" alt="{{ legislator.name }}" 
                                      class="rounded-circle" width="40" height="40">
@@ -288,23 +274,16 @@
                             </td>
                             <td>{{ legislator.party }}</td>
                             <td>
-                                <span class="badge 
-                                    {% if legislator.tier == 'Challenger' %}bg-danger{% 
-                                    elif legislator.tier == 'Master' %}bg-warning{% 
-                                    elif legislator.tier == 'Diamond' %}bg-info{% 
-                                    elif legislator.tier == 'Platinum' %}bg-success{% 
-                                    elif legislator.tier == 'Gold' %}bg-warning text-dark{% 
-                                    elif legislator.tier == 'Silver' %}bg-secondary{% 
-                                    else %}bg-dark{% endif %}">
+                                <span class="badge tier-{{ legislator.tier.lower() }}">
                                     {{ legislator.tier }}
                                 </span>
                             </td>
+                            <td class="{{ 'font-weight-bold' if current_category == 'overall' else '' }}">{{ legislator.overall_score }}</td>
                             <td class="{{ 'font-weight-bold' if current_category == 'participation' else '' }}">{{ legislator.participation_score }}</td>
                             <td class="{{ 'font-weight-bold' if current_category == 'legislation' else '' }}">{{ legislator.legislation_score }}</td>
                             <td class="{{ 'font-weight-bold' if current_category == 'speech' else '' }}">{{ legislator.speech_score }}</td>
                             <td class="{{ 'font-weight-bold' if current_category == 'voting' else '' }}">{{ legislator.voting_score }}</td>
                             <td class="{{ 'font-weight-bold' if current_category == 'cooperation' else '' }}">{{ legislator.cooperation_score }}</td>
-                            <td class="{{ 'font-weight-bold' if current_category == 'overall' else '' }}">{{ legislator.overall_score }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -372,12 +351,12 @@ document.addEventListener("DOMContentLoaded", function() {
     
     // 현재 카테고리에 해당하는 열 기준으로 기본 정렬
     var currentCategoryMap = {
-        "participation": 5,
-        "legislation": 6,
-        "speech": 7,
-        "voting": 8,
-        "cooperation": 9,
-        "overall": 10
+        "overall": 5,
+        "participation": 6,
+        "legislation": 7,
+        "speech": 8,
+        "voting": 9,
+        "cooperation": 10
     };
     
     var currentCategory = "{{ current_category }}";
@@ -429,8 +408,7 @@ function sortTableByColumn(columnIndex) {
     
     // 정렬된 행으로 테이블 재구성
     rows.forEach(function(row, index) {
-        // 순위 업데이트
-        row.cells[0].textContent = index + 1;
+        // 순위 업데이트하지 않음 (원래의 overall_rank 유지)
         tableBody.appendChild(row);
     });
 }
@@ -522,7 +500,7 @@ function updateRankingTable(legislators) {
         
         // 행 내용 구성
         row.innerHTML = `
-            <td>${index + 1}</td>
+            <td>${legislator.overall_rank}</td>
             <td>
                 <img src="${legislator.profile_image_url}" alt="${legislator.name}" 
                      class="rounded-circle" width="40" height="40">
@@ -538,12 +516,12 @@ function updateRankingTable(legislators) {
                     ${legislator.tier}
                 </span>
             </td>
+            <td class="${overallClass}">${legislator.overall_score}</td>
             <td class="${participationClass}">${legislator.participation_score}</td>
             <td class="${legislationClass}">${legislator.legislation_score}</td>
             <td class="${speechClass}">${legislator.speech_score}</td>
             <td class="${votingClass}">${legislator.voting_score}</td>
             <td class="${cooperationClass}">${legislator.cooperation_score}</td>
-            <td class="${overallClass}">${legislator.overall_score}</td>
         `;
         
         tableBody.appendChild(row);
