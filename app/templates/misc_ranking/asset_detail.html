@@ -1,0 +1,360 @@
+{% extends "base.html" %}
+
+{% block title %}국회.gg - {{ asset_details.legislator.name }} 의원 재산 상세{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/misc-ranking">잡다한 랭킹</a></li>
+                    <li class="breadcrumb-item"><a href="/misc-ranking/asset">재산별 랭킹</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ asset_details.legislator.name }} 의원 재산 상세</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>{{ asset_details.legislator.name }} 의원 기본 정보</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>정당:</strong> {{ asset_details.legislator.party }}</p>
+                            <p><strong>선수:</strong> {{ asset_details.legislator.term }}</p>
+                            <p><strong>소속위원회:</strong> {{ asset_details.legislator.committee }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>총 재산:</strong> {{ asset_details.legislator.asset }} 억원</p>
+                            <a href="/champions/{{ asset_details.legislator.id }}" class="btn btn-primary">의원 상세 프로필</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5>재산 카테고리별 비율</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="assetCategoryChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5>재산 카테고리별 금액</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>카테고리</th>
+                                    <th>금액 (백만원)</th>
+                                    <th>비율 (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% set total_asset = 0 %}
+                                {% for category in asset_details.category_totals %}
+                                    {% set total_asset = total_asset + category.total %}
+                                {% endfor %}
+                                
+                                {% for category in asset_details.category_totals %}
+                                <tr>
+                                    <td>{{ category.category }}</td>
+                                    <td>{{ category.total }}</td>
+                                    <td>{{ ((category.total / total_asset) * 100) | round(1) if total_asset > 0 else 0 }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5>재산 상세 내역</h5>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-primary btn-sm active" id="filter-all">전체</button>
+                        {% for category in asset_details.category_totals %}
+                        <button type="button" class="btn btn-outline-primary btn-sm filter-btn" data-category="{{ category.category }}">{{ category.category }}</button>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <style>
+                            #asset-details-table {
+                                width: 100%;
+                                border-collapse: collapse;
+                                font-size: 14px;
+                            }
+                            #asset-details-table th {
+                                background-color: #f8f9fa;
+                                color: #495057;
+                                font-weight: 600;
+                                text-align: center;
+                                padding: 12px 8px;
+                                white-space: nowrap;
+                                position: sticky;
+                                top: 0;
+                                z-index: 10;
+                            }
+                            #asset-details-table td {
+                                padding: 10px 8px;
+                                vertical-align: middle;
+                                border-bottom: 1px solid #dee2e6;
+                                height: 50px;
+                            }
+                            #asset-details-table tr:hover {
+                                background-color: rgba(0, 123, 255, 0.05);
+                            }
+                            .text-truncate-custom {
+                                max-width: 200px;
+                                white-space: nowrap;
+                                overflow: hidden;
+                                text-overflow: ellipsis;
+                                display: block;
+                            }
+                            .text-truncate-sm {
+                                max-width: 100px;
+                                white-space: nowrap;
+                                overflow: hidden;
+                                text-overflow: ellipsis;
+                                display: block;
+                            }
+                            .text-truncate-xs {
+                                max-width: 80px;
+                                white-space: nowrap;
+                                overflow: hidden;
+                                text-overflow: ellipsis;
+                                display: block;
+                            }
+                            .text-right {
+                                text-align: right;
+                            }
+                            .text-center {
+                                text-align: center;
+                            }
+                            .tooltip-inner {
+                                max-width: 300px;
+                                padding: 10px;
+                                background-color: rgba(0, 0, 0, 0.85);
+                                font-size: 13px;
+                                line-height: 1.4;
+                            }
+                        </style>
+                        <table class="table" id="asset-details-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 10%">카테고리</th>
+                                    <th style="width: 8%">본인과의 관계</th>
+                                    <th style="width: 12%">재산 종류</th>
+                                    <th style="width: 15%">소재지</th>
+                                    <th style="width: 7%">면적(㎡)</th>
+                                    <th style="width: 8%">종전가액</th>
+                                    <th style="width: 8%">현재가액</th>
+                                    <th style="width: 8%">증가액</th>
+                                    <th style="width: 8%">감소액</th>
+                                    <th style="width: 16%">변동사유</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for detail in asset_details.asset_details %}
+                                <tr data-category="{{ detail.asset_category }}">
+                                    <td><span class="text-truncate-sm" data-bs-toggle="tooltip" title="{{ detail.asset_category }}">{{ detail.asset_category }}</span></td>
+                                    <td><span class="text-truncate-xs text-center" data-bs-toggle="tooltip" title="{{ detail.relation_to_self }}">{{ detail.relation_to_self }}</span></td>
+                                    <td><span class="text-truncate-sm" data-bs-toggle="tooltip" title="{{ detail.asset_type }}">{{ detail.asset_type }}</span></td>
+                                    <td><span class="text-truncate-custom" data-bs-toggle="tooltip" title="{{ detail.location }}">{{ detail.location }}</span></td>
+                                    <td class="text-center">{{ detail.area_sqm }}</td>
+                                    <td class="text-right">{{ detail.asset_previous|default('0')|int }}</td>
+                                    <td class="text-right">{{ detail.asset_current|default('0')|int }}</td>
+                                    <td class="text-right">{{ detail.asset_increase|default('0')|int }}</td>
+                                    <td class="text-right">{{ detail.asset_decrease|default('0')|int }}</td>
+                                    <td><span class="text-truncate-custom" data-bs-toggle="tooltip" title="{{ detail.reason_for_change }}">{{ detail.reason_for_change }}</span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 카테고리별 재산 차트 생성
+    const categoryLabels = [];
+    const categoryData = [];
+    const categoryColors = [
+        'rgba(255, 99, 132, 0.7)',
+        'rgba(54, 162, 235, 0.7)',
+        'rgba(255, 206, 86, 0.7)',
+        'rgba(75, 192, 192, 0.7)',
+        'rgba(153, 102, 255, 0.7)',
+        'rgba(255, 159, 64, 0.7)',
+        'rgba(199, 199, 199, 0.7)',
+        'rgba(83, 102, 255, 0.7)',
+        'rgba(40, 159, 64, 0.7)',
+        'rgba(210, 199, 199, 0.7)'
+    ];
+    
+    {% for category in asset_details.category_totals %}
+    categoryLabels.push('{{ category.category }}');
+    categoryData.push({{ category.total }});
+    {% endfor %}
+    
+    const ctxCategory = document.getElementById('assetCategoryChart').getContext('2d');
+    const assetCategoryChart = new Chart(ctxCategory, {
+        type: 'pie',
+        data: {
+            labels: categoryLabels,
+            datasets: [{
+                data: categoryData,
+                backgroundColor: categoryColors.slice(0, categoryLabels.length),
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        font: {
+                            size: 12,
+                            weight: 'bold'
+                        },
+                        padding: 20,
+                        generateLabels: function(chart) {
+                            const data = chart.data;
+                            if (data.labels.length && data.datasets.length) {
+                                const dataset = data.datasets[0];
+                                const total = dataset.data.reduce((a, b) => a + b, 0);
+                                return data.labels.map(function(label, i) {
+                                    const value = dataset.data[i];
+                                    const percentage = Math.round((value / total) * 100);
+                                    return {
+                                        text: `${label} - ${value.toLocaleString()} 백만원 (${percentage}%)`,
+                                        fillStyle: dataset.backgroundColor[i],
+                                        strokeStyle: dataset.backgroundColor[i],
+                                        lineWidth: 1,
+                                        hidden: false,
+                                        index: i
+                                    };
+                                });
+                            }
+                            return [];
+                        }
+                    }
+                },
+                tooltip: {
+                    titleFont: {
+                        size: 14,
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    padding: 12,
+                    callbacks: {
+                        title: function(context) {
+                            return context[0].label;
+                        },
+                        label: function(context) {
+                            const value = context.raw || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = Math.round((value / total) * 100);
+                            return [
+                                `금액: ${value.toLocaleString()} 백만원`,
+                                `비율: ${percentage}%`,
+                                `전체 대비: ${percentage}/${100}%`
+                            ];
+                        }
+                    }
+                }
+            },
+            animation: {
+                animateRotate: true,
+                animateScale: true,
+                duration: 1000
+            }
+        }
+    });
+    
+    // 카테고리 필터링 기능
+    const filterAll = document.getElementById('filter-all');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const table = document.getElementById('asset-details-table');
+    const rows = table.querySelectorAll('tbody tr');
+    
+    filterAll.addEventListener('click', function() {
+        rows.forEach(row => {
+            row.style.display = '';
+        });
+        
+        // 버튼 스타일 업데이트
+        filterAll.classList.add('active');
+        filterButtons.forEach(btn => {
+            btn.classList.remove('active');
+        });
+    });
+    
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const category = this.getAttribute('data-category');
+            
+            rows.forEach(row => {
+                if (row.getAttribute('data-category') === category) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // 버튼 스타일 업데이트
+            filterAll.classList.remove('active');
+            filterButtons.forEach(btn => {
+                if (btn.getAttribute('data-category') === category) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        });
+    });
+});
+
+    // 툴팁 초기화
+    document.addEventListener('DOMContentLoaded', function() {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.forEach(function(tooltipTriggerEl) {
+            new bootstrap.Tooltip(tooltipTriggerEl, {
+                html: true,
+                container: 'body'
+            });
+        });
+    });
+</script>
+{% endblock %}
