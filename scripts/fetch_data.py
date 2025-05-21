@@ -664,18 +664,10 @@ def fetch_excel_data(db: Session):
     """
     엑셀 파일에서 데이터 수집
     """
-    # 호출: excel_parser.parse_attendance_excel()로 출석 데이터 수집
-    # 호출: excel_parser.parse_speech_keywords_excel()로 발언 키워드 데이터 수집
-    # 호출: excel_parser.parse_speech_by_meeting_excel()로 회의별 발언 데이터 수집
-    # 호출: process_attendance_data(), process_speech_data()로 데이터 처리
-    # DB에 저장
-    """
-    엑셀 파일에서 데이터 수집
-    """
     import os
     import glob
-    from app.utils.excel_parser import parse_speech_by_meeting_excel
-    from app.services.data_processing import process_speech_data
+    from app.utils.excel_parser import parse_speech_by_meeting_excel, parse_asset_excel
+    from app.services.data_processing import process_speech_data, process_keyword_data, process_asset_data
     
     print("엑셀 데이터 수집 시작...")
 
@@ -823,6 +815,65 @@ def fetch_excel_data(db: Session):
         print("처리할 출석 데이터가 없습니다.")
     
     print(f"출석 데이터 처리 완료: {processed_count}개 파일")
+    
+    # 4. 재산 데이터 처리
+    print("\n=== 재산 데이터 수집 ===")
+    asset_dir = "data/excel/asset"
+    
+    # 폴더 존재 확인 및 생성
+    if not os.path.exists(asset_dir):
+        os.makedirs(asset_dir, exist_ok=True)
+        print(f"폴더 생성: {asset_dir}")
+        print("재산 데이터가 없습니다. 먼저 엑셀 파일을 넣으세요.")
+    else:
+        # 재산 파일 목록 가져오기 (asset_2025_03.xlsx 이름을 기본으로)
+        asset_files = [os.path.join(asset_dir, "asset_2025_03.xlsx")]
+        
+        # 지정된 파일이 없으면 모든 엑셀 파일 확인
+        if not os.path.exists(asset_files[0]):
+            print(f"기본 파일명 'asset_2025_03.xlsx'을 찾을 수 없습니다. 다른 엑셀 파일을 확인합니다.")
+            asset_files = glob.glob(os.path.join(asset_dir, "*.xlsx"))
+            
+        # 임시 파일 필터링
+        asset_files = [f for f in asset_files if os.path.exists(f) and '~$' not in os.path.basename(f)]
+        
+        if asset_files:
+            print(f"재산 엑셀 파일: {len(asset_files)}개")
+            
+            # AssetDetailed 테이블 초기화 - 항상 데이터 삭제 후 시작
+            from app.models.assetdetailed import AssetDetailed
+            existing_count = db.query(AssetDetailed).count()
+            if existing_count > 0:
+                print(f"기존 AssetDetailed 데이터 {existing_count}개 삭제 중...")
+                db.query(AssetDetailed).delete()
+                db.commit()
+                print("AssetDetailed 테이블 초기화 완료")
+            
+            # 재산 파일 처리
+            processed_count = 0
+            for file_path in asset_files:
+                filename = os.path.basename(file_path)
+                print(f"파일 처리 중: {filename}")
+                
+                try:
+                    # 이미 구현된 parse_asset_excel 함수 사용
+                    from app.utils.excel_parser import parse_asset_excel
+                    records_count = parse_asset_excel(file_path, db)
+                    if records_count > 0:
+                        processed_count += 1
+                        print(f"  - {records_count}개의 재산 상세 데이터 저장 완료")
+                except Exception as e:
+                    print(f"  - 파일 처리 오류: {filename}, 오류: {str(e)}")
+            
+            # 의원별 총 재산을 Legislator.asset 필드에 처리
+            if processed_count > 0:
+                from app.services.data_processing import process_asset_data
+                process_asset_data(db)
+            
+            print(f"재산 데이터 처리 완료: {processed_count}개 파일")
+        else:
+            print("처리할 재산 데이터 파일이 없습니다.")
+    
     print("\n엑셀 데이터 수집 완료")
 
 if __name__ == "__main__":
