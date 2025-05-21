@@ -2,6 +2,8 @@ import pandas as pd
 import os
 import re
 from typing import List, Dict, Any
+from sqlalchemy.orm import Session
+from app.models.assetdetailed import AssetDetailed
 
 
 def parse_attendance_excel(file_path: str) -> List[Dict[str, Any]]:
@@ -371,3 +373,131 @@ def parse_speech_by_meeting_excel(file_path: str) -> List[Dict[str, Any]]:
         import traceback
         traceback.print_exc()
         return []
+    
+
+def parse_asset_excel(file_path: str, db: Session) -> int:
+    """
+    재산 엑셀 파일을 파싱하여 AssetDetailed 모델로 DB에 저장
+    
+    Args:
+        file_path: 엑셀 파일 경로
+        db: 데이터베이스 세션
+    
+    Returns:
+        int: 처리된 레코드 수
+    """
+    try:
+        # 엑셀 파일 읽기
+        df = pd.read_excel(file_path)
+        
+        print(f"엑셀 파일 형태: {df.shape}")
+        print(f"컬럼명: {df.columns.tolist()}")
+        
+        # 컬럼명 출력 (디버깅용)
+        for i, col in enumerate(df.columns):
+            print(f"{i}: {col}")
+        
+        # 샘플 데이터 출력 (디버깅용)
+        print("\n첫 번째 행의 데이터:")
+        first_row = df.iloc[0]
+        for col in df.columns:
+            print(f"{col}: {first_row.get(col, 'N/A')}")
+        
+        # 연월 정보 설정 (파일에서 직접 가져옴)
+        year_month = ""
+        if '연월' in df.columns and not pd.isna(df['연월'].iloc[0]):
+            year_month = str(df['연월'].iloc[0])
+        
+        # 처리된 레코드 수
+        processed_count = 0
+        
+        # 각 행 처리
+        for idx, row in df.iterrows():
+            try:
+                # 'NO'가 없는 행 건너뛰기 (헤더 또는 빈 행)
+                if 'NO' not in row or pd.isna(row['NO']):
+                    continue
+                
+                # 숫자 컬럼 안전하게 변환
+                asset_previous = _safe_int_conversion(row.get('종전가액', 0))
+                asset_increase = _safe_int_conversion(row.get('증가액', 0))
+                asset_increase_real = _safe_int_conversion(row.get('증가액실거래가격', None))
+                
+                # 파일에 따라 '감소액' 또는 '감 소액'으로 컬럼명이 다를 수 있음
+                decrease_col = '감소액' if '감소액' in df.columns else '감 소액'
+                asset_decrease = _safe_int_conversion(row.get(decrease_col, 0))
+                
+                asset_decrease_real = _safe_int_conversion(row.get('감소액실거래가격', None))
+                asset_current = _safe_int_conversion(row.get('현재가액', 0))
+                
+                # 소재지 데이터 처리 - '소재지 면적 등 권리의 명세' 컬럼에서 추출
+                location = ""
+                if '소재지 면적 등 권리의 명세' in df.columns:
+                    location_val = row.get('소재지 면적 등 권리의 명세')
+                    if pd.notna(location_val):
+                        location = str(location_val).strip()
+                        # 디버깅용 출력
+                        print(f"행 {idx}: 소재지 면적 등 권리의 명세 = '{location}'")
+                
+                # AssetDetailed 모델에 매핑
+                asset_detail = AssetDetailed(
+                    report_year_month=year_month,
+                    row_no=int(row['NO']),
+                    mona_code=row.get('monaCode', ''),
+                    role_group=row.get('구분', ''),
+                    affiliation=row.get('소속', ''),
+                    position=row.get('직위', ''),
+                    name=row.get('이름', ''),
+                    asset_category=row.get('재산구분', ''),
+                    relation_to_self=row.get('본인과의 관계', ''),
+                    asset_type=row.get('재산의종류', ''),
+                    location=location,  # '소재지 면적 등 권리의 명세' 컬럼 값 사용
+                    area_sqm="",  # 통합 컬럼을 사용하므로 빈 문자열
+                    rights_detail="",  # 통합 컬럼을 사용하므로 빈 문자열
+                    asset_previous=asset_previous,
+                    asset_increase=asset_increase,
+                    asset_increase_real=asset_increase_real,
+                    asset_decrease=asset_decrease,
+                    asset_decrease_real=asset_decrease_real,
+                    asset_current=asset_current,
+                    reason_for_change=row.get('변동사유', '')
+                )
+                
+                db.add(asset_detail)
+                processed_count += 1
+                
+                # 20개마다 커밋 및 로그 출력
+                if processed_count % 20 == 0:
+                    db.commit()
+                    print(f"{processed_count}개 처리 완료...")
+                
+            except Exception as e:
+                print(f"행 {idx} 처리 중 오류 발생: {str(e)}")
+                continue
+        
+        # 마지막 커밋
+        db.commit()
+        print(f"재산 상세 데이터 처리 완료: {processed_count}개")
+        
+        return processed_count
+        
+    except Exception as e:
+        db.rollback()
+        print(f"재산 엑셀 파일 파싱 오류: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return 0
+
+def _safe_int_conversion(value, default=None):
+    """천원 단위 금액을 안전하게 정수로 변환"""
+    if pd.isna(value) or value == '':
+        return default
+    
+    try:
+        # 쉼표 제거 후 정수 변환
+        if isinstance(value, str):
+            value = value.replace(',', '')
+        return int(float(value))
+    except (ValueError, TypeError):
+        print(f"숫자 변환 실패: {value}, 기본값 {default} 사용")
+        return default
