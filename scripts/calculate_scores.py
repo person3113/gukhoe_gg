@@ -453,9 +453,9 @@ def calculate_cooperation_scores(db: Session):
                 # 다른 이념 성향과의 협력은 높은 가중치
                 if leg_ideology != coworker_ideology and leg_ideology != "other" and coworker_ideology != "other":
                     weighted_score += count * 3
-                # 같은 이념 성향의 다른 정당과의 협력은 낮은 가중치
+                # 같은 이념 성향의 다른 정당과의 협력은 매우 낮은 가중치
                 elif legislator_parties.get(leg_id) != legislator_parties.get(coworker_id):
-                    weighted_score += count * 1
+                    weighted_score += count * 0.1
             
             # 총 협력 수로 나누어 가중 평균 구하기
             cooperation_score = min((weighted_score / total_cooperations) * 33.33, 100)
