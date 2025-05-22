@@ -571,6 +571,67 @@ def process_vote_data(raw_data, db=None):
         if close_db:
             db.close()
 
+def process_asset_data(db: Session):
+    """
+    AssetDetailed 테이블에서 의원별 총 재산을 계산하여 Legislator.asset 필드에 저장
+    매번 실행 시 기존 재산 정보를 완전히 초기화하고 새로 계산
+    
+    Args:
+        db: 데이터베이스 세션
+    """
+    from app.models.assetdetailed import AssetDetailed
+    from app.models.legislator import Legislator
+    from sqlalchemy import func
+    
+    try:
+        print("의원별 재산 정보 처리 시작...")
+        
+        # 모든 의원의 재산 정보 초기화
+        db.query(Legislator).update({Legislator.asset: 0})
+        db.commit()
+        print("모든 의원의 재산 정보 초기화 완료")
+        
+        # AssetDetailed 테이블에서 의원별 총액 계산 (현재가액 기준)
+        legislators_assets = db.query(
+            AssetDetailed.name,
+            func.sum(AssetDetailed.asset_current).label('total_asset')
+        ).group_by(
+            AssetDetailed.name
+        ).all()
+        
+        processed_count = 0
+        for name, total_asset in legislators_assets:
+            if not name:
+                continue
+                
+            # 의원 정보 조회
+            legislator = db.query(Legislator).filter(Legislator.hg_nm == name).first()
+            if not legislator:
+                print(f"경고: '{name}' 의원을 DB에서 찾을 수 없습니다.")
+                continue
+            
+            # 재산 정보 업데이트 (천원 -> 원 단위로 변환)
+            legislator.asset = total_asset * 1000  # 천원 -> 원 단위 변환
+            processed_count += 1
+            
+            # 로그 출력
+            print(f"{legislator.hg_nm}: 총 재산 {total_asset:,}천원 -> {total_asset*1000:,}원")
+            
+            # 50명마다 중간 저장
+            if processed_count % 50 == 0:
+                db.commit()
+                print(f"{processed_count}명 처리 완료...")
+        
+        # 최종 커밋
+        db.commit()
+        print(f"의원별 재산 정보 처리 완료: {processed_count}명")
+        
+    except Exception as e:
+        db.rollback()
+        print(f"재산 정보 처리 오류: {str(e)}")
+        import traceback
+        traceback.print_exc()
+
 def calculate_committee_processing_ratio(db: Session):
     # DB에서 위원회별 접수건수, 처리건수 데이터 조회
     # 처리 비율 계산 (처리건수/접수건수 * 100)

@@ -753,17 +753,17 @@ def get_gender_average_assets(db: Session) -> Dict[str, float]:
             Legislator.sex_gbn_nm == gender
         ).scalar()
         
-        # 억 단위로 변환
         result[gender] = round(avg_asset / 100000000, 1) if avg_asset else 0
     
     return result
 
-def get_gender_stats_summary(db: Session, gender: str) -> Dict[str, Any]:
+def get_legislator_asset_details(db: Session, legislator_id: int) -> Dict[str, Any]:
     """
-    특정 성별 의원들의 통계 요약 계산
+    특정 의원의 재산 상세 정보 조회
     
     Args:
         db: 데이터베이스 세션
+        legislator_id: 의원 ID
         gender: 성별
         
     Returns:

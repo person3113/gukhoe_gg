@@ -8,6 +8,7 @@ from app.db.database import get_db
 from app.models.legislator import Legislator
 from app.models.committee import Committee
 from app.services import stats_service, chart_service
+from app.services.get_asset_details import get_legislator_asset_details
 
 templates = Jinja2Templates(directory="app/templates")
 router = APIRouter()
@@ -439,3 +440,34 @@ async def asset_ranking(request: Request, db: Session = Depends(get_db), asset_g
     
     # 템플릿 렌더링
     return templates.TemplateResponse("misc_ranking/asset.html", context)
+
+@router.get("/misc-ranking/asset/detail/{legislator_id}")
+async def asset_detail(request: Request, legislator_id: int, db: Session = Depends(get_db)):
+    """
+    의원 재산 상세 정보 페이지
+    
+    Args:
+        request: FastAPI 요청 객체
+        legislator_id: 의원 ID
+        db: 데이터베이스 세션
+        
+    Returns:
+        템플릿 렌더링 응답
+    """
+    # 의원 재산 상세 정보 조회
+    asset_details = get_legislator_asset_details(db, legislator_id)
+    
+    if not asset_details:
+        return templates.TemplateResponse(
+            "404.html", 
+            {"request": request, "message": f"ID {legislator_id}에 해당하는 의원을 찾을 수 없습니다."}
+        )
+    
+    # 템플릿 렌더링
+    return templates.TemplateResponse(
+        "misc_ranking/asset_detail.html", 
+        {
+            "request": request,
+            "asset_details": asset_details
+        }
+    )
