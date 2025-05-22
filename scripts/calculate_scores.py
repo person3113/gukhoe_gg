@@ -42,7 +42,8 @@ def calculate_participation_scores(db: Session):
     """
     의원별 참여 점수(출석률) 계산하여 DB 업데이트
     
-    참여 점수 = (본회의 출석 + 상임위 출석) / (본회의 회의 수 + 상임위 회의 수) × 100
+    참여 점수 = (본회의 출석 + 상임위 출석) / (본회의 회의 수 + 상임위 회의 수) × 100 - 결석 페널티
+    결석 페널티 = 결석률 × 가중치(1.5) × 100
     
     Args:
         db: 데이터베이스 세션
@@ -88,22 +89,46 @@ def calculate_participation_scores(db: Session):
             standing_attendance = standing_attendance_record.count if standing_attendance_record else 0
             standing_meetings = standing_meetings_record.count if standing_meetings_record else 0
             
-            # 3. 출석 점수 계산
+            # 3. 결석 횟수 계산
+            plenary_absences = plenary_meetings - plenary_attendance
+            standing_absences = standing_meetings - standing_attendance
+            total_absences = plenary_absences + standing_absences
+            
+            # 4. 출석 점수 계산
             total_attendance = plenary_attendance + standing_attendance
             total_meetings = plenary_meetings + standing_meetings
             
             if total_meetings > 0:
-                participation_score = (total_attendance / total_meetings) * 100
+                # 기본 출석률 계산
+                base_attendance_rate = (total_attendance / total_meetings) * 100
+                
+                # 결석률 계산
+                absence_rate = total_absences / total_meetings
+                
+                # 결석에 대한 감점 계산 (결석률에 가중치 1.5 적용)
+                # 예: 결석률 10%일 경우 15%의 페널티 적용
+                absence_penalty = absence_rate * 1.5 * 100
+                
+                # 최종 참여 점수 계산 (기본 출석률에서 결석 페널티 차감)
+                participation_score = base_attendance_rate - absence_penalty
+                
+                # 점수는 최소 0점, 최대 100점
+                participation_score = max(0, min(100, participation_score))
                 participation_score = round(participation_score, 1)
             else:
                 participation_score = 0
+                absence_penalty = 0
+                base_attendance_rate = 0
             
-            # 4. DB 업데이트
+            # 5. DB 업데이트
             legislator.participation_score = participation_score
             updated_count += 1
             
-            # 5. 로그 출력
-            print(f"{legislator.hg_nm}: 본회의({plenary_attendance}/{plenary_meetings}), 상임위({standing_attendance}/{standing_meetings}) -> 참여 점수: {participation_score}")
+            # 6. 로그 출력
+            print(f"{legislator.hg_nm}: 본회의({plenary_attendance}/{plenary_meetings}), " 
+                  f"상임위({standing_attendance}/{standing_meetings}), " 
+                  f"결석({total_absences}/{total_meetings}, 기본출석률: {round(base_attendance_rate, 1)}%, "
+                  f"페널티: {round(absence_penalty, 1)}%) -> 참여 점수: {participation_score}")
         
         # 변경사항 저장
         db.commit()
@@ -428,9 +453,9 @@ def calculate_cooperation_scores(db: Session):
                 # 다른 이념 성향과의 협력은 높은 가중치
                 if leg_ideology != coworker_ideology and leg_ideology != "other" and coworker_ideology != "other":
                     weighted_score += count * 3
-                # 같은 이념 성향의 다른 정당과의 협력은 낮은 가중치
+                # 같은 이념 성향의 다른 정당과의 협력은 매우 낮은 가중치
                 elif legislator_parties.get(leg_id) != legislator_parties.get(coworker_id):
-                    weighted_score += count * 1
+                    weighted_score += count * 0.1
             
             # 총 협력 수로 나누어 가중 평균 구하기
             cooperation_score = min((weighted_score / total_cooperations) * 33.33, 100)
