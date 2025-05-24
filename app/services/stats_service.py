@@ -60,7 +60,8 @@ def get_party_average_stats(db: Session, stat: str = 'asset') -> Dict[str, Any]:
         # 통계 항목에 따라 다른 컬럼 선택
         if stat == 'asset':
             avg_value = db.query(func.avg(Legislator.asset)).filter(
-                Legislator.poly_nm == party
+                Legislator.poly_nm == party,
+                Legislator.hg_nm != '백선희'  # 백선희 의원 제외
             ).scalar()
             # 재산은 억 단위로 표시 (10^8으로 나눔)
             avg_value = round(avg_value / 100000000, 1) if avg_value else 0
@@ -126,7 +127,8 @@ def get_term_average_stats(db: Session, stat: str = 'overall_score') -> Dict[str
             ).scalar()
         elif stat == 'asset':
             avg_value = db.query(func.avg(Legislator.asset)).filter(
-                Legislator.reele_gbn_nm == term
+                Legislator.reele_gbn_nm == term,
+                Legislator.hg_nm != '백선희'  # 백선희 의원 제외
             ).scalar()
             # 재산은 억 단위로 표시 (10^8으로 나눔)
             avg_value = round(avg_value / 100000000, 1) if avg_value else 0
@@ -600,7 +602,8 @@ def get_term_average_assets(db: Session) -> Dict[str, float]:
     for term in terms:
         # 해당 선수 의원들의 평균 재산 계산
         avg_asset = db.query(func.avg(Legislator.asset)).filter(
-            Legislator.reele_gbn_nm == term
+            Legislator.reele_gbn_nm == term,
+            Legislator.hg_nm != '백선희'  # 백선희 의원 제외
         ).scalar()
         
         # 억 단위로 변환
@@ -750,7 +753,8 @@ def get_gender_average_assets(db: Session) -> Dict[str, float]:
     for gender in genders:
         # 해당 성별 의원들의 평균 재산 계산
         avg_asset = db.query(func.avg(Legislator.asset)).filter(
-            Legislator.sex_gbn_nm == gender
+            Legislator.sex_gbn_nm == gender,
+            Legislator.hg_nm != '백선희'  # 백선희 의원 제외
         ).scalar()
         
         result[gender] = round(avg_asset / 100000000, 1) if avg_asset else 0
@@ -954,7 +958,8 @@ def get_age_average_assets(db: Session) -> Dict[str, float]:
     for group, (min_year, max_year) in age_groups.items():
         # 해당 나이대 의원들의 평균 재산 계산
         avg_asset = db.query(func.avg(Legislator.asset)).filter(
-            Legislator.bth_date.between(str(min_year), str(max_year))
+            Legislator.bth_date.between(str(min_year), str(max_year)),
+            Legislator.hg_nm != '백선희'  # 백선희 의원 제외
         ).scalar()
         
         # 억 단위로 변환
