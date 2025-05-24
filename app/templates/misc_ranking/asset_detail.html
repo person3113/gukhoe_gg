@@ -66,16 +66,11 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% set total_asset = 0 %}
-                                {% for category in asset_details.category_totals %}
-                                    {% set total_asset = total_asset + category.total %}
-                                {% endfor %}
-                                
                                 {% for category in asset_details.category_totals %}
                                 <tr>
                                     <td>{{ category.category }}</td>
                                     <td>{{ category.total }}</td>
-                                    <td>{{ ((category.total / total_asset) * 100) | round(1) if total_asset > 0 else 0 }}</td>
+                                    <td>{{ category.percentage }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -254,7 +249,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 const total = dataset.data.reduce((a, b) => a + b, 0);
                                 return data.labels.map(function(label, i) {
                                     const value = dataset.data[i];
-                                    const percentage = Math.round((value / total) * 100);
+                                    const percentage = ((value / total) * 100).toFixed(1);
                                     return {
                                         text: `${label} - ${value.toLocaleString()} 백만원 (${percentage}%)`,
                                         fillStyle: dataset.backgroundColor[i],
@@ -285,11 +280,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         label: function(context) {
                             const value = context.raw || 0;
                             const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentage = Math.round((value / total) * 100);
+                            const percentage = ((value / total) * 100).toFixed(1);
                             return [
                                 `금액: ${value.toLocaleString()} 백만원`,
-                                `비율: ${percentage}%`,
-                                `전체 대비: ${percentage}/${100}%`
+                                `비율: ${percentage}%`
                             ];
                         }
                     }

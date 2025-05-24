@@ -53,8 +53,8 @@ def get_legislator_asset_details(db: Session, legislator_id: int) -> Dict[str, A
     for detail in asset_details:
         category = detail.asset_category
         if category not in category_totals:
-            category_totals[category] = 0
-        category_totals[category] += detail.asset_current if detail.asset_current else 0
+            category_totals[category] = 0.0  # float 타입으로 초기화
+        category_totals[category] += float(detail.asset_current) if detail.asset_current else 0.0
     
     # 결과 딕셔너리 생성
     result = {
@@ -86,10 +86,19 @@ def get_legislator_asset_details(db: Session, legislator_id: int) -> Dict[str, A
         })
     
     # 카테고리별 합계 변환
+    # 총 자산 계산
+    total_asset_value = sum(category_totals.values())
+    
     for category, total in category_totals.items():
+        # 비율 계산 (백분율)
+        percentage = 0.0
+        if total_asset_value > 0:
+            percentage = (float(total) / float(total_asset_value)) * 100.0
+            
         result["category_totals"].append({
             "category": category,
-            "total": round(total / 1000, 1)  # 백만원 단위로 변환
+            "total": round(float(total) / 1000.0, 1),  # 백만원 단위로 변환, 소수점 유지
+            "percentage": round(percentage, 1)  # 소수점 첫째 자리까지 반올림
         })
     
     # 카테고리별 합계를 금액 기준으로 내림차순 정렬
