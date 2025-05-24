@@ -757,6 +757,54 @@ def get_gender_average_assets(db: Session) -> Dict[str, float]:
     
     return result
 
+def get_gender_stats_summary(db: Session, gender: str) -> Dict[str, Any]:
+    """
+    특정 성별 의원들의 통계 요약 계산
+    
+    Args:
+        db: 데이터베이스 세션
+        gender: 성별
+        
+    Returns:
+        성별 통계 요약 딕셔너리
+    """
+    # 해당 성별 의원들의 점수 통계
+    stats = db.query(
+        func.avg(Legislator.overall_score).label("avg"),
+        func.max(Legislator.overall_score).label("max"),
+        func.min(Legislator.overall_score).label("min"),
+        func.avg(Legislator.asset).label("avg_asset"),
+        func.count(Legislator.id).label("count")
+    ).filter(
+        Legislator.sex_gbn_nm == gender
+    ).first()
+    
+    # 티어 분포 계산
+    tier_query = db.query(
+        Legislator.tier,
+        func.count(Legislator.id).label("count")
+    ).filter(
+        Legislator.sex_gbn_nm == gender
+    ).group_by(
+        Legislator.tier
+    ).all()
+    
+    tier_distribution = {}
+    for tier, count in tier_query:
+        tier_distribution[tier] = count
+    
+    # 결과 딕셔너리 구성
+    result = {
+        "avg": round(stats.avg, 1) if stats.avg else 0,
+        "max": round(stats.max, 1) if stats.max else 0,
+        "min": round(stats.min, 1) if stats.min else 0,
+        "avg_asset": round(stats.avg_asset / 100000000, 1) if stats.avg_asset else 0,  # 억 단위
+        "count": stats.count,
+        "tier_distribution": tier_distribution
+    }
+    
+    return result
+
 def get_legislator_asset_details(db: Session, legislator_id: int) -> Dict[str, Any]:
     """
     특정 의원의 재산 상세 정보 조회
