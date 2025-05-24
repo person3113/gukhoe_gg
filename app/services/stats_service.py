@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 
 from app.models.bill import Bill
 from app.models.legislator import Legislator
@@ -1095,34 +1095,129 @@ def get_legislators_by_age_group(db: Session, age_group: str) -> List[Dict[str, 
     
     return result
 
-def get_score_asset_correlation(db: Session) -> Dict[str, Any]:
+def get_score_asset_correlation(db: Session, for_chart: bool = False) -> Dict[str, Any]:
     """
     활동점수와 재산의 상관관계 데이터 계산
     
     Args:
         db: 데이터베이스 세션
+        for_chart: 차트용 데이터인지 여부. True이면 일부 의원만 선택하여 그래프가 고르게 보이도록 함.
         
     Returns:
         상관관계 데이터 딕셔너리
     """
-    # 의원별 점수와 재산 데이터 조회
+    # 의원별 점수와 재산 데이터 조회 (백선희 의원 제외)
     legislators = db.query(
         Legislator.id,
         Legislator.hg_nm,
         Legislator.overall_score,
         Legislator.asset
+    ).filter(
+        Legislator.hg_nm != '백선희',  # 백선희 의원 제외
+        Legislator.overall_score.isnot(None),
+        Legislator.asset.isnot(None)
     ).all()
     
-    # 데이터 포인트 구성
-    data_points = []
-    for legislator in legislators:
-        if legislator.overall_score is not None and legislator.asset is not None:
+    # 의원 데이터를 딕셔너리 리스트로 변환
+    leg_data = []
+    for leg in legislators:
+        leg_data.append({
+            "id": leg.id,
+            "name": leg.hg_nm,
+            "score": leg.overall_score,
+            "asset": leg.asset,
+            "asset_billion": leg.asset / 100000000  # 억 단위
+        })
+    
+    # 재산 기준 정렬
+    leg_data.sort(key=lambda x: x["asset_billion"])
+    
+    # 재산 기준 그룹화
+    total_legs = len(leg_data)
+    
+    # 극단적인 재산 값을 가진 의원들 제외 (90 퍼센타일 초과 재산)
+    asset_cutoff_index = int(total_legs * 0.9)  # 90% 퍼센타일
+    if asset_cutoff_index < total_legs:
+        asset_cutoff = leg_data[asset_cutoff_index]["asset_billion"]
+    else:
+        asset_cutoff = float('inf')
+    
+    # 점수 기준 정렬
+    leg_data.sort(key=lambda x: x["score"])
+    
+    # 점수 범위 계산
+    score_min = min([leg["score"] for leg in leg_data])
+    score_max = max([leg["score"] for leg in leg_data])
+    
+    # 차트용이 아니면 모든 의원 데이터 반환
+    if not for_chart:
+        data_points = []
+        for leg in leg_data:
             data_points.append({
-                "id": legislator.id,
-                "name": legislator.hg_nm,
-                "score": round(legislator.overall_score, 1),
-                "asset": round(legislator.asset / 100000000, 1)  # 억 단위
+                "id": leg["id"],
+                "name": leg["name"],
+                "score": round(leg["score"], 1),
+                "asset": round(leg["asset_billion"], 1)  # 억 단위
             })
+    else:
+        # 차트용이면 일부 의원만 선택하여 그래프가 고르게 보이도록 함
+        # 점수 범위를 등간격으로 분할
+        num_score_bins = 10
+        score_bin_size = (score_max - score_min) / num_score_bins
+        score_bins = {}
+        
+        # 각 점수 구간별 의원 분류
+        for i in range(num_score_bins):
+            bin_min = score_min + i * score_bin_size
+            bin_max = score_min + (i + 1) * score_bin_size
+            score_bins[i] = []
+            
+            for leg in leg_data:
+                # 극단적인 재산 값을 가진 의원 제외
+                if leg["asset_billion"] > asset_cutoff:
+                    continue
+                    
+                if i < num_score_bins - 1:
+                    if bin_min <= leg["score"] < bin_max:
+                        score_bins[i].append(leg)
+                else:  # 마지막 구간은 마지막 값 포함
+                    if bin_min <= leg["score"] <= bin_max:
+                        score_bins[i].append(leg)
+        
+        # 데이터 포인트 생성
+        data_points = []
+        
+        # 각 점수 구간에서 재산 범위별 의원 선택
+        for bin_idx, bin_legs in score_bins.items():
+            if not bin_legs:
+                continue
+                
+            # 재산 기준 정렬
+            bin_legs.sort(key=lambda x: x["asset_billion"])
+            
+            # 각 구간에서 재산 범위별로 고르게 샘플링
+            if len(bin_legs) >= 5:
+                # 최소, 25%, 50%, 75%, 최대 재산 의원 선택
+                sample_indices = [
+                    0,  # 최소 재산
+                    len(bin_legs) // 4,  # 25%
+                    len(bin_legs) // 2,  # 50%
+                    3 * len(bin_legs) // 4,  # 75%
+                    len(bin_legs) - 1  # 최대 재산
+                ]
+                samples = [bin_legs[i] for i in sample_indices]
+            else:
+                # 구간에 의원이 적으면 모두 포함
+                samples = bin_legs
+            
+            # 샘플링된 의원들을 데이터 포인트로 추가
+            for legislator in samples:
+                data_points.append({
+                    "id": legislator["id"],
+                    "name": legislator["name"],
+                    "score": round(legislator["score"], 1),
+                    "asset": round(legislator["asset_billion"], 1)  # 억 단위
+                })
     
     # 결과 구성
     result = {
@@ -1141,14 +1236,18 @@ def get_party_asset_ratio(db: Session) -> Dict[str, Any]:
     Returns:
         정당별 재산 비율 딕셔너리
     """
-    # 전체 재산 합계 조회
-    total_asset = db.query(func.sum(Legislator.asset)).scalar() or 1  # 0으로 나누기 방지
+    # 전체 재산 합계 조회 (백선희 의원 제외)
+    total_asset = db.query(func.sum(Legislator.asset)).filter(
+        Legislator.hg_nm != '백선희'  # 백선희 의원 제외
+    ).scalar() or 1  # 0으로 나누기 방지
     
-    # 정당별 재산 합계 조회
+    # 정당별 재산 합계 조회 (백선희 의원 제외)
     party_assets = db.query(
         Legislator.poly_nm,
         func.sum(Legislator.asset).label("total_asset"),
         func.count(Legislator.id).label("count")
+    ).filter(
+        Legislator.hg_nm != '백선희'  # 백선희 의원 제외
     ).group_by(
         Legislator.poly_nm
     ).all()
@@ -1166,29 +1265,59 @@ def get_party_asset_ratio(db: Session) -> Dict[str, Any]:
     
     return result
 
+def get_asset_percentile_ranges(db: Session) -> Dict[str, Tuple[int, int]]:
+    """
+    자산 백분위 범위 계산
+    
+    Args:
+        db: 데이터베이스 세션
+        
+    Returns:
+        백분위 구간별 자산 범위 딕셔너리
+    """
+    # 백선희 의원 제외하고 모든 의원의 자산 조회
+    assets = db.query(Legislator.asset).filter(
+        Legislator.hg_nm != '백선희'  # 백선희 의원 제외
+    ).order_by(
+        Legislator.asset
+    ).all()
+    
+    assets = [asset[0] for asset in assets]
+    total_count = len(assets)
+    
+    if total_count == 0:
+        return {}
+    
+    # 백분위 계산
+    percentile_ranges = {
+        "0-20 백분위": (0, assets[int(total_count * 0.2)] if int(total_count * 0.2) < total_count else assets[-1]),
+        "20-40 백분위": (assets[int(total_count * 0.2)] if int(total_count * 0.2) < total_count else 0, 
+                      assets[int(total_count * 0.4)] if int(total_count * 0.4) < total_count else assets[-1]),
+        "40-60 백분위": (assets[int(total_count * 0.4)] if int(total_count * 0.4) < total_count else 0, 
+                      assets[int(total_count * 0.6)] if int(total_count * 0.6) < total_count else assets[-1]),
+        "60-80 백분위": (assets[int(total_count * 0.6)] if int(total_count * 0.6) < total_count else 0, 
+                      assets[int(total_count * 0.8)] if int(total_count * 0.8) < total_count else assets[-1]),
+        "80-100 백분위": (assets[int(total_count * 0.8)] if int(total_count * 0.8) < total_count else 0, 
+                       assets[-1] if total_count > 0 else 0)
+    }
+    
+    return percentile_ranges
+
 def get_asset_stats_summary(db: Session, asset_group: str) -> Dict[str, Any]:
     """
     특정 재산 구간 의원들의 통계 요약 계산
     
     Args:
         db: 데이터베이스 세션
-        asset_group: 재산 구간 ('1억 미만', '1억~10억', '10억~50억', '50억~100억', '100억 이상')
+        asset_group: 재산 구간 ('0-20 백분위', '20-40 백분위', '40-60 백분위', '60-80 백분위', '80-100 백분위')
         
     Returns:
         재산 구간별 통계 요약 딕셔너리
     """
-    # 재산 구간에 따른 범위 설정 (단위: 원)
-    if asset_group == "1억 미만":
-        asset_min, asset_max = 0, 100000000
-    elif asset_group == "1억~10억":
-        asset_min, asset_max = 100000000, 1000000000
-    elif asset_group == "10억~50억":
-        asset_min, asset_max = 1000000000, 5000000000
-    elif asset_group == "50억~100억":
-        asset_min, asset_max = 5000000000, 10000000000
-    elif asset_group == "100억 이상":
-        asset_min, asset_max = 10000000000, 9999999999999
-    else:
+    # 백분위 기반 자산 범위 계산
+    percentile_ranges = get_asset_percentile_ranges(db)
+    
+    if not percentile_ranges or asset_group not in percentile_ranges:
         return {
             "avg_score": 0,
             "max_score": 0,
@@ -1197,6 +1326,9 @@ def get_asset_stats_summary(db: Session, asset_group: str) -> Dict[str, Any]:
             "count": 0,
             "tier_distribution": {}
         }
+    
+    # 선택한 백분위 범위 가져오기
+    asset_min, asset_max = percentile_ranges[asset_group]
     
     # 해당 재산 구간 의원들의 통계
     stats = db.query(
@@ -1241,24 +1373,19 @@ def get_legislators_by_asset_group(db: Session, asset_group: str) -> List[Dict[s
     
     Args:
         db: 데이터베이스 세션
-        asset_group: 재산 구간 ('1억 미만', '1억~10억', '10억~50억', '50억~100억', '100억 이상')
+        asset_group: 재산 구간 ('0-20 백분위', '20-40 백분위', '40-60 백분위', '60-80 백분위', '80-100 백분위')
         
     Returns:
         의원 목록
     """
-    # 재산 구간에 따른 범위 설정 (단위: 원)
-    if asset_group == "1억 미만":
-        asset_min, asset_max = 0, 100000000
-    elif asset_group == "1억~10억":
-        asset_min, asset_max = 100000000, 1000000000
-    elif asset_group == "10억~50억":
-        asset_min, asset_max = 1000000000, 5000000000
-    elif asset_group == "50억~100억":
-        asset_min, asset_max = 5000000000, 10000000000
-    elif asset_group == "100억 이상":
-        asset_min, asset_max = 10000000000, 9999999999999
-    else:
+    # 백분위 기반 자산 범위 계산
+    percentile_ranges = get_asset_percentile_ranges(db)
+    
+    if not percentile_ranges or asset_group not in percentile_ranges:
         return []
+    
+    # 선택한 백분위 범위 가져오기
+    asset_min, asset_max = percentile_ranges[asset_group]
     
     # 해당 재산 구간 의원 목록 조회
     legislators = db.query(Legislator).filter(

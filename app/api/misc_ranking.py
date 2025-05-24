@@ -392,17 +392,20 @@ async def asset_ranking(request: Request, db: Session = Depends(get_db), asset_g
     Returns:
         템플릿 렌더링 응답
     """
-    # 재산 구간 목록 정의
-    asset_groups = ["1억 미만", "1억~10억", "10억~50억", "50억~100억", "100억 이상"]
+    # 재산 구간 목록 정의 (백분위 기반)
+    asset_groups = ["0-20 백분위", "20-40 백분위", "40-60 백분위", "60-80 백분위", "80-100 백분위"]
     
-    # 점수-재산 상관관계 조회 (항상 필요)
-    correlation_data = stats_service.get_score_asset_correlation(db)
+    # 점수-재산 상관관계 조회 (차트용 - 일부 의원 제외)
+    chart_correlation_data = stats_service.get_score_asset_correlation(db, for_chart=True)
+    
+    # 점수-재산 상관관계 조회 (테이블용 - 모든 의원 포함)
+    table_correlation_data = stats_service.get_score_asset_correlation(db, for_chart=False)
     
     # 정당별 재산 비율 조회 (항상 필요)
     party_asset_ratio = stats_service.get_party_asset_ratio(db)
     
     # 차트 데이터 생성 (항상 필요)
-    correlation_chart = chart_service.generate_score_asset_correlation_chart_data(correlation_data)
+    correlation_chart = chart_service.generate_score_asset_correlation_chart_data(chart_correlation_data)
     party_ratio_chart = chart_service.generate_party_asset_ratio_chart_data(party_asset_ratio)
     
     # 기본 컨텍스트 데이터 (항상 필요)
@@ -410,7 +413,7 @@ async def asset_ranking(request: Request, db: Session = Depends(get_db), asset_g
         "request": request,
         "asset_groups": asset_groups,
         "asset_group": asset_group,
-        "correlation_data": correlation_data,
+        "correlation_data": table_correlation_data,  # 테이블용 데이터 (모든 의원 포함)
         "party_asset_ratio": party_asset_ratio,
         "correlation_chart": correlation_chart,
         "party_ratio_chart": party_ratio_chart

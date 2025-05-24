@@ -1,3 +1,4 @@
+import math
 from typing import List, Dict, Any, Optional
 
 
@@ -908,18 +909,118 @@ def generate_score_asset_correlation_chart_data(correlation_data: Dict[str, Any]
     # 데이터 포인트들 추출
     data_points = correlation_data.get("data_points", [])
     
+    # x축과 y축의 최소/최대값 계산
+    scores = [point["score"] for point in data_points]
+    assets = [point["asset"] for point in data_points]
+    
+    if scores and assets:
+        min_score = min(scores)
+        max_score = max(scores)
+        min_asset = min(assets)
+        max_asset = max(assets)
+        
+        # 10% 패딩 추가
+        score_padding = (max_score - min_score) * 0.1
+        asset_padding = (max_asset - min_asset) * 0.1
+        
+        min_score = max(0, min_score - score_padding)  # 음수 방지
+        max_score = max_score + score_padding
+        min_asset = max(0, min_asset - asset_padding)  # 음수 방지
+        max_asset = max_asset + asset_padding
+        
+        # 점수 축 범위 조정 (더 고르게 보이도록)
+        score_range = max_score - min_score
+        score_step = score_range / 10
+        min_score = math.floor(min_score / score_step) * score_step
+        max_score = math.ceil(max_score / score_step) * score_step
+        
+        # 재산 축 범위 조정 (더 고르게 보이도록)
+        asset_range = max_asset - min_asset
+        asset_step = asset_range / 10
+        min_asset = math.floor(min_asset / asset_step) * asset_step
+        max_asset = math.ceil(max_asset / asset_step) * asset_step
+    else:
+        min_score = 0
+        max_score = 100
+        min_asset = 0
+        max_asset = 100
+    
     # 산점도 차트 데이터 구성
     chart_data = {
         "datasets": [{
             "label": "의원별 점수-재산 분포",
             "data": [
-                {"x": point["score"], "y": point["asset"], "r": 5, "name": point["name"]}
+                {"x": point["score"], "y": point["asset"], "r": 6, "name": point["name"]}
                 for point in data_points
             ],
-            "backgroundColor": 'rgba(75, 192, 192, 0.6)',
-            "borderColor": 'rgba(75, 192, 192, 1)',
-            "borderWidth": 1
-        }]
+            "backgroundColor": 'rgba(54, 162, 235, 0.7)',  # 더 선명한 파란색
+            "borderColor": 'rgba(54, 162, 235, 1)',
+            "borderWidth": 1,
+            "pointRadius": 6,  # 크기 증가
+            "pointHoverRadius": 8  # 호버 시 크기 증가
+        }],
+        "options": {
+            "responsive": True,
+            "maintainAspectRatio": True,
+            "plugins": {
+                "tooltip": {
+                    "callbacks": {
+                        "label": "function(context) { const point = context.raw; return `${point.name}: 점수 ${point.x}, 재산 ${point.y}억원`; }"
+                    }
+                },
+                "title": {
+                    "display": True,
+                    "text": "활동점수와 재산 상관관계",
+                    "font": {
+                        "size": 16
+                    }
+                }
+            },
+            "scales": {
+                "x": {
+                    "title": {
+                        "display": True,
+                        "text": "종합점수",
+                        "font": {
+                            "size": 14,
+                            "weight": "bold"
+                        }
+                    },
+                    "min": min_score,
+                    "max": max_score,
+                    "grid": {
+                        "display": True,
+                        "color": "rgba(0, 0, 0, 0.1)"
+                    },
+                    "ticks": {
+                        "font": {
+                            "size": 12
+                        }
+                    }
+                },
+                "y": {
+                    "title": {
+                        "display": True,
+                        "text": "재산 (억원)",
+                        "font": {
+                            "size": 14,
+                            "weight": "bold"
+                        }
+                    },
+                    "min": min_asset,
+                    "max": max_asset,
+                    "grid": {
+                        "display": True,
+                        "color": "rgba(0, 0, 0, 0.1)"
+                    },
+                    "ticks": {
+                        "font": {
+                            "size": 12
+                        }
+                    }
+                }
+            }
+        }
     }
     
     return chart_data

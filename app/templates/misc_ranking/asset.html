@@ -259,12 +259,12 @@
 document.addEventListener('DOMContentLoaded', function() {
     // 점수-재산 상관관계 차트 (산점도)
     var correlationCtx = document.getElementById('correlationChart').getContext('2d');
-    var correlationData = {{ correlation_chart|tojson }};
+    var correlationData = {{ correlation_chart|tojson|safe }};
     
     var correlationChart = new Chart(correlationCtx, {
         type: 'scatter',
         data: correlationData,
-        options: {
+        options: correlationData.options || {
             responsive: true,
             maintainAspectRatio: true,
             plugins: {
@@ -281,16 +281,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 x: {
                     title: {
                         display: true,
-                        text: '종합 점수'
+                        text: '종합점수'
                     },
-                    min: 70
+                    grid: {
+                        display: true
+                    }
                 },
                 y: {
                     title: {
                         display: true,
                         text: '재산 (억원)'
                     },
-                    beginAtZero: true
+                    beginAtZero: true,
+                    grid: {
+                        display: true
+                    }
                 }
             }
         }
@@ -298,7 +303,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 정당별 재산 비율 차트 (파이 차트)
     var partyRatioCtx = document.getElementById('partyRatioChart').getContext('2d');
-    var partyRatioData = {{ party_ratio_chart|tojson }};
+    var partyRatioData = {{ party_ratio_chart|tojson|safe }};
     
     var partyRatioChart = new Chart(partyRatioCtx, {
         type: 'pie',
