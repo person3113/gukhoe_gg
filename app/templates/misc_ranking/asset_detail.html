@@ -73,8 +73,21 @@
                                     <td>{{ category.percentage }}</td>
                                 </tr>
                                 {% endfor %}
+                                
                             </tbody>
                         </table>
+                        
+                        <!-- 줄임말 설명 -->
+                        <div class="mt-3 p-3 bg-light rounded">
+                            <small>
+                                <strong>※ 줄임말 설명:</strong><br>
+                                {% for category in asset_details.category_totals %}
+                                    {% if category.original_category %}
+                                        <strong>{{ category.category }}</strong>: {{ category.original_category }}<br>
+                                    {% endif %}
+                                {% endfor %}
+                            </small>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -98,6 +111,7 @@
                         <style>
                             #asset-details-table {
                                 width: 100%;
+                                table-layout: fixed; /* 고정 테이블 레이아웃 사용 */
                                 border-collapse: collapse;
                                 font-size: 14px;
                             }
@@ -111,32 +125,67 @@
                                 position: sticky;
                                 top: 0;
                                 z-index: 10;
+                                overflow: hidden;
                             }
                             #asset-details-table td {
                                 padding: 10px 8px;
                                 vertical-align: middle;
                                 border-bottom: 1px solid #dee2e6;
                                 height: 50px;
+                                overflow: hidden;
                             }
                             #asset-details-table tr:hover {
                                 background-color: rgba(0, 123, 255, 0.05);
                             }
+                            /* 카테고리 열 */
+                            #asset-details-table td:nth-child(1) {
+                                width: 10%;
+                            }
+                            /* 본인과의 관계 열 */
+                            #asset-details-table td:nth-child(2) {
+                                width: 8%;
+                            }
+                            /* 재산 종류 열 */
+                            #asset-details-table td:nth-child(3) {
+                                width: 12%;
+                            }
+                            /* 소재지 열 */
+                            #asset-details-table td:nth-child(4) {
+                                width: 15%;
+                            }
+                            /* 면적 열 */
+                            #asset-details-table td:nth-child(5) {
+                                width: 7%;
+                                text-align: center;
+                            }
+                            /* 금액 관련 열 (종전가액, 현재가액, 증가액, 감소액) */
+                            #asset-details-table td:nth-child(6),
+                            #asset-details-table td:nth-child(7),
+                            #asset-details-table td:nth-child(8),
+                            #asset-details-table td:nth-child(9) {
+                                width: 8%;
+                                text-align: right;
+                            }
+                            /* 변동사유 열 */
+                            #asset-details-table td:nth-child(10) {
+                                width: 16%;
+                            }
                             .text-truncate-custom {
-                                max-width: 200px;
+                                max-width: 100%;
                                 white-space: nowrap;
                                 overflow: hidden;
                                 text-overflow: ellipsis;
                                 display: block;
                             }
                             .text-truncate-sm {
-                                max-width: 100px;
+                                max-width: 100%;
                                 white-space: nowrap;
                                 overflow: hidden;
                                 text-overflow: ellipsis;
                                 display: block;
                             }
                             .text-truncate-xs {
-                                max-width: 80px;
+                                max-width: 100%;
                                 white-space: nowrap;
                                 overflow: hidden;
                                 text-overflow: ellipsis;
@@ -174,7 +223,7 @@
                             <tbody>
                                 {% for detail in asset_details.asset_details %}
                                 <tr data-category="{{ detail.asset_category }}">
-                                    <td><span class="text-truncate-sm" data-bs-toggle="tooltip" title="{{ detail.asset_category }}">{{ detail.asset_category }}</span></td>
+                                    <td><span class="text-truncate-sm" data-bs-toggle="tooltip" title="{% if detail.original_category != detail.asset_category %}{{ detail.original_category }}{% else %}{{ detail.asset_category }}{% endif %}">{{ detail.asset_category }}</span></td>
                                     <td><span class="text-truncate-xs text-center" data-bs-toggle="tooltip" title="{{ detail.relation_to_self }}">{{ detail.relation_to_self }}</span></td>
                                     <td><span class="text-truncate-sm" data-bs-toggle="tooltip" title="{{ detail.asset_type }}">{{ detail.asset_type }}</span></td>
                                     <td><span class="text-truncate-custom" data-bs-toggle="tooltip" title="{{ detail.location }}">{{ detail.location }}</span></td>
@@ -216,8 +265,8 @@ document.addEventListener('DOMContentLoaded', function() {
     ];
     
     {% for category in asset_details.category_totals %}
-    categoryLabels.push('{{ category.category }}');
-    categoryData.push({{ category.total }});
+    categoryLabels.push("{{ category.category|replace('"', '\\"') }}");
+    categoryData.push({{ category.total|float }});
     {% endfor %}
     
     const ctxCategory = document.getElementById('assetCategoryChart').getContext('2d');
