@@ -6,6 +6,7 @@
 4. uvicorn app.main:app --reload (서버 실행)
 5. python scripts/selective_reset.py (DB 초기화)
 6. 점수 계산 대시보드: http://127.0.0.1:8000/admin/dashboard
+7. python scripts/download_images.py
 
 <br> 
 
