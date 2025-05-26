@@ -1288,17 +1288,16 @@ def get_asset_percentile_ranges(db: Session) -> Dict[str, Tuple[int, int]]:
     if total_count == 0:
         return {}
     
-    # 백분위 계산
+    # 각 구간이 정확히 60명씩 포함되도록 인덱스 설정
+    # 총 300명이므로 0-59, 60-119, 120-179, 180-239, 240-299로 나눔
+    
+    # 백분위 계산 - 구간이 겹치지 않도록 조정
     percentile_ranges = {
-        "0-20 백분위": (0, assets[int(total_count * 0.2)] if int(total_count * 0.2) < total_count else assets[-1]),
-        "20-40 백분위": (assets[int(total_count * 0.2)] if int(total_count * 0.2) < total_count else 0, 
-                      assets[int(total_count * 0.4)] if int(total_count * 0.4) < total_count else assets[-1]),
-        "40-60 백분위": (assets[int(total_count * 0.4)] if int(total_count * 0.4) < total_count else 0, 
-                      assets[int(total_count * 0.6)] if int(total_count * 0.6) < total_count else assets[-1]),
-        "60-80 백분위": (assets[int(total_count * 0.6)] if int(total_count * 0.6) < total_count else 0, 
-                      assets[int(total_count * 0.8)] if int(total_count * 0.8) < total_count else assets[-1]),
-        "80-100 백분위": (assets[int(total_count * 0.8)] if int(total_count * 0.8) < total_count else 0, 
-                       assets[-1] if total_count > 0 else 0)
+        "0-20 백분위": (assets[0], assets[59]),
+        "20-40 백분위": (assets[59] + 1, assets[119]),
+        "40-60 백분위": (assets[119] + 1, assets[179]),
+        "60-80 백분위": (assets[179] + 1, assets[239]),
+        "80-100 백분위": (assets[239] + 1, assets[total_count - 1])
     }
     
     return percentile_ranges
@@ -1331,25 +1330,51 @@ def get_asset_stats_summary(db: Session, asset_group: str) -> Dict[str, Any]:
     asset_min, asset_max = percentile_ranges[asset_group]
     
     # 해당 재산 구간 의원들의 통계
-    stats = db.query(
-        func.avg(Legislator.overall_score).label("avg_score"),
-        func.max(Legislator.overall_score).label("max_score"),
-        func.min(Legislator.overall_score).label("min_score"),
-        func.avg(Legislator.asset).label("avg_asset"),
-        func.count(Legislator.id).label("count")
-    ).filter(
-        Legislator.asset.between(asset_min, asset_max)
-    ).first()
-    
-    # 티어 분포 계산
-    tier_query = db.query(
-        Legislator.tier,
-        func.count(Legislator.id).label("count")
-    ).filter(
-        Legislator.asset.between(asset_min, asset_max)
-    ).group_by(
-        Legislator.tier
-    ).all()
+    # get_legislators_by_asset_group와 같은 조건 적용
+    if asset_group == "0-20 백분위":
+        stats = db.query(
+            func.avg(Legislator.overall_score).label("avg_score"),
+            func.max(Legislator.overall_score).label("max_score"),
+            func.min(Legislator.overall_score).label("min_score"),
+            func.avg(Legislator.asset).label("avg_asset"),
+            func.count(Legislator.id).label("count")
+        ).filter(
+            Legislator.asset >= asset_min,
+            Legislator.asset <= asset_max
+        ).first()
+        
+        # 티어 분포 계산
+        tier_query = db.query(
+            Legislator.tier,
+            func.count(Legislator.id).label("count")
+        ).filter(
+            Legislator.asset >= asset_min,
+            Legislator.asset <= asset_max
+        ).group_by(
+            Legislator.tier
+        ).all()
+    else:
+        stats = db.query(
+            func.avg(Legislator.overall_score).label("avg_score"),
+            func.max(Legislator.overall_score).label("max_score"),
+            func.min(Legislator.overall_score).label("min_score"),
+            func.avg(Legislator.asset).label("avg_asset"),
+            func.count(Legislator.id).label("count")
+        ).filter(
+            Legislator.asset > asset_min,
+            Legislator.asset <= asset_max
+        ).first()
+        
+        # 티어 분포 계산
+        tier_query = db.query(
+            Legislator.tier,
+            func.count(Legislator.id).label("count")
+        ).filter(
+            Legislator.asset > asset_min,
+            Legislator.asset <= asset_max
+        ).group_by(
+            Legislator.tier
+        ).all()
     
     tier_distribution = {}
     for tier, count in tier_query:
@@ -1388,11 +1413,23 @@ def get_legislators_by_asset_group(db: Session, asset_group: str) -> List[Dict[s
     asset_min, asset_max = percentile_ranges[asset_group]
     
     # 해당 재산 구간 의원 목록 조회
-    legislators = db.query(Legislator).filter(
-        Legislator.asset.between(asset_min, asset_max)
-    ).order_by(
-        Legislator.overall_score.desc()
-    ).all()
+    # 각 구간을 정확히 처리하기 위한 조건
+    if asset_group == "0-20 백분위":
+        # 첫 번째 구간은 최소값과 최대값 모두 포함
+        legislators = db.query(Legislator).filter(
+            Legislator.asset >= asset_min,
+            Legislator.asset <= asset_max
+        ).order_by(
+            Legislator.overall_score.desc()
+        ).all()
+    else:
+        # 다른 구간은 이전 구간의 최대값보다 큰 값부터 시작
+        legislators = db.query(Legislator).filter(
+            Legislator.asset > asset_min,
+            Legislator.asset <= asset_max
+        ).order_by(
+            Legislator.overall_score.desc()
+        ).all()
     
     # 결과 리스트 구성
     result = []
