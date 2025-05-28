@@ -1,26 +1,39 @@
 # 백엔드 프레임워크
-fastapi==0.115.11
-uvicorn==0.34.0
-jinja2==3.1.2
+fastapi>=0.95.0
+uvicorn>=0.21.1
+jinja2>=3.1.2
 
 # 데이터베이스 및 ORM
-SQLAlchemy==2.0.39
-pydantic==2.10.6
-pydantic-settings==2.1.0  # 추가됨
+SQLAlchemy>=2.0.7
+pydantic>=1.10.7
+pydantic-settings>=2.1.0
 
 # API 통신
-requests==2.32.3
-xmltodict==0.13.0
+requests>=2.28.2
+xmltodict>=0.13.0
 
 # 데이터 처리
-pandas==2.2.3
-numpy==2.2.4
-openpyxl==3.1.2
+pandas>=2.0.0
+numpy>=1.26.0
+openpyxl>=3.1.2
 
 # 테스트 관련 패키지
-pytest==7.4.3
-httpx==0.25.1
-pytest-asyncio==0.21.1
+pytest>=7.3.1
+httpx>=0.24.0
+pytest-asyncio>=0.21.1
 
 # 기타
-beautifulsoup4==4.13.4
+beautifulsoup4>=4.12.2
+
+# 추가된 라이브러리
+aiofiles>=23.1.0
+alembic>=1.10.3
+python-dotenv>=1.0.0
+matplotlib>=3.7.1
+boto3>=1.26.127
+scikit-learn>=1.2.2
+scipy>=1.10.1
+cryptography>=40.0.2
+pytest-cov>=4.1.0
+pyyaml>=6.0
+Pillow>=10.0.0

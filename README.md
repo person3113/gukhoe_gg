@@ -36,3 +36,15 @@
 > - 데이터가 없으면 오류나서 서버 실행 안 됨. 다 구현 안 돼서 지금 안 됨.
 
 </details>
+
+<details>
+<summary>이미지 최적화 방법</summary>
+
+> - 이미지 최적화 스크립트 실행 방법:
+> - `python scripts/optimize_images.py app/static/images/legislators app/static/images/optimized 800 85`
+> - 위 명령은 의원 이미지를 최대 너비 800px, 품질 85%로 최적화하여 optimized 폴더에 저장합니다.
+> - 최적화된 이미지를 기존 이미지로 교체: `xcopy /y app/static/images/optimized/* app/static/images/legislators/`
+> - 이미지 최적화는 배포 전에 한 번만 실행하면 됩니다.
+> - 웹사이트에는 자동으로 이미지 캐싱 및 지연 로딩 기능이 적용되어 있습니다.
+
+</details>
