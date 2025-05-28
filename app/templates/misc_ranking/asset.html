@@ -4,30 +4,47 @@
 
 {% block content %}
 <div class="container">
-    <h1 class="mb-4">재산별 랭킹</h1>
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-8">
+            <h1 class="mb-3">재산별 랭킹</h1>
+            <p class="text-muted">국회의원들의 재산 현황과 활동 점수를 분석해 보세요.</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb justify-content-md-end">
+                    <li class="breadcrumb-item"><a href="/"><i class="fas fa-home"></i> 홈</a></li>
+                    <li class="breadcrumb-item"><a href="/misc-ranking">잡다한 랭킹</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">재산별 랭킹</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
     
     <!-- 점수-재산 상관관계 및 정당별 재산 비율 차트 (항상 표시) -->
     <div class="row mb-4">
         <!-- 점수-재산 상관관계 -->
         <div class="col-md-6 mb-4">
-            <div class="card h-100">
+            <div class="card card-modern h-100" style="min-height: 600px;">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5>활동점수와 재산 상관관계</h5>
+                    <h5 class="mb-0"><i class="fas fa-chart-scatter me-2"></i> 활동점수와 재산 상관관계</h5>
                     <div class="btn-group" role="group">
                         <input type="radio" class="btn-check" name="correlation-view" id="correlation-chart-btn" autocomplete="off" checked>
-                        <label class="btn btn-outline-primary btn-sm" for="correlation-chart-btn">차트</label>
+                        <label class="btn btn-outline-primary btn-sm" for="correlation-chart-btn"><i class="fas fa-chart-line me-1"></i> 차트</label>
                         
                         <input type="radio" class="btn-check" name="correlation-view" id="correlation-table-btn" autocomplete="off">
-                        <label class="btn btn-outline-primary btn-sm" for="correlation-table-btn">테이블</label>
+                        <label class="btn btn-outline-primary btn-sm" for="correlation-table-btn"><i class="fas fa-table me-1"></i> 테이블</label>
                     </div>
                 </div>
-                <div class="card-body">
-                    <div id="correlation-chart-view">
-                        <canvas id="correlationChart" height="300"></canvas>
+                <div class="card-body" style="min-height: 540px;">
+                    <div id="correlation-chart-view" class="chart-container">
+                        <!-- 고정 높이 컨테이너 적용 - 높이 증가 및 패딩 추가 -->
+                        <div style="position: relative; height: 500px; width: 100%; padding: 20px;">
+                            <canvas id="correlationChart"></canvas>
+                        </div>
                     </div>
                     <div id="correlation-table-view" class="d-none">
                         <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                            <table class="table table-striped">
+                            <table class="table table-striped table-hover">
                                 <thead>
                                     <tr>
                                         <th>의원명</th>
@@ -39,11 +56,11 @@
                                     {% for point in correlation_data.data_points %}
                                     <tr>
                                         <td>
-                                            <a href="/champions/{{ point.id }}">
+                                            <a href="/champions/{{ point.id }}" class="text-decoration-none">
                                                 {{ point.name }}
                                             </a>
                                         </td>
-                                        <td>{{ point.score }}</td>
+                                        <td><span class="badge bg-primary rounded-pill">{{ point.score }}</span></td>
                                         <td>{{ point.asset }}</td>
                                     </tr>
                                     {% endfor %}
@@ -57,23 +74,26 @@
         
         <!-- 정당별 재산 비율 -->
         <div class="col-md-6 mb-4">
-            <div class="card h-100">
+            <div class="card card-modern h-100" style="min-height: 600px;">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5>정당별 재산 비율</h5>
+                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i> 정당별 재산 비율</h5>
                     <div class="btn-group" role="group">
                         <input type="radio" class="btn-check" name="party-ratio-view" id="party-ratio-chart-btn" autocomplete="off" checked>
-                        <label class="btn btn-outline-primary btn-sm" for="party-ratio-chart-btn">차트</label>
+                        <label class="btn btn-outline-primary btn-sm" for="party-ratio-chart-btn"><i class="fas fa-chart-pie me-1"></i> 차트</label>
                         
                         <input type="radio" class="btn-check" name="party-ratio-view" id="party-ratio-table-btn" autocomplete="off">
-                        <label class="btn btn-outline-primary btn-sm" for="party-ratio-table-btn">테이블</label>
+                        <label class="btn btn-outline-primary btn-sm" for="party-ratio-table-btn"><i class="fas fa-table me-1"></i> 테이블</label>
                     </div>
                 </div>
-                <div class="card-body">
-                    <div id="party-ratio-chart-view">
-                        <canvas id="partyRatioChart" height="300"></canvas>
+                <div class="card-body" style="min-height: 540px;">
+                    <div id="party-ratio-chart-view" class="chart-container">
+                        <!-- 고정 높이 컨테이너 적용 - 높이 증가 및 패딩 추가 -->
+                        <div style="position: relative; height: 500px; width: 100%; padding: 20px;">
+                            <canvas id="partyRatioChart"></canvas>
+                        </div>
                     </div>
                     <div id="party-ratio-table-view" class="d-none">
-                        <table class="table table-striped">
+                        <table class="table table-striped table-hover">
                             <thead>
                                 <tr>
                                     <th>정당</th>
@@ -85,9 +105,11 @@
                             <tbody>
                                 {% for party, data in party_asset_ratio.items() %}
                                 <tr>
-                                    <td>{{ party }}</td>
+                                    <td>
+                                        <span class="party-tag {% if party == '국민의힘' %}party-conservative{% elif party == '더불어민주당' %}party-democratic{% elif party == '정의당' %}party-justice{% else %}party-other{% endif %}">{{ party }}</span>
+                                    </td>
                                     <td>{{ data.total_asset }}</td>
-                                    <td>{{ data.ratio }}</td>
+                                    <td><span class="badge bg-info rounded-pill">{{ data.ratio }}%</span></td>
                                     <td>{{ data.count }}</td>
                                 </tr>
                                 {% endfor %}
@@ -100,15 +122,15 @@
     </div>
     
     <!-- 재산 구간 선택 영역 -->
-    <div class="card mb-4">
+    <div class="card card-modern mb-4">
         <div class="card-header">
-            <h5>재산 구간 선택</h5>
+            <h5 class="mb-0"><i class="fas fa-filter me-2"></i> 재산 구간 선택</h5>
         </div>
         <div class="card-body">
             <div class="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-3">
                 {% for asset in asset_groups %}
                 <div class="col">
-                    <a href="/misc-ranking/asset?asset_group={{ asset }}" class="btn btn-outline-primary w-100 {% if asset_group == asset %}active{% endif %}">{{ asset }}</a>
+                    <a href="/misc-ranking/asset?asset_group={{ asset }}" class="btn {% if asset_group == asset %}btn-primary{% else %}btn-outline-primary{% endif %} w-100 shadow-sm">{{ asset }}</a>
                 </div>
                 {% endfor %}
             </div>
@@ -117,8 +139,16 @@
 
     <!-- 안내 문구 - 재산 구간 선택이 없을 때만 표시 -->
     {% if not asset_group %}
-    <div class="alert alert-info mb-4">
-        위에서 재산 구간을 선택하면 해당 구간의 상세 정보를 볼 수 있습니다.
+    <div class="alert alert-info bg-light border-start border-4 border-info shadow-sm mb-4">
+        <div class="d-flex">
+            <div class="me-3">
+                <i class="fas fa-info-circle fa-2x text-info"></i>
+            </div>
+            <div>
+                <h5 class="alert-heading">재산 구간을 선택해보세요</h5>
+                <p class="mb-0">위에서 재산 구간을 선택하면 해당 구간 의원들의 활동과 티어 통계를 볼 수 있습니다.</p>
+            </div>
+        </div>
     </div>
     {% endif %}
     
@@ -127,52 +157,85 @@
     <div class="row">
         <!-- 재산 구간 통계 요약 -->
         <div class="col-12 mb-4">
-            <div class="card">
+            <div class="card card-modern">
                 <div class="card-header">
-                    <h5>{{ asset_group }} 통계 요약</h5>
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i> {{ asset_group }} 통계 요약</h5>
                 </div>
                 <div class="card-body">
-                    <!-- 기본 통계 정보 (평균, 최고, 최저 등) -->
-                    <table class="table table-striped">
-                        <tr>
-                            <th>평균 종합점수</th>
-                            <td>{{ asset_stats.avg_score }}</td>
-                        </tr>
-                        <tr>
-                            <th>최고 점수</th>
-                            <td>{{ asset_stats.max_score }}</td>
-                        </tr>
-                        <tr>
-                            <th>최저 점수</th>
-                            <td>{{ asset_stats.min_score }}</td>
-                        </tr>
-                        <tr>
-                            <th>인원 수</th>
-                            <td>{{ asset_stats.count }}</td>
-                        </tr>
-                    </table>
-                    
-                    <!-- 티어 분포 -->
-                    <h6 class="mt-4">티어 분포</h6>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>티어</th>
-                                    <th>인원 수</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for tier in ["Challenger", "Grandmaster", "Master", "Diamond", "Emerald", "Platinum", "Gold", "Silver", "Bronze", "Iron"] %}
-                                {% if asset_stats.tier_distribution.get(tier) %}
-                                <tr>
-                                    <td>{{ tier }}</td>
-                                    <td>{{ asset_stats.tier_distribution[tier] }}</td>
-                                </tr>
-                                {% endif %}
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <!-- 기본 통계 정보 카드 그룹 -->
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <div class="stat-card text-center">
+                                        <div class="stat-icon">
+                                            <i class="fas fa-calculator"></i>
+                                        </div>
+                                        <div class="stat-value">{{ asset_stats.avg_score }}</div>
+                                        <div class="stat-label">평균 종합점수</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="stat-card text-center">
+                                        <div class="stat-icon">
+                                            <i class="fas fa-users"></i>
+                                        </div>
+                                        <div class="stat-value">{{ asset_stats.count }}</div>
+                                        <div class="stat-label">해당 구간 의원 수</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="stat-card text-center">
+                                        <div class="stat-icon">
+                                            <i class="fas fa-arrow-up"></i>
+                                        </div>
+                                        <div class="stat-value">{{ asset_stats.max_score }}</div>
+                                        <div class="stat-label">최고 점수</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="stat-card text-center">
+                                        <div class="stat-icon">
+                                            <i class="fas fa-arrow-down"></i>
+                                        </div>
+                                        <div class="stat-value">{{ asset_stats.min_score }}</div>
+                                        <div class="stat-label">최저 점수</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <!-- 티어 분포 -->
+                            <h6 class="mb-3">티어 분포</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>티어</th>
+                                            <th>인원 수</th>
+                                            <th>비율</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for tier, count in asset_stats.tier_distribution.items() %}
+                                        <tr>
+                                            <td>
+                                                <span class="badge tier-{{ tier.lower() }}">{{ tier }}</span>
+                                            </td>
+                                            <td>{{ count }}</td>
+                                            <td>
+                                                {% set percentage = (count / asset_stats.count * 100) | round(1) %}
+                                                <div class="progress" style="height: 5px;">
+                                                    <div class="progress-bar {% if tier.lower() in ['gold', 'silver', 'bronze'] %}bg-{{ tier.lower() }}{% else %}bg-secondary{% endif %}" role="progressbar" style="width: {{ percentage }}%" aria-valuenow="{{ percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                                </div>
+                                                <small>{{ percentage }}%</small>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -180,27 +243,36 @@
         
         <!-- 재산 구간 의원 목록 -->
         <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5>{{ asset_group }} 의원 목록</h5>
+            <div class="card card-modern">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-list-ul me-2"></i> {{ asset_group }} 의원 목록</h5>
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-light text-dark me-2">총 {{ legislators|length }}명</span>
+                        <div class="input-group input-group-sm" style="width: 250px;">
+                            <input type="text" class="form-control" id="table-search" placeholder="이름 검색...">
+                            <button class="btn btn-outline-secondary" type="button">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                      <table class="table table-striped" id="legislators-table">
+                      <table class="table table-hover" id="legislators-table">
                           <thead>
                               <tr>
-                                  <th data-sort="overall_rank">순위 <i class="sort-icon"></i></th>
+                                  <th data-sort="overall_rank" class="text-center">순위 <i class="sort-icon"></i></th>
                                   <th>사진</th>
                                   <th>의원명</th>
                                   <th>정당</th>
                                   <th>티어</th>
-                                  <th data-sort="overall_score">종합점수 <i class="sort-icon"></i></th>
-                                  <th data-sort="participation_score">참여도 <i class="sort-icon"></i></th>
-                                  <th data-sort="legislation_score">입법활동 <i class="sort-icon"></i></th>
-                                  <th data-sort="speech_score">의정발언 <i class="sort-icon"></i></th>
-                                  <th data-sort="voting_score">표결책임성 <i class="sort-icon"></i></th>
-                                  <th data-sort="cooperation_score">정당 간 협력 <i class="sort-icon"></i></th>
-                                  <th data-sort="asset">재산 <i class="sort-icon"></i></th>
+                                  <th data-sort="overall_score" class="text-center">종합점수 <i class="sort-icon"></i></th>
+                                  <th data-sort="participation_score" class="text-center">참여도 <i class="sort-icon"></i></th>
+                                  <th data-sort="legislation_score" class="text-center">입법활동 <i class="sort-icon"></i></th>
+                                  <th data-sort="speech_score" class="text-center">의정발언 <i class="sort-icon"></i></th>
+                                  <th data-sort="voting_score" class="text-center">표결책임성 <i class="sort-icon"></i></th>
+                                  <th data-sort="cooperation_score" class="text-center">정당 간 협력 <i class="sort-icon"></i></th>
+                                  <th data-sort="asset" class="text-center">재산 <i class="sort-icon"></i></th>
                               </tr>
                           </thead>
                           <tbody>
@@ -223,21 +295,61 @@
                                       <a href="/champions/{{ legislator.id }}">
                                           {{ legislator.name }}
                                       </a>
-                                      <a href="/misc-ranking/asset/detail/{{ legislator.id }}" class="btn btn-sm btn-outline-info ms-2">재산 상세</a>
                                   </td>
-                                  <td>{{ legislator.party }}</td>
                                   <td>
-                                      <span class="badge tier-{{ legislator.tier.lower() }}">
-                                          {{ legislator.tier }}
+                                      <span class="party-tag {% if legislator.party == '국민의힘' %}party-conservative{% elif legislator.party == '더불어민주당' %}party-democratic{% elif legislator.party == '정의당' %}party-justice{% else %}party-other{% endif %}">
+                                          {{ legislator.party }}
                                       </span>
                                   </td>
-                                  <td>{{ legislator.overall_score }}</td>
-                                  <td>{{ legislator.participation_score }}</td>
-                                  <td>{{ legislator.legislation_score }}</td>
-                                  <td>{{ legislator.speech_score }}</td>
-                                  <td>{{ legislator.voting_score }}</td>
-                                  <td>{{ legislator.cooperation_score }}</td>
-                                  <td>{{ legislator.asset }}</td>
+                                  <td>
+                                      <span class="badge tier-{{ legislator.tier.lower() }} px-2 py-1">{{ legislator.tier }}</span>
+                                  </td>
+                                  <td class="text-center">
+                                      <span class="badge bg-primary rounded-pill px-3">{{ legislator.overall_score }}</span>
+                                  </td>
+                                  <td class="text-center">
+                                      {% set score = legislator.participation_score %}
+                                      <div class="progress" style="height: 8px;">
+                                          <div class="progress-bar {% if score >= 90 %}bg-success{% elif score >= 70 %}bg-info{% elif score >= 50 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ score }}%;" aria-valuenow="{{ score }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                      </div>
+                                      <small class="d-block mt-1">{{ score }}</small>
+                                  </td>
+                                  <td class="text-center">
+                                      {% set score = legislator.legislation_score %}
+                                      <div class="progress" style="height: 8px;">
+                                          <div class="progress-bar {% if score >= 90 %}bg-success{% elif score >= 70 %}bg-info{% elif score >= 50 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ score }}%;" aria-valuenow="{{ score }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                      </div>
+                                      <small class="d-block mt-1">{{ score }}</small>
+                                  </td>
+                                  <td class="text-center">
+                                      {% set score = legislator.speech_score %}
+                                      <div class="progress" style="height: 8px;">
+                                          <div class="progress-bar {% if score >= 90 %}bg-success{% elif score >= 70 %}bg-info{% elif score >= 50 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ score }}%;" aria-valuenow="{{ score }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                      </div>
+                                      <small class="d-block mt-1">{{ score }}</small>
+                                  </td>
+                                  <td class="text-center">
+                                      {% set score = legislator.voting_score %}
+                                      <div class="progress" style="height: 8px;">
+                                          <div class="progress-bar {% if score >= 90 %}bg-success{% elif score >= 70 %}bg-info{% elif score >= 50 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ score }}%;" aria-valuenow="{{ score }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                      </div>
+                                      <small class="d-block mt-1">{{ score }}</small>
+                                  </td>
+                                  <td class="text-center">
+                                      {% set score = legislator.cooperation_score %}
+                                      <div class="progress" style="height: 8px;">
+                                          <div class="progress-bar {% if score >= 90 %}bg-success{% elif score >= 70 %}bg-info{% elif score >= 50 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ score }}%;" aria-valuenow="{{ score }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                      </div>
+                                      <small class="d-block mt-1">{{ score }}</small>
+                                  </td>
+                                  <td class="text-center fw-bold">
+                                      <div class="d-flex align-items-center justify-content-center">
+                                          <span class="me-2">{{ legislator.asset }} 억원</span>
+                                          <a href="/misc-ranking/asset/detail/{{ legislator.id }}" class="btn btn-sm btn-primary" title="자산 상세 보기">
+                                              <i class="fas fa-search-dollar"></i>
+                                          </a>
+                                      </div>
+                                  </td>
                               </tr>
                               {% endfor %}
                           </tbody>
@@ -253,8 +365,36 @@
 
 {% block extra_scripts %}
 <script>
+// 테이블 검색 기능
 document.addEventListener('DOMContentLoaded', function() {
-    // 점수-재산 상관관계 차트 (산점도)
+    const searchInput = document.getElementById('table-search');
+    if (searchInput) {
+        searchInput.addEventListener('keyup', function() {
+            const searchValue = this.value.toLowerCase();
+            const table = document.getElementById('legislators-table');
+            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+            
+            for (let i = 0; i < rows.length; i++) {
+                const nameCell = rows[i].getElementsByTagName('td')[2]; // 의원명 셀
+                const partyCell = rows[i].getElementsByTagName('td')[3]; // 정당 셀
+                
+                if (nameCell) {
+                    const name = nameCell.textContent || nameCell.innerText;
+                    const party = partyCell.textContent || partyCell.innerText;
+                    
+                    if (name.toLowerCase().indexOf(searchValue) > -1 || party.toLowerCase().indexOf(searchValue) > -1) {
+                        rows[i].style.display = '';
+                    } else {
+                        rows[i].style.display = 'none';
+                    }
+                }
+            }
+        });
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    // 점수-재산 상관관계 차트 (산점도) - 크기 수정
     if (document.getElementById('correlationChart')) {
         var correlationCtx = document.getElementById('correlationChart').getContext('2d');
         var correlationData = JSON.parse('{{ correlation_chart|tojson|safe }}');
@@ -262,10 +402,21 @@ document.addEventListener('DOMContentLoaded', function() {
         var correlationChart = new Chart(correlationCtx, {
             type: 'scatter',
             data: correlationData,
-            options: correlationData.options || {
+            options: {
                 responsive: true,
-                maintainAspectRatio: true,
+                maintainAspectRatio: false, // 고정 크기 컨테이너 사용
+                layout: {
+                    padding: {
+                        top: 20,
+                        right: 20,
+                        bottom: 20,
+                        left: 20
+                    }
+                },
                 plugins: {
+                    legend: {
+                        display: false
+                    },
                     tooltip: {
                         callbacks: {
                             label: function(context) {
@@ -279,28 +430,52 @@ document.addEventListener('DOMContentLoaded', function() {
                     x: {
                         title: {
                             display: true,
-                            text: '종합점수'
+                            text: '종합점수',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
                         },
                         grid: {
                             display: true
+                        },
+                        ticks: {
+                            font: {
+                                size: 12
+                            }
                         }
                     },
                     y: {
                         title: {
                             display: true,
-                            text: '재산 (억원)'
+                            text: '재산 (억원)',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
                         },
                         beginAtZero: true,
                         grid: {
                             display: true
+                        },
+                        ticks: {
+                            font: {
+                                size: 12
+                            }
                         }
+                    }
+                },
+                elements: {
+                    point: {
+                        radius: 6,
+                        hoverRadius: 8
                     }
                 }
             }
         });
     }
     
-    // 정당별 재산 비율 차트 (파이 차트)
+    // 정당별 재산 비율 차트 (파이 차트) - 크기 수정
     if (document.getElementById('partyRatioChart')) {
         var partyRatioCtx = document.getElementById('partyRatioChart').getContext('2d');
         var partyRatioData = JSON.parse('{{ party_ratio_chart|tojson|safe }}');
@@ -310,10 +485,31 @@ document.addEventListener('DOMContentLoaded', function() {
             data: partyRatioData,
             options: {
                 responsive: true,
-                maintainAspectRatio: true,
+                maintainAspectRatio: false, // 고정 크기 컨테이너 사용
+                layout: {
+                    padding: {
+                        top: 20,
+                        right: 20,
+                        bottom: 60, // 하단 범례를 위한 여유 공간
+                        left: 20
+                    }
+                },
                 plugins: {
                     legend: {
-                        position: 'bottom'
+                        position: 'bottom',
+                        align: 'center',
+                        labels: {
+                            font: {
+                                size: 11,
+                                weight: 'bold'
+                            },
+                            padding: 15,
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            boxWidth: 12,
+                            boxHeight: 12
+                        },
+                        maxHeight: 80 // 범례 최대 높이 제한
                     },
                     tooltip: {
                         callbacks: {
@@ -323,6 +519,12 @@ document.addEventListener('DOMContentLoaded', function() {
                                 return `${label}: ${value}%`;
                             }
                         }
+                    }
+                },
+                elements: {
+                    arc: {
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
                     }
                 }
             }

@@ -2,52 +2,44 @@
 
 {% block title %}국회.gg - {{ title }} 랭킹{% endblock %}
 
-{% block extra_head %}
-<style>
-    .sortable {
-        cursor: pointer;
-    }
-    .sort-icon::after {
-        content: "";
-        margin-left: 5px;
-    }
-    .sort-asc::after {
-        content: " ▲";
-    }
-    .sort-desc::after {
-        content: " ▼";
-    }
-</style>
-{% endblock %}
-
 {% block content %}
 <div class="container">
-    <h1 class="mb-4">활동 랭킹 {% if current_category != 'overall' %}- {{ title }}{% endif %}</h1>
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-8">
+            <h1 class="mb-3">활동 랭킹 {% if current_category != 'overall' %}- {{ title }}{% endif %}</h1>
+            <p class="text-muted">국회의원들의 {{ title }} 활동을 분석해보세요.</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb justify-content-md-end">
+                    <li class="breadcrumb-item"><a href="/"><i class="fas fa-home"></i> 홈</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">활동 랭킹</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
     
     <!-- TOP 5 & BOTTOM 5 영역 -->
-    <div class="row mb-5">
+    <div class="row mb-4">
         <!-- 상위 5명 -->
-        <div class="col-md-6">
-            <div class="card">
+        <div class="col-md-6 mb-4">
+            <div class="card card-modern h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5>{{ title }} Best 5</h5>
+                    <h5 class="mb-0"><i class="fas fa-trophy me-2"></i>{{ title }} Best 5</h5>
                     <div class="btn-group" role="group">
                         <input type="radio" class="btn-check" name="top-view" id="top-chart-btn" autocomplete="off" checked>
-                        <label class="btn btn-outline-primary btn-sm" for="top-chart-btn">차트</label>
+                        <label class="btn btn-outline-primary btn-sm" for="top-chart-btn"><i class="fas fa-chart-line me-1"></i>차트</label>
                         
                         <input type="radio" class="btn-check" name="top-view" id="top-table-btn" autocomplete="off">
-                        <label class="btn btn-outline-primary btn-sm" for="top-table-btn">목록</label>
+                        <label class="btn btn-outline-primary btn-sm" for="top-table-btn"><i class="fas fa-table me-1"></i>목록</label>
                     </div>
                 </div>
                 <div class="card-body">
-                    <!-- 차트 뷰 -->
-                    <div id="top-chart-view">
+                    <div id="top-chart-view" class="chart-container">
                         <canvas id="topChart" height="300"></canvas>
                     </div>
-                    
-                    <!-- 테이블 뷰 -->
                     <div id="top-table-view" class="d-none">
-                        <table class="table table-striped">
+                        <table class="table table-striped table-hover">
                             <thead>
                                 <tr>
                                     <th>순위</th>
@@ -67,17 +59,27 @@
                                              class="rounded-circle" width="40" height="40" loading="lazy">
                                     </td>
                                     <td>
-                                        <a href="/champions/{{ legislator.id }}">
+                                        <a href="/champions/{{ legislator.id }}" class="text-decoration-none">
                                             {{ legislator.name }}
                                         </a>
                                     </td>
-                                    <td>{{ legislator.party }}</td>
                                     <td>
-                                        <span class="badge tier-{{ legislator.tier.lower() }}">
-                                            {{ legislator.tier }}
+                                        <span class="party-tag 
+                                            {% if legislator.party == '국민의힘' %}party-conservative
+                                            {% elif legislator.party == '더불어민주당' %}party-democratic
+                                            {% elif legislator.party == '정의당' %}party-justice
+                                            {% elif legislator.party == '개혁신당' %}party-reform
+                                            {% elif legislator.party == '조국혁신당' %}party-innovation
+                                            {% elif legislator.party == '기본소득당' %}party-basic
+                                            {% elif legislator.party == '진보당' %}party-progressive
+                                            {% else %}party-other{% endif %}">
+                                            {{ legislator.party }}
                                         </span>
                                     </td>
-                                    <td>{{ legislator.current_score }}</td>
+                                    <td>
+                                        <span class="badge tier-{{ legislator.tier.lower() }} px-2 py-1">{{ legislator.tier }}</span>
+                                    </td>
+                                    <td><span class="badge bg-primary rounded-pill">{{ legislator.current_score }}</span></td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -88,27 +90,24 @@
         </div>
         
         <!-- 하위 5명 -->
-        <div class="col-md-6">
-            <div class="card">
+        <div class="col-md-6 mb-4">
+            <div class="card card-modern h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5>{{ title }} Worst 5</h5>
+                    <h5 class="mb-0"><i class="fas fa-chart-line-down me-2"></i>{{ title }} Worst 5</h5>
                     <div class="btn-group" role="group">
                         <input type="radio" class="btn-check" name="bottom-view" id="bottom-chart-btn" autocomplete="off" checked>
-                        <label class="btn btn-outline-primary btn-sm" for="bottom-chart-btn">차트</label>
+                        <label class="btn btn-outline-primary btn-sm" for="bottom-chart-btn"><i class="fas fa-chart-line me-1"></i>차트</label>
                         
                         <input type="radio" class="btn-check" name="bottom-view" id="bottom-table-btn" autocomplete="off">
-                        <label class="btn btn-outline-primary btn-sm" for="bottom-table-btn">목록</label>
+                        <label class="btn btn-outline-primary btn-sm" for="bottom-table-btn"><i class="fas fa-table me-1"></i>목록</label>
                     </div>
                 </div>
                 <div class="card-body">
-                    <!-- 차트 뷰 -->
-                    <div id="bottom-chart-view">
+                    <div id="bottom-chart-view" class="chart-container">
                         <canvas id="bottomChart" height="300"></canvas>
                     </div>
-                    
-                    <!-- 테이블 뷰 -->
                     <div id="bottom-table-view" class="d-none">
-                        <table class="table table-striped">
+                        <table class="table table-striped table-hover">
                             <thead>
                                 <tr>
                                     <th>순위</th>
@@ -128,17 +127,27 @@
                                              class="rounded-circle" width="40" height="40" loading="lazy">
                                     </td>
                                     <td>
-                                        <a href="/champions/{{ legislator.id }}">
+                                        <a href="/champions/{{ legislator.id }}" class="text-decoration-none">
                                             {{ legislator.name }}
                                         </a>
                                     </td>
-                                    <td>{{ legislator.party }}</td>
                                     <td>
-                                        <span class="badge tier-{{ legislator.tier.lower() }}">
-                                            {{ legislator.tier }}
+                                        <span class="party-tag 
+                                            {% if legislator.party == '국민의힘' %}party-conservative
+                                            {% elif legislator.party == '더불어민주당' %}party-democratic
+                                            {% elif legislator.party == '정의당' %}party-justice
+                                            {% elif legislator.party == '개혁신당' %}party-reform
+                                            {% elif legislator.party == '조국혁신당' %}party-innovation
+                                            {% elif legislator.party == '기본소득당' %}party-basic
+                                            {% elif legislator.party == '진보당' %}party-progressive
+                                            {% else %}party-other{% endif %}">
+                                            {{ legislator.party }}
                                         </span>
                                     </td>
-                                    <td>{{ legislator.current_score }}</td>
+                                    <td>
+                                        <span class="badge tier-{{ legislator.tier.lower() }} px-2 py-1">{{ legislator.tier }}</span>
+                                    </td>
+                                    <td><span class="badge bg-secondary rounded-pill">{{ legislator.current_score }}</span></td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -149,141 +158,291 @@
         </div>
     </div>
     
-    <!-- 전체 의원 랭킹 테이블 -->
-    <div class="card">
+    <!-- 필터 영역 -->
+    <div class="card card-modern mb-4">
         <div class="card-header">
-            <h5>전체 의원 랭킹</h5>
+            <h5 class="mb-0"><i class="fas fa-filter me-2"></i> 필터 옵션</h5>
         </div>
         <div class="card-body">
-            <!-- 필터 영역 -->
-            <div class="row mb-3">
-                <div class="col-md-12">
-                    <form id="filter-form" class="row g-3">
-                        <!-- 정당 필터 -->
-                        <div class="col-md-3">
-                            <label for="party" class="form-label">정당</label>
-                            <select class="form-select" id="party" name="party">
-                                <option value="">전체</option>
-                                {% for party in parties %}
-                                <option value="{{ party }}" {% if current_filters.party == party %}selected{% endif %}>{{ party }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        
-                        <!-- 위원회 필터 -->
-                        <div class="col-md-3">
-                            <label for="committee" class="form-label">위원회</label>
-                            <select class="form-select" id="committee" name="committee">
-                                <option value="">전체</option>
-                                {% for committee in committees %}
-                                <option value="{{ committee }}" {% if current_filters.committee == committee %}selected{% endif %}>{{ committee[:5] }}{% if committee|length > 5 %}{% endif %}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        
-                        <!-- 의원 경력 필터 -->
-                        <div class="col-md-3">
-                            <label for="term" class="form-label">의원 경력</label>
-                            <select class="form-select" id="term" name="term">
-                                <option value="">전체</option>
-                                {% for term in terms %}
-                                <option value="{{ term }}" {% if current_filters.term == term %}selected{% endif %}>{{ term }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        
-                        <!-- 성별 필터 -->
-                        <div class="col-md-3">
-                            <label for="gender" class="form-label">성별</label>
-                            <select class="form-select" id="gender" name="gender">
-                                <option value="">전체</option>
-                                <option value="남" {% if current_filters.gender == "남" %}selected{% endif %}>남</option>
-                                <option value="여" {% if current_filters.gender == "여" %}selected{% endif %}>여</option>
-                            </select>
-                        </div>
-                        
-                        <!-- 필터 버튼 -->
-                        <div class="col-12">
-                            <button type="button" id="apply-filter-btn" class="btn btn-primary">필터 적용</button>
-                            <button type="button" id="reset-filter-btn" class="btn btn-secondary">필터 초기화</button>
-                        </div>
-                    </form>
+            <form id="filter-form" class="row g-3">
+                <!-- 정당 필터 -->
+                <div class="col-md-3">
+                    <label for="party" class="form-label">정당</label>
+                    <select class="form-select" id="party" name="party">
+                        <option value="">전체</option>
+                        {% for party in parties %}
+                        <option value="{{ party }}" {% if current_filters.party == party %}selected{% endif %}>{{ party }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- 위원회 필터 -->
+                <div class="col-md-3">
+                    <label for="committee" class="form-label">위원회</label>
+                    <select class="form-select" id="committee" name="committee">
+                        <option value="">전체</option>
+                        {% for committee in committees %}
+                        <option value="{{ committee }}" {% if current_filters.committee == committee %}selected{% endif %}>{{ committee[:5] }}{% if committee|length > 5 %}...{% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- 의원 경력 필터 -->
+                <div class="col-md-3">
+                    <label for="term" class="form-label">의원 경력</label>
+                    <select class="form-select" id="term" name="term">
+                        <option value="">전체</option>
+                        {% for term in terms %}
+                        <option value="{{ term }}" {% if current_filters.term == term %}selected{% endif %}>{{ term }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- 성별 필터 -->
+                <div class="col-md-3">
+                    <label for="gender" class="form-label">성별</label>
+                    <select class="form-select" id="gender" name="gender">
+                        <option value="">전체</option>
+                        <option value="남" {% if current_filters.gender == "남" %}selected{% endif %}>남</option>
+                        <option value="여" {% if current_filters.gender == "여" %}selected{% endif %}>여</option>
+                    </select>
+                </div>
+                
+                <!-- 필터 버튼 -->
+                <div class="col-12">
+                    <button type="button" id="apply-filter-btn" class="btn btn-primary shadow-sm">필터 적용</button>
+                    <button type="button" id="reset-filter-btn" class="btn btn-secondary shadow-sm">필터 초기화</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 전체 의원 랭킹 -->
+    <div class="card card-modern">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-list-ul me-2"></i> 전체 의원 랭킹</h5>
+            <div class="d-flex align-items-center">
+                <span class="badge bg-light text-dark me-2">총 {{ all_legislators|length }}명</span>
+                <div class="input-group input-group-sm" style="width: 250px;">
+                    <input type="text" class="form-control" id="table-search" placeholder="이름 검색...">
+                    <button class="btn btn-outline-secondary" type="button">
+                        <i class="fas fa-search"></i>
+                    </button>
                 </div>
             </div>
-            
-            <!-- 테이블 -->
+        </div>
+        <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover">
+                <style>
+                    #legislators-table {
+                        width: 100% !important;
+                        table-layout: fixed !important;
+                        border-collapse: collapse;
+                        font-size: 14px;
+                    }
+                    #legislators-table th {
+                        background-color: #f8f9fa;
+                        color: #495057;
+                        font-weight: 600;
+                        text-align: center;
+                        padding: 12px 8px;
+                        white-space: nowrap;
+                        position: sticky;
+                        top: 0;
+                        z-index: 10;
+                        border-bottom: 2px solid #dee2e6;
+                    }
+                    #legislators-table td {
+                        padding: 12px 8px;
+                        vertical-align: middle;
+                        border-bottom: 1px solid #dee2e6;
+                        height: 65px;
+                        text-align: center;
+                    }
+                    #legislators-table tr:hover {
+                        background-color: rgba(0, 123, 255, 0.05);
+                    }
+                    
+                    /* 컬럼별 너비 조정 - 정당 열 확보 */
+                    #legislators-table th:nth-child(1),
+                    #legislators-table td:nth-child(1) {
+                        width: 5% !important;
+                        min-width: 50px !important;
+                    }
+                    #legislators-table th:nth-child(2),
+                    #legislators-table td:nth-child(2) {
+                        width: 7% !important;
+                        min-width: 60px !important;
+                    }
+                    #legislators-table th:nth-child(3),
+                    #legislators-table td:nth-child(3) {
+                        width: 9% !important;
+                        min-width: 80px !important;
+                        text-align: left !important;
+                    }
+                    /* 정당 열 - 충분한 공간 확보 */
+                    #legislators-table th:nth-child(4),
+                    #legislators-table td:nth-child(4) {
+                        width: 12% !important;
+                        min-width: 110px !important;
+                        max-width: 130px !important;
+                        text-align: center !important;
+                        white-space: nowrap !important;
+                        overflow: visible !important;
+                        display: table-cell !important;
+                        visibility: visible !important;
+                    }
+                    #legislators-table th:nth-child(5),
+                    #legislators-table td:nth-child(5) {
+                        width: 8% !important;
+                        min-width: 70px !important;
+                    }
+                    #legislators-table th:nth-child(6),
+                    #legislators-table td:nth-child(6) {
+                        width: 9% !important;
+                        min-width: 80px !important;
+                    }
+                    #legislators-table th:nth-child(7),
+                    #legislators-table td:nth-child(7),
+                    #legislators-table th:nth-child(8),
+                    #legislators-table td:nth-child(8),
+                    #legislators-table th:nth-child(9),
+                    #legislators-table td:nth-child(9),
+                    #legislators-table th:nth-child(10),
+                    #legislators-table td:nth-child(10),
+                    #legislators-table th:nth-child(11),
+                    #legislators-table td:nth-child(11) {
+                        width: 10% !important;
+                        min-width: 90px !important;
+                    }
+                    
+                    /* 정당 태그 강제 표시 */
+                    .party-tag {
+                        display: inline-block !important;
+                        visibility: visible !important;
+                        opacity: 1 !important;
+                        min-width: 85px !important;
+                        max-width: 120px !important;
+                        padding: 0.45rem 0.8rem !important;
+                        margin: 0 auto !important;
+                        white-space: nowrap !important;
+                        overflow: hidden !important;
+                        text-overflow: ellipsis !important;
+                        font-size: 0.8rem !important;
+                        font-weight: 700 !important;
+                        border-radius: 20px !important;
+                        text-align: center !important;
+                        line-height: 1.2 !important;
+                    }
+                    
+                    .sort-icon {
+                        cursor: pointer;
+                        user-select: none;
+                    }
+                    
+                    /* 반응형 - 모바일에서 정당 열 유지 */
+                    @media (max-width: 768px) {
+                        #legislators-table th:nth-child(4),
+                        #legislators-table td:nth-child(4) {
+                            width: 15% !important;
+                            min-width: 100px !important;
+                        }
+                        .party-tag {
+                            min-width: 75px !important;
+                            font-size: 0.7rem !important;
+                            padding: 0.3rem 0.6rem !important;
+                        }
+                    }
+                </style>
+                <table class="table" id="legislators-table">
                     <thead>
                         <tr>
-                            <th>순위</th>
-                            <th>사진</th>
-                            <th>의원명</th>
-                            <th>정당</th>
-                            <th>티어</th>
-                            <th class="sortable" onclick="sortTableByColumn(5)">
-                                <span class="{{ 'font-weight-bold' if current_category == 'overall' else '' }}">
-                                    종합 점수
-                                    <span id="sort-5" class="sort-icon"></span>
-                                </span>
-                            </th>
-                            <th class="sortable" onclick="sortTableByColumn(6)">
-                                <span class="{{ 'font-weight-bold' if current_category == 'participation' else '' }}">
-                                    참여도
-                                    <span id="sort-6" class="sort-icon"></span>
-                                </span>
-                            </th>
-                            <th class="sortable" onclick="sortTableByColumn(7)">
-                                <span class="{{ 'font-weight-bold' if current_category == 'legislation' else '' }}">
-                                    입법활동
-                                    <span id="sort-7" class="sort-icon"></span>
-                                </span>
-                            </th>
-                            <th class="sortable" onclick="sortTableByColumn(8)">
-                                <span class="{{ 'font-weight-bold' if current_category == 'speech' else '' }}">
-                                    의정발언
-                                    <span id="sort-8" class="sort-icon"></span>
-                                </span>
-                            </th>
-                            <th class="sortable" onclick="sortTableByColumn(9)">
-                                <span class="{{ 'font-weight-bold' if current_category == 'voting' else '' }}">
-                                    표결 책임성
-                                    <span id="sort-9" class="sort-icon"></span>
-                                </span>
-                            </th>
-                            <th class="sortable" onclick="sortTableByColumn(10)">
-                                <span class="{{ 'font-weight-bold' if current_category == 'cooperation' else '' }}">
-                                    정당 간 협력
-                                    <span id="sort-10" class="sort-icon"></span>
-                                </span>
-                            </th>
+                            <th data-sort="overall_rank" style="width: 5%; min-width: 50px;">순위 <i class="sort-icon"></i></th>
+                            <th style="width: 7%; min-width: 60px;">사진</th>
+                            <th style="width: 9%; min-width: 80px;">의원명</th>
+                            <th style="width: 12%; min-width: 110px;">정당</th>
+                            <th style="width: 8%; min-width: 70px;">티어</th>
+                            <th data-sort="overall_score" style="width: 9%; min-width: 80px;" class="{{ 'fw-bold text-primary' if current_category == 'overall' else '' }}">종합점수 <i class="sort-icon"></i></th>
+                            <th data-sort="participation_score" style="width: 10%; min-width: 90px;" class="{{ 'fw-bold text-primary' if current_category == 'participation' else '' }}">참여도 <i class="sort-icon"></i></th>
+                            <th data-sort="legislation_score" style="width: 10%; min-width: 90px;" class="{{ 'fw-bold text-primary' if current_category == 'legislation' else '' }}">입법활동 <i class="sort-icon"></i></th>
+                            <th data-sort="speech_score" style="width: 10%; min-width: 90px;" class="{{ 'fw-bold text-primary' if current_category == 'speech' else '' }}">의정발언 <i class="sort-icon"></i></th>
+                            <th data-sort="voting_score" style="width: 10%; min-width: 90px;" class="{{ 'fw-bold text-primary' if current_category == 'voting' else '' }}">표결책임성 <i class="sort-icon"></i></th>
+                            <th data-sort="cooperation_score" style="width: 10%; min-width: 90px;" class="{{ 'fw-bold text-primary' if current_category == 'cooperation' else '' }}">정당 간 협력 <i class="sort-icon"></i></th>
                         </tr>
                     </thead>
-                    <tbody id="ranking-table-body">
+                    <tbody>
                         {% for legislator in all_legislators %}
-                        <tr>
+                        <tr data-overall_rank="{{ legislator.overall_rank }}"
+                            data-overall_score="{{ legislator.overall_score }}"
+                            data-participation_score="{{ legislator.participation_score }}"
+                            data-legislation_score="{{ legislator.legislation_score }}"
+                            data-speech_score="{{ legislator.speech_score }}"
+                            data-voting_score="{{ legislator.voting_score }}"
+                            data-cooperation_score="{{ legislator.cooperation_score }}">
                             <td>{{ legislator.overall_rank }}</td>
                             <td>
                                 <img src="{{ legislator.profile_image_url }}" alt="{{ legislator.name }}" 
                                      class="rounded-circle" width="40" height="40" loading="lazy">
                             </td>
-                            <td>
-                                <a href="/champions/{{ legislator.id }}">
+                            <td style="text-align: left;">
+                                <a href="/champions/{{ legislator.id }}" class="text-decoration-none">
                                     {{ legislator.name }}
                                 </a>
                             </td>
-                            <td>{{ legislator.party }}</td>
-                            <td>
-                                <span class="badge tier-{{ legislator.tier.lower() }}">
-                                    {{ legislator.tier }}
+                            <td style="text-align: center;">
+                                <span class="party-tag 
+                                    {% if legislator.party == '국민의힘' %}party-conservative
+                                    {% elif legislator.party == '더불어민주당' %}party-democratic
+                                    {% elif legislator.party == '정의당' %}party-justice
+                                    {% elif legislator.party == '개혁신당' %}party-reform
+                                    {% elif legislator.party == '조국혁신당' %}party-innovation
+                                    {% elif legislator.party == '기본소득당' %}party-basic
+                                    {% elif legislator.party == '진보당' %}party-progressive
+                                    {% else %}party-other{% endif %}">
+                                    {{ legislator.party }}
                                 </span>
                             </td>
-                            <td class="{{ 'font-weight-bold' if current_category == 'overall' else '' }}">{{ legislator.overall_score }}</td>
-                            <td class="{{ 'font-weight-bold' if current_category == 'participation' else '' }}">{{ legislator.participation_score }}</td>
-                            <td class="{{ 'font-weight-bold' if current_category == 'legislation' else '' }}">{{ legislator.legislation_score }}</td>
-                            <td class="{{ 'font-weight-bold' if current_category == 'speech' else '' }}">{{ legislator.speech_score }}</td>
-                            <td class="{{ 'font-weight-bold' if current_category == 'voting' else '' }}">{{ legislator.voting_score }}</td>
-                            <td class="{{ 'font-weight-bold' if current_category == 'cooperation' else '' }}">{{ legislator.cooperation_score }}</td>
+                            <td>
+                                <span class="badge tier-{{ legislator.tier.lower() }} px-2 py-1">{{ legislator.tier }}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-primary rounded-pill px-3">{{ legislator.overall_score }}</span>
+                            </td>
+                            <td>
+                                {% set score = legislator.participation_score %}
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar {% if score >= 90 %}bg-success{% elif score >= 70 %}bg-info{% elif score >= 50 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ score }}%;" aria-valuenow="{{ score }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <small class="d-block mt-1">{{ score }}</small>
+                            </td>
+                            <td>
+                                {% set score = legislator.legislation_score %}
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar {% if score >= 90 %}bg-success{% elif score >= 70 %}bg-info{% elif score >= 50 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ score }}%;" aria-valuenow="{{ score }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <small class="d-block mt-1">{{ score }}</small>
+                            </td>
+                            <td>
+                                {% set score = legislator.speech_score %}
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar {% if score >= 90 %}bg-success{% elif score >= 70 %}bg-info{% elif score >= 50 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ score }}%;" aria-valuenow="{{ score }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <small class="d-block mt-1">{{ score }}</small>
+                            </td>
+                            <td>
+                                {% set score = legislator.voting_score %}
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar {% if score >= 90 %}bg-success{% elif score >= 70 %}bg-info{% elif score >= 50 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ score }}%;" aria-valuenow="{{ score }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <small class="d-block mt-1">{{ score }}</small>
+                            </td>
+                            <td>
+                                {% set score = legislator.cooperation_score %}
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar {% if score >= 90 %}bg-success{% elif score >= 70 %}bg-info{% elif score >= 50 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ score }}%;" aria-valuenow="{{ score }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <small class="d-block mt-1">{{ score }}</small>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -296,6 +455,34 @@
 
 {% block extra_scripts %}
 <script>
+// 테이블 검색 기능
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('table-search');
+    if (searchInput) {
+        searchInput.addEventListener('keyup', function() {
+            const searchValue = this.value.toLowerCase();
+            const table = document.getElementById('legislators-table');
+            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+            
+            for (let i = 0; i < rows.length; i++) {
+                const nameCell = rows[i].getElementsByTagName('td')[2]; // 의원명 셀
+                const partyCell = rows[i].getElementsByTagName('td')[3]; // 정당 셀
+                
+                if (nameCell) {
+                    const name = nameCell.textContent || nameCell.innerText;
+                    const party = partyCell.textContent || partyCell.innerText;
+                    
+                    if (name.toLowerCase().indexOf(searchValue) > -1 || party.toLowerCase().indexOf(searchValue) > -1) {
+                        rows[i].style.display = '';
+                    } else {
+                        rows[i].style.display = 'none';
+                    }
+                }
+            }
+        });
+    }
+});
+
 document.addEventListener("DOMContentLoaded", function() {
     // 차트 데이터
     var chartData = JSON.parse('{{ chart_data|tojson }}');
@@ -348,71 +535,112 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById("bottom-chart-view").classList.add("d-none");
         document.getElementById("bottom-table-view").classList.remove("d-none");
     });
+
+    // 테이블 정렬 기능
+    let currentSortColumn = 'overall_rank';  // 기본 정렬 컬럼
+    let currentSortOrder = 'asc';  // 기본 정렬 방향
+    
+    // 모든 정렬 가능한 컬럼 헤더에 이벤트 리스너 추가
+    const sortableHeaders = document.querySelectorAll('#legislators-table th[data-sort]');
+    sortableHeaders.forEach(header => {
+        header.style.cursor = 'pointer'; // 커서 포인터로 변경하여 클릭 가능함을 표시
+        
+        // 클릭 이벤트 리스너 추가
+        header.addEventListener('click', function() {
+            const sortColumn = this.getAttribute('data-sort');
+            
+            // 같은 컬럼을 다시 클릭한 경우, 정렬 방향 토글
+            if (sortColumn === currentSortColumn) {
+                currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
+            } else {
+                // 새 컬럼 클릭 시 해당 컬럼 기준 오름차순 정렬
+                currentSortColumn = sortColumn;
+                currentSortOrder = 'asc';
+            }
+            
+            // 정렬 아이콘 업데이트
+            updateSortIcons();
+            
+            // 테이블 정렬
+            sortTable();
+        });
+    });
+    
+    // 정렬 아이콘 업데이트 함수
+    function updateSortIcons() {
+        // 모든 아이콘 초기화
+        document.querySelectorAll('.sort-icon').forEach(icon => {
+            icon.textContent = '';
+        });
+        
+        // 현재 정렬 컬럼의 아이콘 업데이트
+        const currentHeader = document.querySelector(`th[data-sort="${currentSortColumn}"]`);
+        if (currentHeader) {
+            const icon = currentHeader.querySelector('.sort-icon');
+            if (icon) {
+                icon.textContent = currentSortOrder === 'asc' ? '▲' : '▼';
+            }
+        }
+    }
+    
+    // 테이블 정렬 함수
+    function sortTable() {
+        const tbody = document.querySelector('#legislators-table tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        
+        // 행 정렬
+        rows.sort((a, b) => {
+            const aValue = parseFloat(a.getAttribute(`data-${currentSortColumn}`)) || 0;
+            const bValue = parseFloat(b.getAttribute(`data-${currentSortColumn}`)) || 0;
+            
+            if (currentSortOrder === 'asc') {
+                return aValue - bValue;
+            } else {
+                return bValue - aValue;
+            }
+        });
+        
+        // 정렬된 행 다시 추가
+        rows.forEach(row => {
+            tbody.appendChild(row);
+        });
+    }
+    
+    // 페이지 로드 시 기본 정렬 아이콘 표시
+    updateSortIcons();
     
     // 현재 카테고리에 해당하는 열 기준으로 기본 정렬
     var currentCategoryMap = {
-        "overall": 5,
-        "participation": 6,
-        "legislation": 7,
-        "speech": 8,
-        "voting": 9,
-        "cooperation": 10
+        "overall": "overall_score",
+        "participation": "participation_score",
+        "legislation": "legislation_score",
+        "speech": "speech_score",
+        "voting": "voting_score",
+        "cooperation": "cooperation_score"
     };
     
     var currentCategory = "{{ current_category }}";
-    var columnIndex = currentCategoryMap[currentCategory];
+    var sortColumn = currentCategoryMap[currentCategory];
     
-    if (columnIndex !== undefined) {
-        sortTableByColumn(columnIndex);
+    if (sortColumn) {
+        currentSortColumn = sortColumn;
+        currentSortOrder = 'desc';
+        updateSortIcons();
+        sortTable();
     }
 });
 
-// 정렬 상태 변수
-var sortColumnIndex = -1;
-var sortDirection = "desc";
-
-// 테이블 정렬 함수
-function sortTableByColumn(columnIndex) {
-    var tableBody = document.getElementById("ranking-table-body");
-    var rows = Array.from(tableBody.querySelectorAll("tr"));
-    
-    // 정렬 방향 결정
-    if (sortColumnIndex === columnIndex) {
-        sortDirection = sortDirection === "asc" ? "desc" : "asc";
-    } else {
-        sortColumnIndex = columnIndex;
-        sortDirection = "desc";  // 기본 내림차순
-    }
-    
-    // 정렬 아이콘 업데이트
-    document.querySelectorAll(".sort-icon").forEach(function(icon) {
-        icon.classList.remove("sort-asc", "sort-desc");
-    });
-    
-    var currentIcon = document.getElementById("sort-" + columnIndex);
-    if (currentIcon) {
-        currentIcon.classList.add(sortDirection === "asc" ? "sort-asc" : "sort-desc");
-    }
-    
-    // 행 정렬
-    rows.sort(function(a, b) {
-        var aValue = parseFloat(a.cells[columnIndex].textContent.trim()) || 0;
-        var bValue = parseFloat(b.cells[columnIndex].textContent.trim()) || 0;
-        
-        if (sortDirection === "asc") {
-            return aValue - bValue;
-        } else {
-            return bValue - aValue;
-        }
-    });
-    
-    // 정렬된 행으로 테이블 재구성
-    rows.forEach(function(row, index) {
-        // 순위 업데이트하지 않음 (원래의 overall_rank 유지)
-        tableBody.appendChild(row);
-    });
+// 정당별 클래스 매핑 함수
+function getPartyClass(party) {
+    if (party === "국민의힘") return "party-conservative";
+    else if (party === "더불어민주당") return "party-democratic";
+    else if (party === "정의당") return "party-justice";
+    else if (party === "개혁신당") return "party-reform";
+    else if (party === "조국혁신당") return "party-innovation";
+    else if (party === "기본소득당") return "party-basic";
+    else if (party === "진보당") return "party-progressive";
+    else return "party-other";
 }
-
 
 // 필터 적용 버튼 클릭 이벤트
 document.getElementById("apply-filter-btn").addEventListener("click", function() {
@@ -446,7 +674,7 @@ function applyFilters() {
     const currentCategory = "{{ current_category }}";
     
     // 로딩 표시
-    const tableBody = document.getElementById("ranking-table-body");
+    const tableBody = document.querySelector('#legislators-table tbody');
     tableBody.innerHTML = '<tr><td colspan="11" class="text-center">데이터를 불러오는 중...</td></tr>';
     
     // API 요청 URL 구성
@@ -474,29 +702,36 @@ function applyFilters() {
 
 // 테이블 업데이트 함수
 function updateRankingTable(legislators) {
-    const tableBody = document.getElementById("ranking-table-body");
+    const tableBody = document.querySelector('#legislators-table tbody');
     tableBody.innerHTML = "";
     
-    legislators.forEach((legislator, index) => {
+    if (legislators.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="11" class="text-center">검색 결과가 없습니다.</td></tr>';
+        return;
+    }
+    
+    legislators.forEach((legislator) => {
         const row = document.createElement("tr");
         
-        // 티어에 따른 배지 클래스 결정
-        let badgeClass = "bg-dark";
-        if (legislator.tier === "Challenger") badgeClass = "bg-danger";
-        else if (legislator.tier === "Master") badgeClass = "bg-warning";
-        else if (legislator.tier === "Diamond") badgeClass = "bg-info";
-        else if (legislator.tier === "Platinum") badgeClass = "bg-success";
-        else if (legislator.tier === "Gold") badgeClass = "bg-warning text-dark";
-        else if (legislator.tier === "Silver") badgeClass = "bg-secondary";
+        // data 속성 추가
+        row.setAttribute('data-overall_rank', legislator.overall_rank);
+        row.setAttribute('data-overall_score', legislator.overall_score);
+        row.setAttribute('data-participation_score', legislator.participation_score);
+        row.setAttribute('data-legislation_score', legislator.legislation_score);
+        row.setAttribute('data-speech_score', legislator.speech_score);
+        row.setAttribute('data-voting_score', legislator.voting_score);
+        row.setAttribute('data-cooperation_score', legislator.cooperation_score);
         
-        // 현재 카테고리에 따른 강조
-        const currentCategory = "{{ current_category }}";
-        const participationClass = currentCategory === "participation" ? "font-weight-bold" : "";
-        const legislationClass = currentCategory === "legislation" ? "font-weight-bold" : "";
-        const speechClass = currentCategory === "speech" ? "font-weight-bold" : "";
-        const votingClass = currentCategory === "voting" ? "font-weight-bold" : "";
-        const cooperationClass = currentCategory === "cooperation" ? "font-weight-bold" : "";
-        const overallClass = currentCategory === "overall" ? "font-weight-bold" : "";
+        // 정당별 클래스 결정
+        const partyClass = getPartyClass(legislator.party);
+        
+        // 점수별 색상 클래스 함수
+        function getScoreClass(score) {
+            if (score >= 90) return "bg-success";
+            else if (score >= 70) return "bg-info";
+            else if (score >= 50) return "bg-warning";
+            else return "bg-danger";
+        }
         
         // 행 내용 구성
         row.innerHTML = `
@@ -505,23 +740,69 @@ function updateRankingTable(legislators) {
                 <img src="${legislator.profile_image_url}" alt="${legislator.name}" 
                      class="rounded-circle" width="40" height="40" loading="lazy">
             </td>
-            <td>
-                <a href="/champions/${legislator.id}">
+            <td style="text-align: left;">
+                <a href="/champions/${legislator.id}" class="text-decoration-none">
                     ${legislator.name}
                 </a>
             </td>
-            <td>${legislator.party}</td>
+            <td style="text-align: center;">
+                <span class="party-tag ${partyClass}">
+                    ${legislator.party}
+                </span>
+            </td>
             <td>
-                <span class="badge ${badgeClass}">
+                <span class="badge tier-${legislator.tier.toLowerCase()} px-2 py-1">
                     ${legislator.tier}
                 </span>
             </td>
-            <td class="${overallClass}">${legislator.overall_score}</td>
-            <td class="${participationClass}">${legislator.participation_score}</td>
-            <td class="${legislationClass}">${legislator.legislation_score}</td>
-            <td class="${speechClass}">${legislator.speech_score}</td>
-            <td class="${votingClass}">${legislator.voting_score}</td>
-            <td class="${cooperationClass}">${legislator.cooperation_score}</td>
+            <td>
+                <span class="badge bg-primary rounded-pill px-3">${legislator.overall_score}</span>
+            </td>
+            <td>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar ${getScoreClass(legislator.participation_score)}" 
+                         role="progressbar" style="width: ${legislator.participation_score}%;" 
+                         aria-valuenow="${legislator.participation_score}" aria-valuemin="0" aria-valuemax="100">
+                    </div>
+                </div>
+                <small class="d-block mt-1">${legislator.participation_score}</small>
+            </td>
+            <td>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar ${getScoreClass(legislator.legislation_score)}" 
+                         role="progressbar" style="width: ${legislator.legislation_score}%;" 
+                         aria-valuenow="${legislator.legislation_score}" aria-valuemin="0" aria-valuemax="100">
+                    </div>
+                </div>
+                <small class="d-block mt-1">${legislator.legislation_score}</small>
+            </td>
+            <td>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar ${getScoreClass(legislator.speech_score)}" 
+                         role="progressbar" style="width: ${legislator.speech_score}%;" 
+                         aria-valuenow="${legislator.speech_score}" aria-valuemin="0" aria-valuemax="100">
+                    </div>
+                </div>
+                <small class="d-block mt-1">${legislator.speech_score}</small>
+            </td>
+            <td>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar ${getScoreClass(legislator.voting_score)}" 
+                         role="progressbar" style="width: ${legislator.voting_score}%;" 
+                         aria-valuenow="${legislator.voting_score}" aria-valuemin="0" aria-valuemax="100">
+                    </div>
+                </div>
+                <small class="d-block mt-1">${legislator.voting_score}</small>
+            </td>
+            <td>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar ${getScoreClass(legislator.cooperation_score)}" 
+                         role="progressbar" style="width: ${legislator.cooperation_score}%;" 
+                         aria-valuenow="${legislator.cooperation_score}" aria-valuemin="0" aria-valuemax="100">
+                    </div>
+                </div>
+                <small class="d-block mt-1">${legislator.cooperation_score}</small>
+            </td>
         `;
         
         tableBody.appendChild(row);

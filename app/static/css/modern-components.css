@@ -1,0 +1,308 @@
+/* Modern UI Components for 국회.gg */
+
+/* Sidebar styling */
+.sidebar {
+    width: 250px;
+    background: linear-gradient(135deg, var(--dark-bg), #263646);
+    color: white;
+    position: fixed;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    overflow-y: auto;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.sidebar-header {
+    padding: 1.5rem;
+    text-align: center;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.sidebar .sidebar-brand {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+}
+
+.sidebar .nav-link {
+    color: rgba(255, 255, 255, 0.75);
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--border-radius);
+    margin: 0.25rem 0.75rem;
+    transition: all 0.2s ease;
+}
+
+.sidebar .nav-link:hover {
+    color: rgba(255, 255, 255, 1);
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar .nav-link.active {
+    color: #fff;
+    background-color: var(--primary-color);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.sidebar .sub-menu {
+    margin-left: 1.25rem;
+    margin-top: 0.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.sidebar .sub-link {
+    padding: 0.5rem 1.25rem !important;
+    font-size: 0.9rem;
+    margin: 0.1rem 0.75rem;
+}
+
+.main-content {
+    margin-left: 250px;
+    width: calc(100% - 250px);
+    min-height: 100vh;
+    transition: all 0.3s ease;
+    padding: 1rem;
+    background-color: var(--light-bg);
+}
+
+/* Hero section */
+.hero-section {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    padding: 4rem 0;
+    border-radius: var(--border-radius);
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('/static/img/pattern.svg');
+    background-size: cover;
+    opacity: 0.1;
+    z-index: 0;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 1;
+}
+
+.hero-title {
+    font-size: 2.75rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    color: white;
+}
+
+.hero-subtitle {
+    font-size: 1.25rem;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 2rem;
+}
+
+/* Modern cards */
+.card-modern {
+    border: none;
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.card-modern:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--hover-shadow);
+}
+
+.card-modern .card-header {
+    padding: 1.25rem 1.5rem;
+    background-color: white;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.card-modern .card-body {
+    padding: 1.5rem;
+}
+
+/* Stats cards */
+.stat-card {
+    text-align: center;
+    padding: 1.5rem;
+}
+
+.stat-icon {
+    height: 48px;
+    width: 48px;
+    background-color: rgba(var(--bs-primary-rgb), 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem auto;
+    color: var(--primary-color);
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Party tags */
+.party-tag {
+    display: inline-flex;
+    padding: 0.35rem 0.75rem;
+    color: white;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    align-items: center;
+}
+
+.party-tag.국민의힘 {
+    background-color: #E61E2B;
+}
+
+.party-tag.더불어민주당 {
+    background-color: #0050A0;
+}
+
+.party-tag.정의당 {
+    background-color: #FFCC00;
+    color: #000;
+}
+
+/* Legislator card */
+.legislator-card {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    background-color: white;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.legislator-card:hover {
+    box-shadow: var(--hover-shadow);
+    transform: translateY(-2px);
+}
+
+.legislator-img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #f8f9fa;
+    margin-right: 1rem;
+}
+
+.legislator-info {
+    flex: 1;
+}
+
+.legislator-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.legislator-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.85rem;
+}
+
+.legislator-score {
+    margin-left: auto;
+    text-align: center;
+}
+
+.score-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.score-label {
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+
+/* Search bar styling */
+.search-form {
+    width: 100%;
+    max-width: 500px;
+}
+
+.search-input {
+    border: none;
+    background-color: rgba(0,0,0,0.04);
+    border-radius: 50px;
+    padding: 0.75rem 1.25rem;
+    transition: all 0.3s ease;
+}
+
+.search-input:focus {
+    background-color: white;
+    box-shadow: 0 0 0 2px var(--primary-color);
+}
+
+.search-button {
+    border-radius: 50px;
+    padding: 0.75rem 1.5rem;
+}
+
+/* Media queries */
+@media (max-width: 991.98px) {
+    .sidebar {
+        transform: translateX(-100%);
+        width: 100%;
+        max-width: 280px;
+    }
+    
+    .sidebar.show {
+        transform: translateX(0);
+    }
+    
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+    }
+    
+    .mobile-header {
+        display: flex;
+        padding: 1rem;
+        background-color: var(--dark-bg);
+        color: white;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .mobile-toggle {
+        display: block;
+    }
+}

@@ -10,48 +10,186 @@
     --tier-silver: #b8b8b8;      /* 은색 */
     --tier-bronze: #a97142;      /* 동색 */
     --tier-iron: #6e6259;        /* 어두운 회색/갈색 */
+    
+    /* 메인 테마 컬러 */
+    --primary-color: #1a5fb4;
+    --primary-light: #3584e4;
+    --secondary-color: #2ec27e;
+    --accent-color: #e66100;
+    --dark-bg: #1c1c1c;
+    --light-bg: #f6f6f6;
+    --card-bg: #ffffff;
+    --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+    --hover-shadow: 0 7px 14px rgba(0, 0, 0, 0.12), 0 3px 6px rgba(0, 0, 0, 0.08);
+    --border-radius: 8px;
+    --transition-speed: 0.2s;
+}
+
+/* 전체 스타일 */
+body {
+    background-color: var(--light-bg);
+    color: #333;
+    font-family: 'Noto Sans KR', sans-serif;
+    line-height: 1.6;
+}
+
+/* 카드 스타일 */
+.card {
+    border: none;
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    transition: all var(--transition-speed) ease;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.card:hover {
+    box-shadow: var(--hover-shadow);
+}
+
+.card-header {
+    background-color: var(--card-bg);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 1rem 1.25rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* 버튼 스타일 */
+.btn {
+    border-radius: var(--border-radius);
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    transition: all var(--transition-speed) ease;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-light);
+    border-color: var(--primary-light);
+}
+
+.btn-outline-primary {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-secondary {
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
+}
+
+/* 테이블 스타일 */
+.table {
+    margin-bottom: 0;
+}
+
+.table th {
+    font-weight: 600;
+    border-top: none;
+    padding: 1rem;
+    background-color: rgba(0,0,0,0.02);
+}
+
+.table td {
+    padding: 1rem;
+    vertical-align: middle;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0,0,0,0.02);
 }
 
 /* 티어 배지 스타일 */
 .badge.tier-challenger { 
     background-color: var(--tier-challenger); 
     color: white;
+    font-weight: 600;
 }
 .badge.tier-grandmaster { 
     background-color: var(--tier-grandmaster); 
     color: white;
+    font-weight: 600;
 }
 .badge.tier-master { 
     background-color: var(--tier-master); 
     color: white;
+    font-weight: 600;
 }
 .badge.tier-diamond { 
     background-color: var(--tier-diamond); 
     color: black;
+    font-weight: 600;
 }
 .badge.tier-emerald { 
     background-color: var(--tier-emerald); 
     color: white;
+    font-weight: 600;
 }
 .badge.tier-platinum { 
     background-color: var(--tier-platinum); 
     color: black;
+    font-weight: 600;
 }
 .badge.tier-gold { 
     background-color: var(--tier-gold); 
     color: black;
+    font-weight: 600;
 }
 .badge.tier-silver { 
     background-color: var(--tier-silver); 
     color: black;
+    font-weight: 600;
 }
 .badge.tier-bronze { 
     background-color: var(--tier-bronze); 
     color: white;
+    font-weight: 600;
 }
 .badge.tier-iron { 
     background-color: var(--tier-iron); 
     color: white;
+    font-weight: 600;
+}
+
+/* 정당 태그 스타일 */
+.party-tag {
+    display: inline-flex;
+    padding: 0.35rem 0.75rem;
+    color: white;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    align-items: center;
+    margin-top: 5px;
+}
+
+.party-conservative {
+    background-color: #E61E2B;
+}
+
+.party-democratic {
+    background-color: #0050A0;
+}
+
+.party-justice {
+    background-color: #FFCC00;
+    color: #000;
+}
+
+.party-other {
+    background-color: #888888;
 }
 
 /* 큰 티어 배지 스타일 */
@@ -64,4 +202,434 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
     border: 1px solid rgba(255,255,255,0.2);
-} 
+    font-weight: 700;
+}
+
+/* 헤더 및 타이틀 */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: 1rem;
+}
+
+h1 {
+    font-size: 2.25rem;
+}
+
+h2 {
+    font-size: 1.85rem;
+}
+
+/* 링크 스타일 */
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: all var(--transition-speed) ease;
+}
+
+a:hover {
+    color: var(--primary-light);
+    text-decoration: none;
+}
+
+/* 검색 컨테이너 */
+.search-container {
+    background-color: var(--card-bg);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    border-radius: 0;
+    padding: 1rem 1.5rem;
+}
+
+/* 차트 컨테이너 */
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+/* 애니메이션 효과 */
+.fade-in {
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ========================================
+   활동 랭킹 페이지 전용 스타일
+======================================== */
+
+/* 1. 프로그레스 바 스타일 */
+.ranking-progress {
+    height: 8px !important;
+    border-radius: 6px;
+    background-color: rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.ranking-progress .progress-bar {
+    border-radius: 6px;
+    transition: width 0.6s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* 점수별 프로그레스 바 색상 */
+.score-progress-excellent {
+    background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+}
+
+.score-progress-good {
+    background: linear-gradient(90deg, #17a2b8 0%, #6f42c1 100%);
+}
+
+.score-progress-average {
+    background: linear-gradient(90deg, #ffc107 0%, #fd7e14 100%);
+}
+
+.score-progress-poor {
+    background: linear-gradient(90deg, #dc3545 0%, #e83e8c 100%);
+}
+
+/* 2. 종합점수 배지 스타일 강화 */
+.overall-score-badge {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%) !important;
+    color: white !important;
+    font-weight: 700 !important;
+    font-size: 1rem !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: 50px !important;
+    box-shadow: 0 2px 8px rgba(26, 95, 180, 0.3);
+    border: none;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 60px;
+}
+
+.overall-score-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(26, 95, 180, 0.4);
+}
+
+
+
+/* 3. 정당 태그 스타일 강화 (기존 스타일 완전 교체) */
+.party-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: white;
+    text-align: center;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    min-width: 90px;
+    justify-content: center;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.party-tag:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+/* 정당별 색상 - 더 선명하고 구분하기 쉽게 */
+.party-tag.party-conservative {
+    background: linear-gradient(135deg, #DC143C 0%, #B22222 100%);
+    border-color: #8B0000;
+    color: white;
+}
+
+.party-tag.party-democratic {
+    background: linear-gradient(135deg, #1E90FF 0%, #0047AB 100%);
+    border-color: #003580;
+    color: white;
+}
+
+.party-tag.party-justice {
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    border-color: #FF8C00;
+    color: #000000;
+    font-weight: 800;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.party-tag.party-other {
+    background: linear-gradient(135deg, #708090 0%, #2F4F4F 100%);
+    border-color: #1C1C1C;
+    color: white;
+}
+
+/* 작은 정당들을 위한 추가 색상 */
+.party-tag.party-reform {
+    background: linear-gradient(135deg, #9370DB 0%, #6A5ACD 100%);
+    border-color: #483D8B;
+    color: white;
+}
+
+.party-tag.party-innovation {
+    background: linear-gradient(135deg, #32CD32 0%, #228B22 100%);
+    border-color: #006400;
+    color: white;
+}
+
+.party-tag.party-basic {
+    background: linear-gradient(135deg, #FF69B4 0%, #C71585 100%);
+    border-color: #8B008B;
+    color: white;
+}
+
+.party-tag.party-progressive {
+    background: linear-gradient(135deg, #FF4500 0%, #CD5C5C 100%);
+    border-color: #8B0000;
+    color: white;
+}
+
+/* 반응형 - 모바일에서 더 컴팩트하게 */
+@media (max-width: 768px) {
+    .party-tag {
+        font-size: 0.75rem;
+        padding: 0.4rem 0.8rem;
+        min-width: 80px;
+    }
+}
+
+/* 테이블 내에서 정당 태그 추가 스타일 */
+#legislators-table .party-tag {
+    margin: 2px 0;
+    white-space: nowrap;
+}
+
+
+/* 4. 검색 입력창 스타일 */
+.ranking-search-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.ranking-search-input {
+    border: 2px solid #e9ecef;
+    border-radius: 25px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    background-color: #f8f9fa;
+}
+
+.ranking-search-input:focus {
+    border-color: var(--primary-color);
+    background-color: white;
+    box-shadow: 0 0 0 3px rgba(26, 95, 180, 0.1);
+    outline: none;
+}
+
+.ranking-search-btn {
+    border: 2px solid #e9ecef;
+    border-radius: 25px;
+    background-color: #f8f9fa;
+    color: #6c757d;
+    transition: all 0.3s ease;
+    padding: 0.5rem 0.75rem;
+}
+
+.ranking-search-btn:hover {
+    border-color: var(--primary-color);
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.total-count-badge {
+    background-color: rgba(26, 95, 180, 0.1) !important;
+    color: var(--primary-color) !important;
+    border: 1px solid rgba(26, 95, 180, 0.2);
+    font-weight: 600;
+    padding: 0.4rem 0.8rem;
+    border-radius: 15px;
+}
+
+/* 5. 테이블 개선 스타일 */
+.ranking-table {
+    background-color: white;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+}
+
+.ranking-table thead th {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: none;
+    font-weight: 700;
+    color: #495057;
+    padding: 1.2rem 1rem;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.ranking-table tbody td {
+    padding: 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    text-align: center;
+}
+
+.ranking-table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.ranking-table tbody tr:hover {
+    background-color: rgba(26, 95, 180, 0.04);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 순위 컬럼 특별 스타일 */
+.rank-number {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--primary-color);
+    min-width: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 의원명 링크 스타일 */
+.legislator-name-link {
+    color: var(--primary-color);
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.legislator-name-link:hover {
+    color: var(--primary-light);
+    text-decoration: underline;
+}
+
+/* 프로필 이미지 개선 */
+.legislator-profile-img {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    border: 2px solid #f8f9fa;
+    transition: all 0.3s ease;
+    object-fit: cover;
+}
+
+.legislator-profile-img:hover {
+    border-color: var(--primary-color);
+    transform: scale(1.05);
+}
+
+/* 점수 표시 개선 */
+.score-text {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #495057;
+    margin-top: 0.25rem;
+}
+
+/* 정렬 아이콘 개선 */
+.sort-header {
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.sort-header:hover {
+    color: var(--primary-color);
+    background-color: rgba(26, 95, 180, 0.1);
+}
+
+.sort-header.active {
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+.sort-icon-fa {
+    opacity: 0.5;
+    transition: all 0.2s ease;
+}
+
+.sort-header:hover .sort-icon-fa,
+.sort-header.active .sort-icon-fa {
+    opacity: 1;
+    color: var(--primary-color);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 1200px) {
+    .ranking-search-container {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: stretch;
+    }
+    
+    .ranking-table thead th {
+        padding: 0.8rem 0.5rem;
+        font-size: 0.85rem;
+    }
+    
+    .ranking-table tbody td {
+        padding: 0.8rem 0.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .overall-score-badge {
+        font-size: 0.85rem !important;
+        padding: 0.4rem 0.8rem !important;
+        min-width: 50px;
+    }
+    
+    .party-tag-enhanced {
+        font-size: 0.75rem;
+        padding: 0.3rem 0.6rem;
+        min-width: 70px;
+    }
+    
+    .ranking-progress {
+        height: 6px !important;
+    }
+    
+    .legislator-profile-img {
+        width: 35px;
+        height: 35px;
+    }
+    
+    .rank-number {
+        font-size: 1rem;
+    }
+}
+
+/* 로딩 상태 스타일 */
+.ranking-loading {
+    text-align: center;
+    padding: 2rem;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.ranking-no-results {
+    text-align: center;
+    padding: 2rem;
+    color: #6c757d;
+    background-color: #f8f9fa;
+    border-radius: var(--border-radius);
+    margin: 1rem 0;
+}

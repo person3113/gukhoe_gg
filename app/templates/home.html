@@ -4,196 +4,570 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="/static/css/top_legislators.css">
+<style>
+/* Modern Hero Section */
+.hero-section {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1e3a8a 0%, #7c3aed 50%, #1e40af 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    color: white;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="white" opacity="0.1"/><circle cx="80" cy="40" r="3" fill="white" opacity="0.1"/><circle cx="40" cy="80" r="1" fill="white" opacity="0.1"/></svg>');
+    animation: float 20s infinite linear;
+}
+
+@keyframes float {
+    0% { transform: translateY(0px) rotate(0deg); }
+    100% { transform: translateY(-100px) rotate(360deg); }
+}
+
+.hero-content {
+    text-align: center;
+    z-index: 10;
+    position: relative;
+    max-width: 1200px;
+    padding: 0 2rem;
+}
+
+.hero-badge {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50px;
+    padding: 0.5rem 1.5rem;
+    margin-bottom: 2rem;
+    font-size: 1rem;
+}
+
+.hero-title {
+    font-size: clamp(3rem, 8vw, 8rem);
+    font-weight: 900;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(to right, white, #e5e7eb);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.hero-subtitle {
+    font-size: clamp(1.5rem, 4vw, 4rem);
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.hero-description {
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    margin-bottom: 3rem;
+    opacity: 0.8;
+    max-width: 32rem;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+}
+
+.hero-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 4rem;
+}
+
+@media (min-width: 640px) {
+    .hero-buttons {
+        flex-direction: row;
+        justify-content: center;
+    }
+}
+
+.btn-hero-primary {
+    background: linear-gradient(to right, #f97316, #dc2626);
+    border: none;
+    color: white;
+    padding: 1.5rem 2rem;
+    border-radius: 50px;
+    font-size: 1.125rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-hero-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    color: white;
+}
+
+.btn-hero-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 1.5rem 2rem;
+    border-radius: 50px;
+    font-size: 1.125rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-hero-secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.hero-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+    max-width: 48rem;
+    margin: 0 auto;
+}
+
+.hero-stat {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.hero-stat-number {
+    font-size: 2.5rem;
+    font-weight: 900;
+    margin-bottom: 0.5rem;
+}
+
+.hero-stat-label {
+    opacity: 0.8;
+    font-weight: 500;
+}
+
+/* Modern Podium Section */
+.podium-section {
+    background: white;
+    padding: 5rem 0;
+}
+
+.section-title {
+    text-align: center;
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: #1f2937;
+    margin-bottom: 1rem;
+}
+
+.section-subtitle {
+    text-align: center;
+    font-size: 1.25rem;
+    color: #6b7280;
+    margin-bottom: 4rem;
+    max-width: 32rem;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.podium-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 2rem;
+    margin-bottom: 4rem;
+    perspective: 1000px;
+}
+
+.podium-item {
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.podium-item:hover {
+    transform: scale(1.05);
+}
+
+.podium-item.first {
+    order: 2;
+}
+
+.podium-item.second {
+    order: 1;
+}
+
+.podium-item.third {
+    order: 3;
+}
+
+.podium-image {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 4px solid white;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    margin: 0 auto 1rem;
+    object-fit: cover;
+}
+
+.podium-item.first .podium-image {
+    width: 120px;
+    height: 120px;
+    border: 6px solid white;
+    position: relative;
+}
+
+.crown-icon {
+    position: absolute;
+    top: -2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #fbbf24;
+    font-size: 2rem;
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
+    40% { transform: translateX(-50%) translateY(-10px); }
+    60% { transform: translateX(-50%) translateY(-5px); }
+}
+
+.podium-base {
+    width: 10rem;
+    border-radius: 1rem 1rem 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 3rem;
+    font-weight: 900;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.podium-base.first {
+    height: 10rem;
+    background: linear-gradient(to top, #fbbf24, #f59e0b);
+    width: 11rem;
+}
+
+.podium-base.second {
+    height: 8rem;
+    background: linear-gradient(to top, #d1d5db, #9ca3af);
+}
+
+.podium-base.third {
+    height: 7rem;
+    background: linear-gradient(to top, #d97706, #92400e);
+}
+
+.podium-info {
+    background: white;
+    border-radius: 1rem;
+    padding: 1rem;
+    margin-top: 1rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border: none;
+}
+
+.podium-name {
+    font-size: 1.125rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.podium-item.first .podium-name {
+    font-size: 1.25rem;
+}
+
+.podium-score {
+    font-size: 1.5rem;
+    font-weight: 900;
+    margin: 0.5rem 0;
+}
+
+.podium-item.first .podium-score {
+    font-size: 2rem;
+    color: #dc2626;
+}
+
+.podium-item.second .podium-score {
+    color: #f97316;
+}
+
+.podium-item.third .podium-score {
+    color: #2563eb;
+}
+
+.tier-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: white;
+    margin-top: 0.5rem;
+}
+
+.tier-challenger { background-color: #dc2626; }
+.tier-master { background-color: #f97316; }
+.tier-diamond { background-color: #2563eb; }
+.tier-platinum { background-color: #6b7280; }
+
+/* Runners up cards */
+.runners-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    max-width: 64rem;
+    margin: 0 auto 3rem;
+}
+
+.runner-card {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.runner-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.runner-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.runner-rank {
+    width: 4rem;
+    height: 4rem;
+    background: linear-gradient(to right, #2563eb, #7c3aed);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.runner-image {
+    width: 5rem;
+    height: 5rem;
+    border-radius: 50%;
+    border: 2px solid #e5e7eb;
+    object-fit: cover;
+}
+
+.runner-info {
+    flex: 1;
+}
+
+.runner-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.runner-score {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #f97316;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .podium-container {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .podium-item {
+        order: unset !important;
+        margin-bottom: 2rem;
+    }
+    
+    .podium-base.first {
+        width: 10rem;
+    }
+    
+    .runners-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid p-0">
-    <!-- 캐치프레이즈 영역 (배경 이미지 포함) -->
-    <div class="hero-section text-center py-5 mb-4" style="background-image: url('#'); background-size: cover; background-position: center; color: white; position: relative;">
-        <!-- 어두운 오버레이 추가 -->
-        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6);"></div>
-        <div class="container position-relative py-5">
-            <h1 class="display-4 fw-bold">국회.gg</h1>
-            <p class="lead">당신이 관심 있는 국회의원의 정치 티어는 어딘가요? 상단 검색바에 입력해보세요</p>
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="hero-content">
+        <div class="hero-badge">
+            🏛️ 22대 국회 공식 데이터 기반
         </div>
-    </div>
-
-    <div class="container">
-        <!-- 국회의원 활동 점수 TOP 5 -->
-        <div class="row mb-5">
-            <div class="col-12">
-                <h2 class="mb-4">국회의원 활동 점수 TOP 5</h2>
-                
-                <!-- 차트 영역 대신 사진형 랭킹 보드 -->
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <div class="row justify-content-center top-legislators">
-                            {% for legislator in top_legislators %}
-                                <div class="col-md-2 col-sm-4 col-6 text-center mb-3">
-                                    <div class="position-relative">
-                                        <!-- 메달 아이콘 -->
-                                        {% if loop.index == 1 %}
-                                            <div class="medal gold-medal">
-                                                <i class="fas fa-medal"></i>
-                                            </div>
-                                        {% elif loop.index == 2 %}
-                                            <div class="medal silver-medal">
-                                                <i class="fas fa-medal"></i>
-                                            </div>
-                                        {% elif loop.index == 3 %}
-                                            <div class="medal bronze-medal">
-                                                <i class="fas fa-medal"></i>
-                                            </div>
-                                        {% endif %}
-                                        
-                                        <!-- 의원 사진 -->
-                                        <a href="/search?name={{ legislator.name }}" class="legislator-link">
-                                            <div class="legislator-img-container rank-{{ loop.index }}">
-                                                <img src="{{ legislator.profile_image_url }}" alt="{{ legislator.name }}" 
-                                                     class="img-fluid rounded-circle legislator-img" loading="lazy">
-                                                <div class="rank-number">{{ loop.index }}</div>
-                                            </div>
-                                            <h5 class="mt-2 mb-0">{{ legislator.name }}</h5>
-                                            <div class="party-tag" style="background-color: 
-                                                {% if legislator.party == '국민의힘' %}#E61E2B
-                                                {% elif legislator.party == '더불어민주당' %}#0050A0
-                                                {% elif legislator.party == '정의당' %}#FFCC00
-                                                {% else %}#888888{% endif %};">
-                                                {{ legislator.party }}
-                                            </div>
-                                            <div class="score-badge">{{ legislator.overall_score }}</div>
-                                        </a>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
+        
+        <h1 class="hero-title">국회.gg</h1>
+        
+        <p class="hero-subtitle">국회의원 랭킹 & 활동 평가</p>
+        
+        <p class="hero-description">
+            게임처럼 재미있게, 데이터로 투명하게. 당신의 국회의원은 어떤 티어에 있을까요?
+        </p>
+        
+        <div class="hero-buttons">
+            <a href="/ranking" class="btn-hero-primary">
+                <i class="fas fa-trophy"></i>
+                전체 랭킹 보기
+            </a>
+        </div>
+        
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <div class="hero-stat-number">300</div>
+                <div class="hero-stat-label">국회의원</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-number">5</div>
+                <div class="hero-stat-label">평가 지표</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-number">98%</div>
+                <div class="hero-stat-label">완료율</div>
             </div>
         </div>
     </div>
-</div>
+</section>
 
-<!-- 스타일 추가 -->
-<style>
-    .top-legislators {
-        padding: 20px 0;
-    }
-    
-    .legislator-img-container {
-        position: relative;
-        display: inline-block;
-        border: 5px solid #f8f9fa;
-        border-radius: 50%;
-        margin-bottom: 10px;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    
-    .rank-1 {
-        transform: scale(1.2);
-        border-color: #FFD700;
-        z-index: 3;
-    }
-    
-    .rank-2 {
-        transform: scale(1.1);
-        border-color: #C0C0C0;
-        z-index: 2;
-    }
-    
-    .rank-3 {
-        transform: scale(1.05);
-        border-color: #CD7F32;
-        z-index: 1;
-    }
-    
-    .legislator-img {
-        width: 100%;
-        height: auto;
-        aspect-ratio: 1/1;
-        object-fit: cover;
-    }
-    
-    .rank-number {
-        position: absolute;
-        bottom: -5px;
-        right: -5px;
-        background-color: #6c757d;
-        color: white;
-        border-radius: 50%;
-        width: 25px;
-        height: 25px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-    }
-    
-    .medal {
-        position: absolute;
-        top: -10px;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 10;
-        font-size: 24px;
-    }
-    
-    .gold-medal {
-        color: #FFD700;
-        font-size: 28px;
-    }
-    
-    .silver-medal {
-        color: #C0C0C0;
-        font-size: 24px;
-    }
-    
-    .bronze-medal {
-        color: #CD7F32;
-        font-size: 22px;
-    }
-    
-    .party-tag {
-        display: inline-block;
-        padding: 2px 8px;
-        color: white;
-        border-radius: 10px;
-        font-size: 12px;
-        margin-top: 5px;
-    }
-    
-    .score-badge {
-        display: inline-block;
-        background-color: #28a745;
-        color: white;
-        border-radius: 10px;
-        padding: 2px 8px;
-        margin-top: 5px;
-        font-weight: bold;
-    }
-    
-    .legislator-link {
-        text-decoration: none;
-        color: #212529;
-        display: block;
-    }
-    
-    .legislator-link:hover .legislator-img-container {
-        transform: translateY(-5px) scale(1.05);
-        box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-    }
-    
-    .legislator-link:hover .rank-1 {
-        transform: translateY(-5px) scale(1.25);
-    }
-    
-    .legislator-link:hover .rank-2 {
-        transform: translateY(-5px) scale(1.15);
-    }
-    
-    .legislator-link:hover .rank-3 {
-        transform: translateY(-5px) scale(1.1);
-    }
-</style>
+<!-- Podium Section -->
+<section class="podium-section">
+    <div class="container">
+        <h2 class="section-title">🏆 종합 랭킹 TOP 5</h2>
+        <p class="section-subtitle">
+            가장 우수한 의정활동을 펼치고 있는 국회의원들을 만나보세요
+        </p>
+        
+        <!-- Top 3 Podium -->
+        <div class="podium-container">
+            <!-- 2nd Place -->
+            {% with leg=top_legislators.1 %}
+            {% if leg %}
+            <div class="podium-item second">
+                <div style="position: relative;">
+                    <img src="{{ leg.profile_image_url }}" alt="{{ leg.name }}" class="podium-image">
+                </div>
+                <div class="podium-base second">2</div>
+                <div class="podium-info">
+                    <div class="podium-name">{{ leg.name }}</div>
+                    <div class="party-tag party-{% if leg.party == '국민의힘' %}conservative{% elif leg.party == '더불어민주당' %}democratic{% elif leg.party == '정의당' %}justice{% else %}other{% endif %}">
+                        {{ leg.party }}
+                    </div>
+                    <div class="podium-score">{{ leg.overall_score }}점</div>
+                    <span class="tier-badge tier-master">Master</span>
+                </div>
+            </div>
+            {% endif %}
+            {% endwith %}
+            
+            <!-- 1st Place -->
+            {% with leg=top_legislators.0 %}
+            {% if leg %}
+            <div class="podium-item first">
+                <div style="position: relative;">
+                    <div class="crown-icon">
+                        <i class="fas fa-crown"></i>
+                    </div>
+                    <img src="{{ leg.profile_image_url }}" alt="{{ leg.name }}" class="podium-image">
+                </div>
+                <div class="podium-base first">1</div>
+                <div class="podium-info">
+                    <div class="podium-name">{{ leg.name }}</div>
+                    <div class="party-tag party-{% if leg.party == '국민의힘' %}conservative{% elif leg.party == '더불어민주당' %}democratic{% elif leg.party == '정의당' %}justice{% else %}other{% endif %}">
+                        {{ leg.party }}
+                    </div>
+                    <div class="podium-score">{{ leg.overall_score }}점</div>
+                    <span class="tier-badge tier-challenger">Challenger</span>
+                </div>
+            </div>
+            {% endif %}
+            {% endwith %}
+            
+            <!-- 3rd Place -->
+            {% with leg=top_legislators.2 %}
+            {% if leg %}
+            <div class="podium-item third">
+                <div style="position: relative;">
+                    <img src="{{ leg.profile_image_url }}" alt="{{ leg.name }}" class="podium-image">
+                </div>
+                <div class="podium-base third">3</div>
+                <div class="podium-info">
+                    <div class="podium-name">{{ leg.name }}</div>
+                    <div class="party-tag party-{% if leg.party == '국민의힘' %}conservative{% elif leg.party == '더불어민주당' %}democratic{% elif leg.party == '정의당' %}justice{% else %}other{% endif %}">
+                        {{ leg.party }}
+                    </div>
+                    <div class="podium-score">{{ leg.overall_score }}점</div>
+                    <span class="tier-badge tier-diamond">Diamond</span>
+                </div>
+            </div>
+            {% endif %}
+            {% endwith %}
+        </div>
+        
+        <!-- 4th and 5th Place -->
+        <div class="runners-grid">
+            {% for i in [3, 4] %}
+                {% if top_legislators|length > i %}
+                <div class="runner-card">
+                    <div class="runner-content">
+                        <div class="runner-rank">{{ i + 1 }}</div>
+                        <img src="{{ top_legislators[i].profile_image_url }}" 
+                             alt="{{ top_legislators[i].name }}" 
+                             class="runner-image">
+                        <div class="runner-info">
+                            <div class="runner-name">{{ top_legislators[i].name }}</div>
+                            <div class="party-tag party-{% if top_legislators[i].party == '국민의힘' %}conservative{% elif top_legislators[i].party == '더불어민주당' %}democratic{% elif top_legislators[i].party == '정의당' %}justice{% else %}other{% endif %}">
+                                {{ top_legislators[i].party }}
+                            </div>
+                            <div class="runner-score">{{ top_legislators[i].overall_score }}점</div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+        
+        <!-- View All Rankings and Asset Buttons -->
+        <div class="text-center">
+            <div class="d-inline-flex gap-3">
+                <a href="/ranking" class="btn-hero-primary">
+                    <i class="fas fa-trophy"></i>
+                    전체 랭킹 보기
+                </a>
+                <a href="/misc-ranking/asset" class="btn-hero-primary" style="background: linear-gradient(to right, #10b981, #059669);">
+                    <i class="fas fa-coins"></i>
+                    자산 정보 보기
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
 {% endblock %}

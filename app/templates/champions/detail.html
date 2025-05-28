@@ -9,14 +9,14 @@
 {% block content %}
 <div class="container">
     <!-- 의원 기본 정보 헤더  -->
-    <div class="row mb-4" style="min-height: 350px;">
+    <div class="row mb-4" style="min-height: 450px;">
         <!-- 의원 사진  -->
         <div class="col-md-3">
-            <img src="{{ legislator.profile_image_url }}" class="img-fluid rounded" alt="{{ legislator.name }}" style="max-height: 300px;" loading="lazy">
+            <img src="{{ legislator.profile_image_url }}" class="img-fluid rounded" alt="{{ legislator.name }}" style="max-height: 400px; width: 100%; object-fit: cover;" loading="lazy">
         </div>
         <!-- 의원 기본 정보 -->
         <div class="col-md-2">
-            <div class="d-flex flex-column h-100">
+            <div class="d-flex flex-column h-100" style="min-height: 400px; justify-content: center;">
                 <h1>{{ legislator.name }}</h1>
                 <p class="text-muted">{{ legislator.eng_name }}</p>
                 <h4 class="text-primary">{{ legislator.party }}</h4>
@@ -29,11 +29,14 @@
                 <p class="text-muted">전체 {{ legislator.overall_rank }}위</p>
             </div>
         </div>
-        <!-- 스탯 차트 - 너비 확대 및 높이 증가 -->
+        <!-- 스탯 차트 - 크기 대폭 증가 -->
         <div class="col-md-7">
-            <div class="card h-100">
-                <div class="card-body">
-                    <canvas id="statsChart" height="300"></canvas>
+            <div class="card h-100" style="min-height: 450px;">
+                <div class="card-body" style="padding: 0.5rem;">
+                    <!-- 레이더 차트용 큰 컨테이너 -->
+                    <div class="chart-container" style="position: relative; height: 420px; width: 100%; padding: 15px;">
+                        <canvas id="statsChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -193,10 +196,11 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <div id="keyword-chart-view" style="height: 400px; overflow-y: auto;">
+                    <!-- 키워드 차트 컨테이너 크기 증가 -->
+                    <div id="keyword-chart-view" class="chart-container" style="position: relative; height: 500px; width: 100%; padding: 10px;">
                         <canvas id="keywordChart"></canvas>
                     </div>
-                    <div id="keyword-table-view" class="mt-3 d-none">
+                    <div id="keyword-table-view" class="mt-3 d-none" style="height: 500px; overflow-y: auto;">
                         <table class="table table-sm">
                             <thead>
                                 <tr>
@@ -234,10 +238,11 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <div id="speech-chart-view" style="height: 300px;">
+                    <!-- 회의별 발언 차트 컨테이너 크기 증가 -->
+                    <div id="speech-chart-view" class="chart-container" style="position: relative; height: 400px; width: 100%; padding: 10px;">
                         <canvas id="speechChart"></canvas>
                     </div>
-                    <div id="speech-table-view" class="mt-3 d-none">
+                    <div id="speech-table-view" class="mt-3 d-none" style="height: 400px; overflow-y: auto;">
                         <table class="table table-sm">
                             <thead>
                                 <tr>
@@ -433,7 +438,7 @@
 {% block extra_scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // 스탯 차트 그리기
+    // 스탯 차트 그리기 - 차트 크기 고정
     var ctx = document.getElementById('statsChart').getContext('2d');
     
     // 컨트롤러에서 전달받은 차트 데이터 사용
@@ -444,22 +449,97 @@ document.addEventListener('DOMContentLoaded', function() {
         data: chartData,
         options: {
             responsive: true,
-            maintainAspectRatio: false,
+            maintainAspectRatio: false, // 컨테이너에 맞춤
+            layout: {
+                padding: {
+                    top: 20,
+                    right: 20,
+                    bottom: 20,
+                    left: 20
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        font: {
+                            size: 14,
+                            weight: '600'
+                        },
+                        padding: 25,
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: 'white',
+                    bodyColor: 'white',
+                    borderColor: 'rgba(255, 255, 255, 0.3)',
+                    borderWidth: 1,
+                    titleFont: {
+                        size: 14
+                    },
+                    bodyFont: {
+                        size: 13
+                    }
+                }
+            },
             scales: {
                 r: {
                     angleLines: {
-                        display: true
+                        display: true,
+                        color: 'rgba(0, 0, 0, 0.1)',
+                        lineWidth: 1
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)',
+                        lineWidth: 1
+                    },
+                    pointLabels: {
+                        font: {
+                            size: 14,
+                            weight: '600'
+                        },
+                        color: '#495057',
+                        padding: 12 // 라벨과 차트 사이 여백
+                    },
+                    ticks: {
+                        display: true,
+                        stepSize: 20,
+                        font: {
+                            size: 11
+                        },
+                        color: 'rgba(0, 0, 0, 0.5)',
+                        backdropColor: 'transparent'
                     },
                     suggestedMin: 0,
-                    suggestedMax: 100
+                    suggestedMax: 100,
+                    beginAtZero: true
                 }
+            },
+            elements: {
+                line: {
+                    borderWidth: 3,
+                    tension: 0.1
+                },
+                point: {
+                    borderWidth: 2,
+                    radius: 6,
+                    hoverRadius: 8
+                }
+            },
+            // 애니메이션 제한으로 리사이즈 이슈 방지
+            animation: {
+                duration: 1000,
+                easing: 'easeInOutQuart'
             }
         }
     });
     
     // 성향 탭인 경우 추가 차트 그리기
     {% if tab == 'tendency' %}
-    // 키워드 차트
+    // 키워드 차트 - 크기 고정
     var keywordCtx = document.getElementById('keywordChart').getContext('2d');
     var keywordChartData = {{ tab_data.keyword_chart|tojson }};
     
@@ -469,45 +549,131 @@ document.addEventListener('DOMContentLoaded', function() {
         options: {
             indexAxis: 'y',
             responsive: true,
-            maintainAspectRatio: false,
+            maintainAspectRatio: false, // 컨테이너에 맞춤
+            layout: {
+                padding: {
+                    top: 5,
+                    right: 15,
+                    bottom: 5,
+                    left: 5
+                }
+            },
             plugins: {
                 legend: {
                     display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: 'white',
+                    bodyColor: 'white',
+                    titleFont: {
+                        size: 13
+                    },
+                    bodyFont: {
+                        size: 12
+                    }
                 }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    },
+                    ticks: {
+                        font: {
+                            size: 12
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: '발언 횟수',
+                        font: {
+                            size: 13,
+                            weight: '600'
+                        }
+                    }
+                },
+                y: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        font: {
+                            size: 12
+                        },
+                        maxRotation: 0
+                    }
+                }
+            },
+            animation: {
+                duration: 1000
             }
         }
     });
     
-    // 회의별 발언 차트 - 파이 차트로 다시 변경
+    // 회의별 발언 차트 - 파이 차트 크기 고정
     var speechCtx = document.getElementById('speechChart').getContext('2d');
     var speechChartData = {{ tab_data.speech_chart|tojson }};
     
     var speechChart = new Chart(speechCtx, {
-        type: 'pie', // 다시 파이 차트로 변경
+        type: 'pie',
         data: speechChartData,
         options: {
             responsive: true,
-            maintainAspectRatio: false,
+            maintainAspectRatio: false, // 컨테이너에 맞춤
+            layout: {
+                padding: {
+                    top: 5,
+                    right: 5,
+                    bottom: 40, // 하단 범례를 위한 여유 공간
+                    left: 5
+                }
+            },
             plugins: {
                 legend: {
-                    position: 'bottom', // 범례를 아래쪽 배치
+                    position: 'bottom',
+                    align: 'center',
                     labels: {
                         font: {
-                            size: 11 // 범례 폰트 크기 감소
+                            size: 12,
+                            weight: '600'
                         },
-                        padding: 20 // 범례 항목 간격 조정
-                    }
+                        padding: 18,
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        boxWidth: 12,
+                        boxHeight: 12
+                    },
+                    maxHeight: 70 // 범례 최대 높이 제한
                 },
                 tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: 'white',
+                    bodyColor: 'white',
+                    titleFont: {
+                        size: 13
+                    },
+                    bodyFont: {
+                        size: 12
+                    },
                     callbacks: {
                         label: function(context) {
-                            // 툴팁에 회의 구분과 발언 수 모두 표시
                             var label = context.label || '';
                             var value = context.raw || 0;
                             return label + ': ' + value + '회';
                         }
                     }
                 }
+            },
+            elements: {
+                arc: {
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }
+            },
+            animation: {
+                duration: 1000
             }
         }
     });
@@ -528,10 +694,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('speech-chart-btn').addEventListener('change', function() {
         document.getElementById('speech-chart-view').classList.remove('d-none');
         document.getElementById('speech-table-view').classList.add('d-none');
-        // 차트가 보이게 될 때 크기 조정 이슈를 해결하기 위해 리사이즈 트리거
-        window.setTimeout(function() {
-            window.dispatchEvent(new Event('resize'));
-        }, 50);
     });
     
     document.getElementById('speech-table-btn').addEventListener('change', function() {
@@ -539,6 +701,20 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('speech-table-view').classList.remove('d-none');
     });
     {% endif %}
+});
+
+// 전역 리사이즈 이벤트 최적화
+let resizeTimeout;
+window.addEventListener('resize', function() {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(function() {
+        // 리사이즈 이벤트 처리를 디바운싱으로 최적화
+        Chart.helpers.each(Chart.instances, function(instance) {
+            if (instance.chart.canvas.offsetParent !== null) {
+                instance.resize();
+            }
+        });
+    }, 250);
 });
 </script>
 {% endblock %}
