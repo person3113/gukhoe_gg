@@ -356,12 +356,59 @@ document.addEventListener('DOMContentLoaded', function() {
         var tierCtx = document.getElementById('tierChart').getContext('2d');
         var tierData = {{ tier_chart|tojson }};
         
+        // 데이터를 백분율로 변환
+        if (tierData && tierData.datasets && tierData.datasets.length > 0) {
+            // CSS 변수에서 색상값 가져오는 함수
+            function getCssVariableValue(variableName) {
+                return getComputedStyle(document.documentElement).getPropertyValue(variableName).trim();
+            }
+            
+            // 티어별 색상 매핑
+            const tierColors = {
+                "Challenger": getCssVariableValue('--tier-challenger'),
+                "Master": getCssVariableValue('--tier-master'),
+                "Diamond": getCssVariableValue('--tier-diamond'),
+                "Platinum": getCssVariableValue('--tier-platinum'),
+                "Gold": getCssVariableValue('--tier-gold'),
+                "Silver": getCssVariableValue('--tier-silver'),
+                "Bronze": getCssVariableValue('--tier-bronze'),
+                "Iron": getCssVariableValue('--tier-iron')
+            };
+    
+            // 각 성별 전체 인원 수 계산
+            const totalCounts = {};
+            tierData.labels.forEach((label, labelIndex) => {
+                totalCounts[label] = 0;
+                tierData.datasets.forEach(dataset => {
+                    totalCounts[label] += dataset.data[labelIndex] || 0;
+                });
+            });
+    
+            // 각 데이터셋을 비율로 변환
+            tierData.datasets.forEach(dataset => {
+                const tier = dataset.label;
+                // 티어별 색상 적용
+                if (tierColors[tier]) {
+                    dataset.backgroundColor = tierColors[tier];
+                    dataset.borderColor = tierColors[tier];
+                }
+                
+                // 데이터를 백분율로 변환
+                dataset.data = dataset.data.map((value, index) => {
+                    const label = tierData.labels[index];
+                    const total = totalCounts[label];
+                    return total > 0 ? (value / total * 100) : 0; // 백분율로 변환
+                });
+            });
+        }
+        
         var tierChart = new Chart(tierCtx, {
             type: 'bar',
             data: tierData,
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                indexAxis: 'y', // 가로 막대 그래프
                 layout: {
                     padding: {
                         top: 20,
@@ -378,24 +425,35 @@ document.addEventListener('DOMContentLoaded', function() {
                             padding: 15,
                             usePointStyle: true
                         }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                // 툴크에 백분율 표시
+                                return context.dataset.label + ': ' + context.raw.toFixed(1) + '%';
+                            }
+                        }
                     }
                 },
                 scales: {
-                    y: {
+                    x: {
+                        stacked: true,
                         beginAtZero: true,
                         title: {
                             display: true,
-                            text: '인원 수',
+                            text: '비율 (%)',
                             font: {
                                 size: 14,
                                 weight: 'bold'
                             }
-                        }
+                        },
+                        max: 100 // X축 최대값을 100%로 설정 (가로 막대는 X축이 값 축)
                     },
-                    x: {
+                    y: {
+                        stacked: true,
                         title: {
                             display: true,
-                            text: '티어',
+                            text: '성별',
                             font: {
                                 size: 14,
                                 weight: 'bold'
