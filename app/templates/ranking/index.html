@@ -64,7 +64,7 @@
                                     <td>{{ loop.index }}</td>
                                     <td>
                                         <img src="{{ legislator.profile_image_url }}" alt="{{ legislator.name }}" 
-                                             class="rounded-circle" width="40" height="40">
+                                             class="rounded-circle" width="40" height="40" loading="lazy">
                                     </td>
                                     <td>
                                         <a href="/champions/{{ legislator.id }}">
@@ -125,7 +125,7 @@
                                     <td>{{ loop.index }}</td>
                                     <td>
                                         <img src="{{ legislator.profile_image_url }}" alt="{{ legislator.name }}" 
-                                             class="rounded-circle" width="40" height="40">
+                                             class="rounded-circle" width="40" height="40" loading="lazy">
                                     </td>
                                     <td>
                                         <a href="/champions/{{ legislator.id }}">
@@ -265,7 +265,7 @@
                             <td>{{ legislator.overall_rank }}</td>
                             <td>
                                 <img src="{{ legislator.profile_image_url }}" alt="{{ legislator.name }}" 
-                                     class="rounded-circle" width="40" height="40">
+                                     class="rounded-circle" width="40" height="40" loading="lazy">
                             </td>
                             <td>
                                 <a href="/champions/{{ legislator.id }}">
@@ -503,7 +503,7 @@ function updateRankingTable(legislators) {
             <td>${legislator.overall_rank}</td>
             <td>
                 <img src="${legislator.profile_image_url}" alt="${legislator.name}" 
-                     class="rounded-circle" width="40" height="40">
+                     class="rounded-circle" width="40" height="40" loading="lazy">
             </td>
             <td>
                 <a href="/champions/${legislator.id}">

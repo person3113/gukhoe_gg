@@ -50,7 +50,7 @@
                                         <a href="/search?name={{ legislator.name }}" class="legislator-link">
                                             <div class="legislator-img-container rank-{{ loop.index }}">
                                                 <img src="{{ legislator.profile_image_url }}" alt="{{ legislator.name }}" 
-                                                     class="img-fluid rounded-circle legislator-img">
+                                                     class="img-fluid rounded-circle legislator-img" loading="lazy">
                                                 <div class="rank-number">{{ loop.index }}</div>
                                             </div>
                                             <h5 class="mt-2 mb-0">{{ legislator.name }}</h5>
