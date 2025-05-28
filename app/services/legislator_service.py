@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from typing import List, Dict, Any, Optional
+import os
 
 from app.models.legislator import Legislator
 from app.models.sns import LegislatorSNS
@@ -82,6 +83,23 @@ def get_filter_options(db: Session) -> Dict[str, List[str]]:
     
     return filter_options
 
+def _get_optimized_image_url(profile_image_url: str) -> str:
+    """
+    최적화된 이미지 URL 생성
+    
+    Args:
+        profile_image_url: 원본 이미지 URL
+    
+    Returns:
+        최적화된 이미지 URL
+    """
+    if not profile_image_url or profile_image_url.startswith('http'):
+        return profile_image_url or "/static/images/legislators/default.png"
+    
+    # 로컬 개발 및 Render 배포 환경에서 정적 이미지 경로 그대로 사용
+    # 최적화 URL 엔드포인트가 불안정한 문제 해결
+    return profile_image_url
+
 def filter_legislators(
     db: Session, 
     name: Optional[str] = None,
@@ -142,7 +160,7 @@ def filter_legislators(
             "party": legislator.poly_nm,
             "district": legislator.orig_nm,
             "term": legislator.reele_gbn_nm,
-            "profile_image_url": legislator.profile_image_url or "/static/images/legislators/default.png",
+            "profile_image_url": _get_optimized_image_url(legislator.profile_image_url),
             "tier": legislator.tier
         })
     
@@ -180,17 +198,12 @@ def get_legislator_detail(db: Session, legislator_id: int) -> Dict[str, Any]:
         "tel": legislator.tel_no,
         "email": legislator.e_mail,
         "profile": legislator.mem_title,
-        "profile_image_url": legislator.profile_image_url or "/static/images/legislators/default.png",
+        "profile_image_url": _get_optimized_image_url(legislator.profile_image_url),
         "tier": legislator.tier,
         "overall_rank": legislator.overall_rank,
     }
     
     return result
-
-def get_legislator_stats(db: Session, legislator_id: int) -> Dict[str, Any]:
-    # 호출: db.query(Legislator)로 특정 의원 스탯 정보 조회
-    # 반환: 의원 스탯 정보
-    pass
 
 def get_legislator_stats(db: Session, legislator_id: int) -> Dict[str, Any]:
     """
@@ -265,16 +278,14 @@ def get_legislator_committee_history(db: Session, legislator_id: int) -> List[Di
         의원 위원회 경력 목록
     """
     # 위원회 경력 조회
-    histories = db.query(CommitteeHistory).filter(
-        CommitteeHistory.legislator_id == legislator_id
-    ).all()
+    histories = db.query(CommitteeHistory).filter(CommitteeHistory.legislator_id == legislator_id).all()
     
-    # 결과 리스트 구성
+    # 위원회 경력 딕셔너리 변환
     result = []
     for history in histories:
         result.append({
-            "period": history.frto_date,
-            "description": history.profile_sj,
+            "committee_name": history.profile_sj,
+            "position": history.frto_date,
         })
     
     return result

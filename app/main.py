@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 import os
 
 from app.db.database import SessionLocal, engine, Base, get_db
-from app.api import home, search, champions, ranking, misc_ranking, about
+from app.api import home, search, champions, ranking, misc_ranking, about, images
 from app.models.legislator import Legislator
 
 # 모든 모델을 명시적으로 임포트
@@ -26,6 +26,9 @@ def create_app():
     setup_static(app)
     setup_templates(app)
     
+    # 이미지 캐시 디렉토리 생성
+    os.makedirs("app/static/cache", exist_ok=True)
+    
     return app
 
 def setup_routes(app):
@@ -36,6 +39,7 @@ def setup_routes(app):
     app.include_router(ranking.router)
     app.include_router(misc_ranking.router)
     app.include_router(about.router)
+    app.include_router(images.router)  # 이미지 라우터 추가
     
     # 관리자 라우터 추가
     from app.api import admin
