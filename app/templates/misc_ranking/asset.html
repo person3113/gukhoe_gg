@@ -163,11 +163,13 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for tier, count in asset_stats.tier_distribution.items() %}
+                                {% for tier in ["Challenger", "Grandmaster", "Master", "Diamond", "Emerald", "Platinum", "Gold", "Silver", "Bronze", "Iron"] %}
+                                {% if asset_stats.tier_distribution.get(tier) %}
                                 <tr>
                                     <td>{{ tier }}</td>
-                                    <td>{{ count }}</td>
+                                    <td>{{ asset_stats.tier_distribution[tier] }}</td>
                                 </tr>
+                                {% endif %}
                                 {% endfor %}
                             </tbody>
                         </table>
@@ -225,14 +227,7 @@
                                   </td>
                                   <td>{{ legislator.party }}</td>
                                   <td>
-                                      <span class="badge 
-                                          {% if legislator.tier == 'Challenger' %}bg-danger{% 
-                                          elif legislator.tier == 'Master' %}bg-warning{% 
-                                          elif legislator.tier == 'Diamond' %}bg-info{% 
-                                          elif legislator.tier == 'Platinum' %}bg-success{% 
-                                          elif legislator.tier == 'Gold' %}bg-warning text-dark{% 
-                                          elif legislator.tier == 'Silver' %}bg-secondary{% 
-                                          else %}bg-dark{% endif %}">
+                                      <span class="badge tier-{{ legislator.tier.lower() }}">
                                           {{ legislator.tier }}
                                       </span>
                                   </td>

@@ -152,12 +152,14 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for tier, count in age_stats.tier_distribution.items() %}
+                                {% for tier in ["Challenger", "Grandmaster", "Master", "Diamond", "Emerald", "Platinum", "Gold", "Silver", "Bronze", "Iron"] %}
+                                {% if age_stats.tier_distribution.get(tier) %}
                                 <tr>
                                     <td>{{ tier }}</td>
-                                    <td>{{ count }}</td>
+                                    <td>{{ age_stats.tier_distribution[tier] }}</td>
                                 </tr>
-                                {% endfor %}
+                                {% endif %}
+                                {% endfor %}    
                             </tbody>
                         </table>
                     </div>
