@@ -24,7 +24,7 @@
     <div class="row mb-4">
         <!-- 점수-재산 상관관계 -->
         <div class="col-md-6 mb-4">
-            <div class="card card-modern h-100">
+            <div class="card card-modern h-100" style="min-height: 600px;">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="fas fa-chart-scatter me-2"></i> 활동점수와 재산 상관관계</h5>
                     <div class="btn-group" role="group">
@@ -35,9 +35,12 @@
                         <label class="btn btn-outline-primary btn-sm" for="correlation-table-btn"><i class="fas fa-table me-1"></i> 테이블</label>
                     </div>
                 </div>
-                <div class="card-body">
+                <div class="card-body" style="min-height: 540px;">
                     <div id="correlation-chart-view" class="chart-container">
-                        <canvas id="correlationChart" height="300"></canvas>
+                        <!-- 고정 높이 컨테이너 적용 - 높이 증가 및 패딩 추가 -->
+                        <div style="position: relative; height: 500px; width: 100%; padding: 20px;">
+                            <canvas id="correlationChart"></canvas>
+                        </div>
                     </div>
                     <div id="correlation-table-view" class="d-none">
                         <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
@@ -71,7 +74,7 @@
         
         <!-- 정당별 재산 비율 -->
         <div class="col-md-6 mb-4">
-            <div class="card card-modern h-100">
+            <div class="card card-modern h-100" style="min-height: 600px;">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i> 정당별 재산 비율</h5>
                     <div class="btn-group" role="group">
@@ -82,9 +85,12 @@
                         <label class="btn btn-outline-primary btn-sm" for="party-ratio-table-btn"><i class="fas fa-table me-1"></i> 테이블</label>
                     </div>
                 </div>
-                <div class="card-body">
+                <div class="card-body" style="min-height: 540px;">
                     <div id="party-ratio-chart-view" class="chart-container">
-                        <canvas id="partyRatioChart" height="300"></canvas>
+                        <!-- 고정 높이 컨테이너 적용 - 높이 증가 및 패딩 추가 -->
+                        <div style="position: relative; height: 500px; width: 100%; padding: 20px;">
+                            <canvas id="partyRatioChart"></canvas>
+                        </div>
                     </div>
                     <div id="party-ratio-table-view" class="d-none">
                         <table class="table table-striped table-hover">
@@ -388,7 +394,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 document.addEventListener('DOMContentLoaded', function() {
-    // 점수-재산 상관관계 차트 (산점도)
+    // 점수-재산 상관관계 차트 (산점도) - 크기 수정
     if (document.getElementById('correlationChart')) {
         var correlationCtx = document.getElementById('correlationChart').getContext('2d');
         var correlationData = JSON.parse('{{ correlation_chart|tojson|safe }}');
@@ -396,10 +402,21 @@ document.addEventListener('DOMContentLoaded', function() {
         var correlationChart = new Chart(correlationCtx, {
             type: 'scatter',
             data: correlationData,
-            options: correlationData.options || {
+            options: {
                 responsive: true,
-                maintainAspectRatio: true,
+                maintainAspectRatio: false, // 고정 크기 컨테이너 사용
+                layout: {
+                    padding: {
+                        top: 20,
+                        right: 20,
+                        bottom: 20,
+                        left: 20
+                    }
+                },
                 plugins: {
+                    legend: {
+                        display: false
+                    },
                     tooltip: {
                         callbacks: {
                             label: function(context) {
@@ -413,28 +430,52 @@ document.addEventListener('DOMContentLoaded', function() {
                     x: {
                         title: {
                             display: true,
-                            text: '종합점수'
+                            text: '종합점수',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
                         },
                         grid: {
                             display: true
+                        },
+                        ticks: {
+                            font: {
+                                size: 12
+                            }
                         }
                     },
                     y: {
                         title: {
                             display: true,
-                            text: '재산 (억원)'
+                            text: '재산 (억원)',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
                         },
                         beginAtZero: true,
                         grid: {
                             display: true
+                        },
+                        ticks: {
+                            font: {
+                                size: 12
+                            }
                         }
+                    }
+                },
+                elements: {
+                    point: {
+                        radius: 6,
+                        hoverRadius: 8
                     }
                 }
             }
         });
     }
     
-    // 정당별 재산 비율 차트 (파이 차트)
+    // 정당별 재산 비율 차트 (파이 차트) - 크기 수정
     if (document.getElementById('partyRatioChart')) {
         var partyRatioCtx = document.getElementById('partyRatioChart').getContext('2d');
         var partyRatioData = JSON.parse('{{ party_ratio_chart|tojson|safe }}');
@@ -444,10 +485,31 @@ document.addEventListener('DOMContentLoaded', function() {
             data: partyRatioData,
             options: {
                 responsive: true,
-                maintainAspectRatio: true,
+                maintainAspectRatio: false, // 고정 크기 컨테이너 사용
+                layout: {
+                    padding: {
+                        top: 20,
+                        right: 20,
+                        bottom: 60, // 하단 범례를 위한 여유 공간
+                        left: 20
+                    }
+                },
                 plugins: {
                     legend: {
-                        position: 'bottom'
+                        position: 'bottom',
+                        align: 'center',
+                        labels: {
+                            font: {
+                                size: 11,
+                                weight: 'bold'
+                            },
+                            padding: 15,
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            boxWidth: 12,
+                            boxHeight: 12
+                        },
+                        maxHeight: 80 // 범례 최대 높이 제한
                     },
                     tooltip: {
                         callbacks: {
@@ -457,6 +519,12 @@ document.addEventListener('DOMContentLoaded', function() {
                                 return `${label}: ${value}%`;
                             }
                         }
+                    }
+                },
+                elements: {
+                    arc: {
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
                     }
                 }
             }
