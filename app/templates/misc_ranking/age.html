@@ -168,25 +168,34 @@
         <!-- 해당 나이대 의원 목록 -->
         <div class="col-12 mb-4">
             <div class="card">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <h5>{{ age_group }} 의원 목록</h5>
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-light text-dark me-2">총 {{ legislators|length }}명</span>
+                        <div class="input-group input-group-sm" style="width: 250px;">
+                            <input type="text" class="form-control" id="table-search" placeholder="이름 검색...">
+                            <button class="btn btn-outline-secondary" type="button">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
                       <table class="table table-striped" id="legislators-table">
                           <thead>
                               <tr>
-                                  <th data-sort="overall_rank">순위 <i class="sort-icon"></i></th>
+                                  <th data-sort="overall_rank" class="text-center">순위 <i class="sort-icon"></i></th>
                                   <th>사진</th>
                                   <th>의원명</th>
-                                  <th>정당</th>
-                                  <th>티어</th>
-                                  <th data-sort="overall_score">종합점수 <i class="sort-icon"></i></th>
-                                  <th data-sort="participation_score">참여도 <i class="sort-icon"></i></th>
-                                  <th data-sort="legislation_score">입법활동 <i class="sort-icon"></i></th>
-                                  <th data-sort="speech_score">의정발언 <i class="sort-icon"></i></th>
-                                  <th data-sort="voting_score">표결책임성 <i class="sort-icon"></i></th>
-                                  <th data-sort="cooperation_score">정당 간 협력 <i class="sort-icon"></i></th>
+                                  <th class="text-center">정당</th>
+                                  <th class="text-center">티어</th>
+                                  <th data-sort="overall_score" class="text-center">종합점수 <i class="sort-icon"></i></th>
+                                  <th data-sort="participation_score" class="text-center">참여도 <i class="sort-icon"></i></th>
+                                  <th data-sort="legislation_score" class="text-center">입법활동 <i class="sort-icon"></i></th>
+                                  <th data-sort="speech_score" class="text-center">의정발언 <i class="sort-icon"></i></th>
+                                  <th data-sort="voting_score" class="text-center">표결책임성 <i class="sort-icon"></i></th>
+                                  <th data-sort="cooperation_score" class="text-center">정당 간 협력 <i class="sort-icon"></i></th>
                               </tr>
                           </thead>
                           <tbody>
@@ -199,7 +208,7 @@
                                   data-voting_score="{{ legislator.voting_score }}"
                                   data-cooperation_score="{{ legislator.cooperation_score }}"
                                   data-asset="{{ legislator.asset }}">
-                                  <td>{{ legislator.overall_rank }}</td>
+                                  <td class="text-center">{{ legislator.overall_rank }}</td>
                                   <td>
                                       <img src="{{ legislator.profile_image_url }}" alt="{{ legislator.name }}" 
                                            class="rounded-circle" width="40" height="40">
@@ -209,18 +218,58 @@
                                           {{ legislator.name }}
                                       </a>
                                   </td>
-                                  <td>{{ legislator.party }}</td>
-                                  <td>
-                                      <span class="badge tier-{{ legislator.tier.lower() }}">
+                                  <td class="text-center">
+                                      <span class="party-tag 
+                                          {% if legislator.party == '국민의힘' %}party-conservative
+                                          {% elif legislator.party == '더불어민주당' %}party-democratic
+                                          {% elif legislator.party == '정의당' %}party-justice
+                                          {% else %}party-other{% endif %}">
+                                          {{ legislator.party }}
+                                      </span>
+                                  </td>
+                                  <td class="text-center">
+                                      <span class="badge tier-{{ legislator.tier.lower() }} px-2 py-1">
                                           {{ legislator.tier }}
                                       </span>
                                   </td>
-                                  <td>{{ legislator.overall_score }}</td>
-                                  <td>{{ legislator.participation_score }}</td>
-                                  <td>{{ legislator.legislation_score }}</td>
-                                  <td>{{ legislator.speech_score }}</td>
-                                  <td>{{ legislator.voting_score }}</td>
-                                  <td>{{ legislator.cooperation_score }}</td>
+                                  <td class="text-center">
+                                      <span class="badge bg-primary rounded-pill px-3">{{ legislator.overall_score }}</span>
+                                  </td>
+                                  <td class="text-center">
+                                      {% set score = legislator.participation_score %}
+                                      <div class="progress" style="height: 8px;">
+                                          <div class="progress-bar {% if score >= 90 %}bg-success{% elif score >= 70 %}bg-info{% elif score >= 50 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ score }}%;" aria-valuenow="{{ score }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                      </div>
+                                      <small class="d-block mt-1">{{ score }}</small>
+                                  </td>
+                                  <td class="text-center">
+                                      {% set score = legislator.legislation_score %}
+                                      <div class="progress" style="height: 8px;">
+                                          <div class="progress-bar {% if score >= 90 %}bg-success{% elif score >= 70 %}bg-info{% elif score >= 50 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ score }}%;" aria-valuenow="{{ score }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                      </div>
+                                      <small class="d-block mt-1">{{ score }}</small>
+                                  </td>
+                                  <td class="text-center">
+                                      {% set score = legislator.speech_score %}
+                                      <div class="progress" style="height: 8px;">
+                                          <div class="progress-bar {% if score >= 90 %}bg-success{% elif score >= 70 %}bg-info{% elif score >= 50 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ score }}%;" aria-valuenow="{{ score }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                      </div>
+                                      <small class="d-block mt-1">{{ score }}</small>
+                                  </td>
+                                  <td class="text-center">
+                                      {% set score = legislator.voting_score %}
+                                      <div class="progress" style="height: 8px;">
+                                          <div class="progress-bar {% if score >= 90 %}bg-success{% elif score >= 70 %}bg-info{% elif score >= 50 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ score }}%;" aria-valuenow="{{ score }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                      </div>
+                                      <small class="d-block mt-1">{{ score }}</small>
+                                  </td>
+                                  <td class="text-center">
+                                      {% set score = legislator.cooperation_score %}
+                                      <div class="progress" style="height: 8px;">
+                                          <div class="progress-bar {% if score >= 90 %}bg-success{% elif score >= 70 %}bg-info{% elif score >= 50 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ score }}%;" aria-valuenow="{{ score }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                      </div>
+                                      <small class="d-block mt-1">{{ score }}</small>
+                                  </td>
                               </tr>
                               {% endfor %}
                           </tbody>
@@ -241,6 +290,34 @@
 
 {% block extra_scripts %}
 <script>
+// 테이블 검색 기능
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('table-search');
+    if (searchInput) {
+        searchInput.addEventListener('keyup', function() {
+            const searchValue = this.value.toLowerCase();
+            const table = document.getElementById('legislators-table');
+            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+            
+            for (let i = 0; i < rows.length; i++) {
+                const nameCell = rows[i].getElementsByTagName('td')[2]; // 의원명 셀
+                const partyCell = rows[i].getElementsByTagName('td')[3]; // 정당 셀
+                
+                if (nameCell) {
+                    const name = nameCell.textContent || nameCell.innerText;
+                    const party = partyCell.textContent || partyCell.innerText;
+                    
+                    if (name.toLowerCase().indexOf(searchValue) > -1 || party.toLowerCase().indexOf(searchValue) > -1) {
+                        rows[i].style.display = '';
+                    } else {
+                        rows[i].style.display = 'none';
+                    }
+                }
+            }
+        });
+    }
+});
+
 document.addEventListener('DOMContentLoaded', function() {
     // 나이별 평균 종합점수 차트
     var scoreCtx = document.getElementById('scoreChart').getContext('2d');
@@ -354,7 +431,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateSortIcons() {
         // 모든 아이콘 초기화
         document.querySelectorAll('.sort-icon').forEach(icon => {
-            icon.className = 'sort-icon';
+            icon.textContent = '';
         });
         
         // 현재 정렬 컬럼의 아이콘 업데이트
@@ -362,7 +439,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (currentHeader) {
             const icon = currentHeader.querySelector('.sort-icon');
             if (icon) {
-                icon.className = `sort-icon fa fa-sort-${currentSortOrder === 'asc' ? 'up' : 'down'}`;
+                icon.textContent = currentSortOrder === 'asc' ? '▲' : '▼';
             }
         }
     }
@@ -374,8 +451,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 행 정렬
         rows.sort((a, b) => {
-            const aValue = parseFloat(a.getAttribute(`data-${currentSortColumn}`));
-            const bValue = parseFloat(b.getAttribute(`data-${currentSortColumn}`));
+            const aValue = parseFloat(a.getAttribute(`data-${currentSortColumn}`)) || 0;
+            const bValue = parseFloat(b.getAttribute(`data-${currentSortColumn}`)) || 0;
             
             if (currentSortOrder === 'asc') {
                 return aValue - bValue;
