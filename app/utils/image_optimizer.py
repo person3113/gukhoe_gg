@@ -149,7 +149,13 @@ class ImageOptimizer:
         # 이미지가 존재하는지 확인
         if not os.path.exists(image_path):
             logger.warning(f"이미지 파일을 찾을 수 없음: {image_path}")
-            return Response(status_code=404)
+            # 기본 이미지 경로
+            default_image_path = "app/static/images/legislators/default.png"
+            if os.path.exists(default_image_path):
+                logger.info(f"기본 이미지 사용: {default_image_path}")
+                image_path = default_image_path
+            else:
+                return Response(status_code=404)
         
         # 요청 헤더에서 캐시 관련 정보 확인
         if_none_match = request.headers.get('if-none-match')
@@ -162,20 +168,32 @@ class ImageOptimizer:
         if if_none_match == etag:
             return Response(status_code=304)
         
-        # 이미지 최적화
-        image_bytes, mime_type = self.optimize_image(image_path, width, height)
-        if not image_bytes:
-            return Response(status_code=500)
-        
-        # 응답 헤더 설정
-        headers = {
-            'Cache-Control': 'public, max-age=31536000',  # 1년
-            'ETag': etag
-        }
-        
-        # 최적화된 이미지 응답
-        return StreamingResponse(
-            io.BytesIO(image_bytes), 
-            media_type=mime_type, 
-            headers=headers
-        ) 
+        try:
+            # 이미지 최적화
+            image_bytes, mime_type = self.optimize_image(image_path, width, height)
+            if not image_bytes:
+                logger.error(f"이미지 최적화 실패: {image_path}")
+                # 기본 이미지로 대체
+                default_image_path = "app/static/images/legislators/default.png"
+                if os.path.exists(default_image_path):
+                    image_bytes, mime_type = self.optimize_image(default_image_path, width, height)
+                    if not image_bytes:
+                        return Response(status_code=500)
+                else:
+                    return Response(status_code=500)
+            
+            # 응답 헤더 설정
+            headers = {
+                'Cache-Control': 'public, max-age=31536000',  # 1년
+                'ETag': etag
+            }
+            
+            # 최적화된 이미지 응답
+            return StreamingResponse(
+                io.BytesIO(image_bytes), 
+                media_type=mime_type, 
+                headers=headers
+            )
+        except Exception as e:
+            logger.error(f"이미지 응답 생성 중 오류 발생: {e}")
+            return Response(status_code=500) 

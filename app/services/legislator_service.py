@@ -96,11 +96,9 @@ def _get_optimized_image_url(profile_image_url: str) -> str:
     if not profile_image_url or profile_image_url.startswith('http'):
         return profile_image_url or "/static/images/legislators/default.png"
     
-    # /static/images/legislators/파일명.jpg 형식에서 파일명만 추출
-    file_name = os.path.basename(profile_image_url)
-    
-    # 최적화된 이미지 URL 생성 (너비 200px로 고정)
-    return f"/images/legislators/{file_name}?width=200"
+    # 로컬 개발 및 Render 배포 환경에서 정적 이미지 경로 그대로 사용
+    # 최적화 URL 엔드포인트가 불안정한 문제 해결
+    return profile_image_url
 
 def filter_legislators(
     db: Session, 
