@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, Request, HTTPException
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from fastapi.templating import Jinja2Templates
 from typing import Optional
@@ -113,6 +114,8 @@ async def champion_detail(
         co_bills_data = bill_service.get_co_sponsored_bills(db, legislator_id)
         tab_data["co_bills"] = co_bills_data["bills"]
         tab_data["co_bills_count"] = co_bills_data["total_count"]
+    elif tab == "asset_detail":
+        return RedirectResponse(url=f"/misc-ranking/asset/detail/{legislator_id}")
     
     # 템플릿 렌더링
     return templates.TemplateResponse(
