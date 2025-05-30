@@ -106,7 +106,15 @@
                                 {% for party, data in party_asset_ratio.items() %}
                                 <tr>
                                     <td>
-                                        <span class="party-tag {% if party == '국민의힘' %}party-conservative{% elif party == '더불어민주당' %}party-democratic{% elif party == '정의당' %}party-justice{% else %}party-other{% endif %}">{{ party }}</span>
+                                        <span class="party-tag 
+                                            {% if party == '국민의힘' %}party-conservative
+                                            {% elif party == '더불어민주당' %}party-democratic
+                                            {% elif party == '정의당' %}party-justice
+                                            {% elif party == '개혁신당' %}party-reform
+                                            {% elif party == '조국혁신당' %}party-innovation
+                                            {% elif party == '기본소득당' %}party-basic
+                                            {% elif party == '진보당' %}party-progressive
+                                            {% else %}party-other{% endif %}">{{ party }}</span>
                                     </td>
                                     <td>{{ data.total_asset }}</td>
                                     <td><span class="badge bg-info rounded-pill">{{ data.ratio }}%</span></td>
@@ -217,20 +225,22 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {% for tier, count in asset_stats.tier_distribution.items() %}
+                                        {% for tier in ["Challenger", "Grandmaster", "Master", "Diamond", "Emerald", "Platinum", "Gold", "Silver", "Bronze", "Iron"] %}
+                                        {% if asset_stats.tier_distribution.get(tier) %}
                                         <tr>
                                             <td>
                                                 <span class="badge tier-{{ tier.lower() }}">{{ tier }}</span>
                                             </td>
-                                            <td>{{ count }}</td>
+                                            <td>{{ asset_stats.tier_distribution[tier] }}</td>
                                             <td>
-                                                {% set percentage = (count / asset_stats.count * 100) | round(1) %}
+                                                {% set percentage = (asset_stats.tier_distribution[tier] / asset_stats.count * 100) | round(1) %}
                                                 <div class="progress" style="height: 5px;">
                                                     <div class="progress-bar {% if tier.lower() in ['gold', 'silver', 'bronze'] %}bg-{{ tier.lower() }}{% else %}bg-secondary{% endif %}" role="progressbar" style="width: {{ percentage }}%" aria-valuenow="{{ percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
                                                 </div>
                                                 <small>{{ percentage }}%</small>
                                             </td>
                                         </tr>
+                                        {% endif %}
                                         {% endfor %}
                                     </tbody>
                                 </table>
@@ -297,7 +307,15 @@
                                       </a>
                                   </td>
                                   <td>
-                                      <span class="party-tag {% if legislator.party == '국민의힘' %}party-conservative{% elif legislator.party == '더불어민주당' %}party-democratic{% elif legislator.party == '정의당' %}party-justice{% else %}party-other{% endif %}">
+                                      <span class="party-tag 
+                                          {% if legislator.party == '국민의힘' %}party-conservative
+                                          {% elif legislator.party == '더불어민주당' %}party-democratic
+                                          {% elif legislator.party == '정의당' %}party-justice
+                                          {% elif legislator.party == '개혁신당' %}party-reform
+                                          {% elif legislator.party == '조국혁신당' %}party-innovation
+                                          {% elif legislator.party == '기본소득당' %}party-basic
+                                          {% elif legislator.party == '진보당' %}party-progressive
+                                          {% else %}party-other{% endif %}">
                                           {{ legislator.party }}
                                       </span>
                                   </td>
