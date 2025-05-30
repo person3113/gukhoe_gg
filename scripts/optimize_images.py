@@ -153,8 +153,31 @@ def create_optimized_variants(input_dir, base_output_dir, sizes, quality=85):
                 
                 # 이미지 리사이징
                 if target_width and target_height:
-                    # 비율 유지하면서 리사이징
-                    resized_img.thumbnail((target_width, target_height), Image.LANCZOS)
+                    # 둘 다 지정된 경우
+                    if size_name == "list":
+                        # list용 이미지는 정확히 200x200 정사각형으로 리사이징
+                        # 원본 이미지의 비율을 유지하면서 가장 작은 차원에 맞춰 조정
+                        if original_width > original_height:
+                            # 세로가 더 짧은 경우, 세로에 맞춰 조정 후 중앙 크롭
+                            ratio = target_height / original_height
+                            new_width = int(original_width * ratio)
+                            resized_img = resized_img.resize((new_width, target_height), Image.LANCZOS)
+                            # 가운데를 기준으로 크롭
+                            left = (new_width - target_width) // 2
+                            right = left + target_width
+                            resized_img = resized_img.crop((left, 0, right, target_height))
+                        else:
+                            # 가로가 더 짧거나 같은 경우, 가로에 맞춰 조정 후 중앙 크롭
+                            ratio = target_width / original_width
+                            new_height = int(original_height * ratio)
+                            resized_img = resized_img.resize((target_width, new_height), Image.LANCZOS)
+                            # 가운데를 기준으로 크롭
+                            top = (new_height - target_height) // 2
+                            bottom = top + target_height
+                            resized_img = resized_img.crop((0, top, target_width, bottom))
+                    else:
+                        # 비율 유지하면서 리사이징
+                        resized_img.thumbnail((target_width, target_height), Image.LANCZOS)
                 elif target_width:
                     # 너비만 지정된 경우 (비율 유지)
                     ratio = target_width / original_width
@@ -213,7 +236,7 @@ if __name__ == "__main__":
     # 이미지 변형 크기 정의
     image_sizes = {
         "detail": (400, None),   # 상세 페이지용 (너비 400px, 높이 자동)
-        "list": (200, 200),      # 목록 페이지용 (200x200)
+        "list": (200, 200),      # 목록 페이지용 (200x200 정사각형)
         "thumb": (40, 40)        # 썸네일용 (40x40)
     }
     
