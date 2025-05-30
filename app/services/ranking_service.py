@@ -1,10 +1,11 @@
 from sqlalchemy.orm import Session
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple, Union
 
 from app.models.legislator import Legislator
 from app.models.committee import Committee, CommitteeMember
+from app.utils.image_path_helper import ImagePathHelper
 
-def get_top_legislators(db: Session, count: int = 5, category: str = 'overall') -> List[Dict[str, Any]]:
+def get_top_legislators(db: Session, count: int = 5, category: str = 'overall', image_type: str = 'thumb') -> List[Dict[str, Any]]:
     """
     특정 카테고리 기준 상위 N명의 국회의원을 조회하는 함수
     
@@ -12,6 +13,7 @@ def get_top_legislators(db: Session, count: int = 5, category: str = 'overall') 
         db: 데이터베이스 세션
         count: 조회할 상위 의원 수 (기본값: 5)
         category: 랭킹 카테고리 (기본값: 'overall')
+        image_type: 이미지 유형 (thumb: 썸네일, list: 목록용, detail: 상세페이지용)
     
     Returns:
         상위 N명 국회의원 정보 리스트
@@ -41,11 +43,20 @@ def get_top_legislators(db: Session, count: int = 5, category: str = 'overall') 
     # ORM 객체를 dict로 변환하여 반환
     result = []
     for legislator in legislators:
+        # 이미지 URL을 썸네일용으로 최적화
+        profile_image_url = legislator.profile_image_url
+        if profile_image_url:
+            # 파일명만 추출
+            filename = profile_image_url.split('/')[-1]
+            profile_image_url = ImagePathHelper.get_optimized_image_path(filename, image_type)
+        else:
+            profile_image_url = "/static/images/legislators/default.png"
+            
         result.append({
             "id": legislator.id,
             "name": legislator.hg_nm,
             "party": legislator.poly_nm,
-            "profile_image_url": legislator.profile_image_url or "/static/images/legislators/default.png",
+            "profile_image_url": profile_image_url,
             "tier": legislator.tier,
             "overall_rank": legislator.overall_rank,
             "overall_score": round(legislator.overall_score, 1) if legislator.overall_score else 0,
@@ -53,12 +64,13 @@ def get_top_legislators(db: Session, count: int = 5, category: str = 'overall') 
             "legislation_score": round(legislator.legislation_score, 1) if legislator.legislation_score else 0,
             "speech_score": round(legislator.speech_score, 1) if legislator.speech_score else 0,
             "voting_score": round(legislator.voting_score, 1) if legislator.voting_score else 0,
-            "cooperation_score": round(legislator.cooperation_score, 1) if legislator.cooperation_score else 0
+            "cooperation_score": round(legislator.cooperation_score, 1) if legislator.cooperation_score else 0,
+            "current_score": round(getattr(legislator, f"{category}_score"), 1) if getattr(legislator, f"{category}_score") else 0
         })
     
     return result
 
-def get_bottom_legislators(db: Session, count: int = 5, category: str = 'overall') -> List[Dict[str, Any]]:
+def get_bottom_legislators(db: Session, count: int = 5, category: str = 'overall', image_type: str = 'thumb') -> List[Dict[str, Any]]:
     # 호출: db.query(Legislator)로 특정 카테고리 기준 하위 N명 조회
     # 반환: 의원 목록
     """
@@ -68,6 +80,7 @@ def get_bottom_legislators(db: Session, count: int = 5, category: str = 'overall
         db: 데이터베이스 세션
         count: 조회할 하위 의원 수 (기본값: 5)
         category: 랭킹 카테고리 (기본값: 'overall')
+        image_type: 이미지 유형 (thumb: 썸네일, list: 목록용, detail: 상세페이지용)
     
     Returns:
         하위 N명 국회의원 정보 리스트
@@ -97,11 +110,20 @@ def get_bottom_legislators(db: Session, count: int = 5, category: str = 'overall
     # ORM 객체를 dict로 변환
     result = []
     for legislator in legislators:
+        # 이미지 URL을 썸네일용으로 최적화
+        profile_image_url = legislator.profile_image_url
+        if profile_image_url:
+            # 파일명만 추출
+            filename = profile_image_url.split('/')[-1]
+            profile_image_url = ImagePathHelper.get_optimized_image_path(filename, image_type)
+        else:
+            profile_image_url = "/static/images/legislators/default.png"
+            
         result.append({
             "id": legislator.id,
             "name": legislator.hg_nm,
             "party": legislator.poly_nm,
-            "profile_image_url": legislator.profile_image_url or "/static/images/legislators/default.png",
+            "profile_image_url": profile_image_url,
             "tier": legislator.tier,
             "overall_rank": legislator.overall_rank,
             "overall_score": round(legislator.overall_score, 1) if legislator.overall_score else 0,
@@ -109,7 +131,8 @@ def get_bottom_legislators(db: Session, count: int = 5, category: str = 'overall
             "legislation_score": round(legislator.legislation_score, 1) if legislator.legislation_score else 0,
             "speech_score": round(legislator.speech_score, 1) if legislator.speech_score else 0,
             "voting_score": round(legislator.voting_score, 1) if legislator.voting_score else 0,
-            "cooperation_score": round(legislator.cooperation_score, 1) if legislator.cooperation_score else 0
+            "cooperation_score": round(legislator.cooperation_score, 1) if legislator.cooperation_score else 0,
+            "current_score": round(getattr(legislator, f"{category}_score"), 1) if getattr(legislator, f"{category}_score") else 0
         })
     
     return result
@@ -122,7 +145,8 @@ def get_legislators_by_filter(
     term: Optional[str] = None,
     gender: Optional[str] = None,
     age_group: Optional[str] = None,
-    asset_group: Optional[str] = None
+    asset_group: Optional[str] = None,
+    image_type: str = 'thumb'
 ) -> List[Dict[str, Any]]:
     # 호출: db.query(Legislator)로 기본 쿼리 시작
     # 필터 조건에 따라 쿼리 구성
@@ -140,6 +164,7 @@ def get_legislators_by_filter(
         gender: 성별 필터 (선택)
         age_group: 나이대 필터 (선택)
         asset_group: 재산 구간 필터 (선택)
+        image_type: 이미지 유형 (thumb: 썸네일, list: 목록용, detail: 상세페이지용)
     
     Returns:
         필터링된 국회의원 랭킹 리스트
@@ -191,11 +216,20 @@ def get_legislators_by_filter(
     # ORM 객체를 dict로 변환
     result = []
     for legislator in legislators:
+        # 이미지 URL을 썸네일용으로 최적화
+        profile_image_url = legislator.profile_image_url
+        if profile_image_url:
+            # 파일명만 추출
+            filename = profile_image_url.split('/')[-1]
+            profile_image_url = ImagePathHelper.get_optimized_image_path(filename, image_type)
+        else:
+            profile_image_url = "/static/images/legislators/default.png"
+            
         result.append({
             "id": legislator.id,
             "name": legislator.hg_nm,
             "party": legislator.poly_nm,
-            "profile_image_url": legislator.profile_image_url or "/static/images/legislators/default.png",
+            "profile_image_url": profile_image_url,
             "tier": legislator.tier,
             "overall_rank": legislator.overall_rank,
             "overall_score": round(legislator.overall_score, 1) if legislator.overall_score else 0,

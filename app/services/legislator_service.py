@@ -5,6 +5,7 @@ import os
 from app.models.legislator import Legislator
 from app.models.sns import LegislatorSNS
 from app.models.committee import Committee, CommitteeHistory
+from app.utils.image_path_helper import ImagePathHelper
 
 def get_filter_options(db: Session) -> Dict[str, List[str]]:
     """
@@ -83,12 +84,13 @@ def get_filter_options(db: Session) -> Dict[str, List[str]]:
     
     return filter_options
 
-def _get_optimized_image_url(profile_image_url: str) -> str:
+def _get_optimized_image_url(profile_image_url: str, image_type: str = "list") -> str:
     """
     최적화된 이미지 URL 생성
     
     Args:
         profile_image_url: 원본 이미지 URL
+        image_type: 이미지 유형 (detail, list, thumb)
     
     Returns:
         최적화된 이미지 URL
@@ -96,9 +98,11 @@ def _get_optimized_image_url(profile_image_url: str) -> str:
     if not profile_image_url or profile_image_url.startswith('http'):
         return profile_image_url or "/static/images/legislators/default.png"
     
-    # 로컬 개발 및 Render 배포 환경에서 정적 이미지 경로 그대로 사용
-    # 최적화 URL 엔드포인트가 불안정한 문제 해결
-    return profile_image_url
+    # 파일명만 추출
+    filename = profile_image_url.split('/')[-1]
+    
+    # ImagePathHelper를 사용하여 최적화된 이미지 경로 반환
+    return ImagePathHelper.get_optimized_image_path(filename, image_type)
 
 def filter_legislators(
     db: Session, 
@@ -166,41 +170,96 @@ def filter_legislators(
     
     return result
 
-def get_legislator_detail(db: Session, legislator_id: int) -> Dict[str, Any]:
+def get_legislators_list(
+    db: Session, 
+    name: Optional[str] = None,
+    party: Optional[str] = None,
+    district: Optional[str] = None,
+    term: Optional[str] = None
+) -> List[Dict]:
     """
-    특정 의원의 상세 정보 조회
+    국회의원 목록 조회
+    
+    Args:
+        db: 데이터베이스 세션
+        name: 의원명 필터
+        party: 정당 필터
+        district: 선거구 필터
+        term: 당선 횟수 필터
+    
+    Returns:
+        국회의원 목록
+    """
+    query = db.query(Legislator)
+    
+    # 필터링 적용
+    if name:
+        query = query.filter(Legislator.hg_nm.contains(name))
+    if party:
+        query = query.filter(Legislator.poly_nm == party)
+    if district:
+        query = query.filter(Legislator.orig_nm == district)
+    if term:
+        query = query.filter(Legislator.reele_gbn_nm == term)
+    
+    legislators = query.all()
+    
+    result = []
+    for legislator in legislators:
+        result.append({
+            "id": legislator.id,
+            "name": legislator.hg_nm,
+            "party": legislator.poly_nm,
+            "district": legislator.orig_nm,
+            "term": legislator.reele_gbn_nm,
+            "profile_image_url": _get_optimized_image_url(legislator.profile_image_url, "list")
+        })
+    
+    return result
+
+def get_legislator_detail(db: Session, legislator_id: int) -> Optional[Dict]:
+    """
+    국회의원 상세 정보 조회
     
     Args:
         db: 데이터베이스 세션
         legislator_id: 국회의원 ID
     
     Returns:
-        의원 상세 정보 딕셔너리
+        국회의원 상세 정보
     """
-    # 의원 정보 조회
     legislator = db.query(Legislator).filter(Legislator.id == legislator_id).first()
     
     if not legislator:
         return None
     
-    # ORM 객체를 dict로 변환
+    # 스탯 계산
+    overall_rank = db.query(Legislator).filter(
+        Legislator.overall_score >= legislator.overall_score
+    ).count()
+    
     result = {
         "id": legislator.id,
         "name": legislator.hg_nm,
         "eng_name": legislator.eng_nm,
-        "birth_date": legislator.bth_date,
-        "job_title": legislator.job_res_nm,
+        "profile_image_url": _get_optimized_image_url(legislator.profile_image_url, "detail"),
         "party": legislator.poly_nm,
         "district": legislator.orig_nm,
-        "committee": legislator.cmit_nm,
         "term": legislator.reele_gbn_nm,
+        "committee": legislator.cmit_nm,
         "gender": legislator.sex_gbn_nm,
+        "birth_date": legislator.bth_date,
         "tel": legislator.tel_no,
         "email": legislator.e_mail,
         "profile": legislator.mem_title,
-        "profile_image_url": _get_optimized_image_url(legislator.profile_image_url),
         "tier": legislator.tier,
-        "overall_rank": legislator.overall_rank,
+        "overall_rank": overall_rank,
+        "overall_score": legislator.overall_score,
+        "participation_score": legislator.participation_score,
+        "legislation_score": legislator.legislation_score,
+        "speech_score": legislator.speech_score,
+        "voting_score": legislator.voting_score,
+        "cooperation_score": legislator.cooperation_score
     }
     
     return result

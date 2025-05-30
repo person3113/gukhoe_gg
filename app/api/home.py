@@ -13,8 +13,8 @@ templates = Jinja2Templates(directory="app/templates")
 
 @router.get("/")
 async def home(request: Request, db: Session = Depends(get_db)):
-    # 종합 랭킹 기준 상위 5명 국회의원 조회
-    top_legislators = ranking_service.get_top_legislators(db, count=5, category='overall')
+    # 종합 랭킹 기준 상위 5명 국회의원 조회 - 홈 화면에서는 list 이미지 사용
+    top_legislators = ranking_service.get_top_legislators(db, count=5, category='overall', image_type="list")
     
     # 상위 5명 국회의원 점수 차트 데이터 생성
     chart_data = chart_service.generate_top_score_chart_data(top_legislators)
