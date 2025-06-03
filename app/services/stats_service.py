@@ -1091,62 +1091,42 @@ def get_legislators_by_age_group(db: Session, age_group: str) -> List[Dict[str, 
     
     Args:
         db: 데이터베이스 세션
-        age_group: 연령대 (20대, 30대, 40대, 50대, 60대, 70대 이상)
+        age_group: 연령대 ('30대 이하', '40대', '50대', '60대', '70대 이상')
     
     Returns:
         의원 목록 (종합점수 내림차순 정렬)
     """
-    # 연령대별 출생연도 범위 계산
-    import datetime
-    current_year = datetime.datetime.now().year
+    # 현재 연도 (2025년)
+    current_year = 2025
     
-    # 연령대별 출생년도 범위 계산 (각 세대의 시작 나이와 끝 나이를 출생년도로 변환)
-    age_ranges = {
-        "20대": (current_year - 29, current_year - 20),  # 20~29세
-        "30대": (current_year - 39, current_year - 30),  # 30~39세
-        "40대": (current_year - 49, current_year - 40),  # 40~49세
-        "50대": (current_year - 59, current_year - 50),  # 50~59세
-        "60대": (current_year - 69, current_year - 60),  # 60~69세
-        "70대 이상": (current_year - 100, current_year - 70)  # 70세 이상
-    }
-    
-    # 해당 연령대가 유효한지 확인
-    if age_group not in age_ranges:
+    # 나이대에 따른 출생연도 범위 설정
+    if age_group == "30대 이하":
+        birth_year_min, birth_year_max = current_year - 39, current_year
+    elif age_group == "40대":
+        birth_year_min, birth_year_max = current_year - 49, current_year - 40
+    elif age_group == "50대":
+        birth_year_min, birth_year_max = current_year - 59, current_year - 50
+    elif age_group == "60대":
+        birth_year_min, birth_year_max = current_year - 69, current_year - 60
+    elif age_group == "70대 이상":
+        birth_year_min, birth_year_max = 0, current_year - 70
+    else:
         return []
     
-    # 출생년도 범위
-    min_birth_year, max_birth_year = age_ranges[age_group]
-    
     # 연령대에 해당하는 의원 목록 조회
-    legislators = []
-    all_legislators = db.query(Legislator).order_by(Legislator.overall_score.desc()).all()
+    legislators = db.query(Legislator).filter(
+        Legislator.bth_date.between(str(birth_year_min), str(birth_year_max))
+    ).order_by(Legislator.overall_score.desc()).all()
     
-    for legislator in all_legislators:
-        # 생년월일에서 출생년도 추출
-        birth_date = legislator.bth_date
-        if not birth_date:
-            continue
-            
-        try:
-            # 생년월일 문자열에서 출생년도 추출 (YYYYMMDD 형식)
-            birth_year = int(birth_date[:4])
-            
-            # 연령대 범위에 포함되는지 확인
-            if min_birth_year <= birth_year <= max_birth_year:
-                legislators.append(legislator)
-        except (ValueError, IndexError):
-            # 생년월일 형식이 잘못된 경우 무시
-            continue
-    
-    # ORM 객체를 dict로 변환
+    # 결과 변환
     result = []
     for legislator in legislators:
-        # 이미지 URL을 썸네일용으로 최적화
+        # 이미지 URL 생성
         profile_image_url = legislator.profile_image_url
         if profile_image_url:
             # 파일명만 추출
             filename = profile_image_url.split('/')[-1]
-            profile_image_url = ImagePathHelper.get_optimized_image_path(filename, "thumb")
+            profile_image_url = ImagePathHelper.get_optimized_image_path(filename, 'thumb')
         else:
             profile_image_url = "/static/images/legislators/default.png"
             
