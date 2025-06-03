@@ -956,24 +956,41 @@ def get_age_average_scores(db: Session) -> Dict[str, float]:
     # 현재 연도 (2025년)
     current_year = 2025
     
-    # 나이대 구분 (30대, 40대, 50대, 60대, 70대 이상)
-    age_groups = {
-        "30대 이하": (current_year - 39, current_year),
-        "40대": (current_year - 49, current_year - 40),
-        "50대": (current_year - 59, current_year - 50),
-        "60대": (current_year - 69, current_year - 60),
-        "70대 이상": (0, current_year - 70)
-    }
-    
     # 나이대별 평균 종합점수 계산
     result = {}
-    for group, (min_year, max_year) in age_groups.items():
-        # 해당 나이대 의원들의 평균 종합점수 계산
-        avg_score = db.query(func.avg(Legislator.overall_score)).filter(
-            Legislator.bth_date.between(str(min_year), str(max_year))
-        ).scalar()
-        
-        result[group] = round(avg_score, 1) if avg_score else 0
+    
+    # 30대 이하: 1986년생 이후 (39세 이하)
+    avg_score = db.query(func.avg(Legislator.overall_score)).filter(
+        func.substr(Legislator.bth_date, 1, 4) >= str(current_year - 39)
+    ).scalar()
+    result["30대 이하"] = round(avg_score, 1) if avg_score else 0
+    
+    # 40대: 1976~1985년생 (40~49세)
+    avg_score = db.query(func.avg(Legislator.overall_score)).filter(
+        func.substr(Legislator.bth_date, 1, 4) >= str(current_year - 49),
+        func.substr(Legislator.bth_date, 1, 4) <= str(current_year - 40)
+    ).scalar()
+    result["40대"] = round(avg_score, 1) if avg_score else 0
+    
+    # 50대: 1966~1975년생 (50~59세)
+    avg_score = db.query(func.avg(Legislator.overall_score)).filter(
+        func.substr(Legislator.bth_date, 1, 4) >= str(current_year - 59),
+        func.substr(Legislator.bth_date, 1, 4) <= str(current_year - 50)
+    ).scalar()
+    result["50대"] = round(avg_score, 1) if avg_score else 0
+    
+    # 60대: 1956~1965년생 (60~69세)
+    avg_score = db.query(func.avg(Legislator.overall_score)).filter(
+        func.substr(Legislator.bth_date, 1, 4) >= str(current_year - 69),
+        func.substr(Legislator.bth_date, 1, 4) <= str(current_year - 60)
+    ).scalar()
+    result["60대"] = round(avg_score, 1) if avg_score else 0
+    
+    # 70대 이상: 1955년생 이전 (70세 이상)
+    avg_score = db.query(func.avg(Legislator.overall_score)).filter(
+        func.substr(Legislator.bth_date, 1, 4) <= str(current_year - 70)
+    ).scalar()
+    result["70대 이상"] = round(avg_score, 1) if avg_score else 0
     
     return result
 
@@ -990,26 +1007,46 @@ def get_age_average_assets(db: Session) -> Dict[str, float]:
     # 현재 연도 (2025년)
     current_year = 2025
     
-    # 나이대 구분 (30대, 40대, 50대, 60대, 70대 이상)
-    age_groups = {
-        "30대 이하": (current_year - 39, current_year),
-        "40대": (current_year - 49, current_year - 40),
-        "50대": (current_year - 59, current_year - 50),
-        "60대": (current_year - 69, current_year - 60),
-        "70대 이상": (0, current_year - 70)
-    }
-    
     # 나이대별 평균 재산 계산
     result = {}
-    for group, (min_year, max_year) in age_groups.items():
-        # 해당 나이대 의원들의 평균 재산 계산
-        avg_asset = db.query(func.avg(Legislator.asset)).filter(
-            Legislator.bth_date.between(str(min_year), str(max_year)),
-            Legislator.hg_nm != '백선희'  # 백선희 의원 제외
-        ).scalar()
-        
-        # 억 단위로 변환
-        result[group] = round(avg_asset / 100000000, 1) if avg_asset else 0
+    
+    # 30대 이하: 1986년생 이후 (39세 이하)
+    avg_asset = db.query(func.avg(Legislator.asset)).filter(
+        func.substr(Legislator.bth_date, 1, 4) >= str(current_year - 39),
+        Legislator.hg_nm != '백선희'  # 백선희 의원 제외
+    ).scalar()
+    result["30대 이하"] = round(avg_asset / 100000000, 1) if avg_asset else 0
+    
+    # 40대: 1976~1985년생 (40~49세)
+    avg_asset = db.query(func.avg(Legislator.asset)).filter(
+        func.substr(Legislator.bth_date, 1, 4) >= str(current_year - 49),
+        func.substr(Legislator.bth_date, 1, 4) <= str(current_year - 40),
+        Legislator.hg_nm != '백선희'  # 백선희 의원 제외
+    ).scalar()
+    result["40대"] = round(avg_asset / 100000000, 1) if avg_asset else 0
+    
+    # 50대: 1966~1975년생 (50~59세)
+    avg_asset = db.query(func.avg(Legislator.asset)).filter(
+        func.substr(Legislator.bth_date, 1, 4) >= str(current_year - 59),
+        func.substr(Legislator.bth_date, 1, 4) <= str(current_year - 50),
+        Legislator.hg_nm != '백선희'  # 백선희 의원 제외
+    ).scalar()
+    result["50대"] = round(avg_asset / 100000000, 1) if avg_asset else 0
+    
+    # 60대: 1956~1965년생 (60~69세)
+    avg_asset = db.query(func.avg(Legislator.asset)).filter(
+        func.substr(Legislator.bth_date, 1, 4) >= str(current_year - 69),
+        func.substr(Legislator.bth_date, 1, 4) <= str(current_year - 60),
+        Legislator.hg_nm != '백선희'  # 백선희 의원 제외
+    ).scalar()
+    result["60대"] = round(avg_asset / 100000000, 1) if avg_asset else 0
+    
+    # 70대 이상: 1955년생 이전 (70세 이상)
+    avg_asset = db.query(func.avg(Legislator.asset)).filter(
+        func.substr(Legislator.bth_date, 1, 4) <= str(current_year - 70),
+        Legislator.hg_nm != '백선희'  # 백선희 의원 제외
+    ).scalar()
+    result["70대 이상"] = round(avg_asset / 100000000, 1) if avg_asset else 0
     
     return result
 
@@ -1027,17 +1064,35 @@ def get_age_stats_summary(db: Session, age_group: str) -> Dict[str, Any]:
     # 현재 연도 (2025년)
     current_year = 2025
     
-    # 나이대에 따른 출생연도 범위 설정
+    # 나이대에 따른 쿼리 필터 설정
     if age_group == "30대 이하":
-        birth_year_min, birth_year_max = current_year - 39, current_year
+        # 1986년생 이후 (39세 이하)
+        base_query = db.query(Legislator).filter(
+            func.substr(Legislator.bth_date, 1, 4) >= str(current_year - 39)
+        )
     elif age_group == "40대":
-        birth_year_min, birth_year_max = current_year - 49, current_year - 40
+        # 1976~1985년생 (40~49세)
+        base_query = db.query(Legislator).filter(
+            func.substr(Legislator.bth_date, 1, 4) >= str(current_year - 49),
+            func.substr(Legislator.bth_date, 1, 4) <= str(current_year - 40)
+        )
     elif age_group == "50대":
-        birth_year_min, birth_year_max = current_year - 59, current_year - 50
+        # 1966~1975년생 (50~59세)
+        base_query = db.query(Legislator).filter(
+            func.substr(Legislator.bth_date, 1, 4) >= str(current_year - 59),
+            func.substr(Legislator.bth_date, 1, 4) <= str(current_year - 50)
+        )
     elif age_group == "60대":
-        birth_year_min, birth_year_max = current_year - 69, current_year - 60
+        # 1956~1965년생 (60~69세)
+        base_query = db.query(Legislator).filter(
+            func.substr(Legislator.bth_date, 1, 4) >= str(current_year - 69),
+            func.substr(Legislator.bth_date, 1, 4) <= str(current_year - 60)
+        )
     elif age_group == "70대 이상":
-        birth_year_min, birth_year_max = 0, current_year - 70
+        # 1955년생 이전 (70세 이상)
+        base_query = db.query(Legislator).filter(
+            func.substr(Legislator.bth_date, 1, 4) <= str(current_year - 70)
+        )
     else:
         return {
             "avg": 0,
@@ -1049,25 +1104,19 @@ def get_age_stats_summary(db: Session, age_group: str) -> Dict[str, Any]:
         }
     
     # 해당 나이대 의원들의 점수 통계
-    stats = db.query(
+    stats = base_query.with_entities(
         func.avg(Legislator.overall_score).label("avg"),
         func.max(Legislator.overall_score).label("max"),
         func.min(Legislator.overall_score).label("min"),
         func.avg(Legislator.asset).label("avg_asset"),
         func.count(Legislator.id).label("count")
-    ).filter(
-        Legislator.bth_date.between(str(birth_year_min), str(birth_year_max))
     ).first()
     
     # 티어 분포 계산
-    tier_query = db.query(
+    tier_query = base_query.with_entities(
         Legislator.tier,
         func.count(Legislator.id).label("count")
-    ).filter(
-        Legislator.bth_date.between(str(birth_year_min), str(birth_year_max))
-    ).group_by(
-        Legislator.tier
-    ).all()
+    ).group_by(Legislator.tier).all()
     
     tier_distribution = {}
     for tier, count in tier_query:
@@ -1099,24 +1148,37 @@ def get_legislators_by_age_group(db: Session, age_group: str) -> List[Dict[str, 
     # 현재 연도 (2025년)
     current_year = 2025
     
-    # 나이대에 따른 출생연도 범위 설정
+    # 나이대에 따른 쿼리 필터 설정
     if age_group == "30대 이하":
-        birth_year_min, birth_year_max = current_year - 39, current_year
+        # 1986년생 이후 (39세 이하)
+        legislators = db.query(Legislator).filter(
+            func.substr(Legislator.bth_date, 1, 4) >= str(current_year - 39)
+        ).order_by(Legislator.overall_score.desc()).all()
     elif age_group == "40대":
-        birth_year_min, birth_year_max = current_year - 49, current_year - 40
+        # 1976~1985년생 (40~49세)
+        legislators = db.query(Legislator).filter(
+            func.substr(Legislator.bth_date, 1, 4) >= str(current_year - 49),
+            func.substr(Legislator.bth_date, 1, 4) <= str(current_year - 40)
+        ).order_by(Legislator.overall_score.desc()).all()
     elif age_group == "50대":
-        birth_year_min, birth_year_max = current_year - 59, current_year - 50
+        # 1966~1975년생 (50~59세)
+        legislators = db.query(Legislator).filter(
+            func.substr(Legislator.bth_date, 1, 4) >= str(current_year - 59),
+            func.substr(Legislator.bth_date, 1, 4) <= str(current_year - 50)
+        ).order_by(Legislator.overall_score.desc()).all()
     elif age_group == "60대":
-        birth_year_min, birth_year_max = current_year - 69, current_year - 60
+        # 1956~1965년생 (60~69세)
+        legislators = db.query(Legislator).filter(
+            func.substr(Legislator.bth_date, 1, 4) >= str(current_year - 69),
+            func.substr(Legislator.bth_date, 1, 4) <= str(current_year - 60)
+        ).order_by(Legislator.overall_score.desc()).all()
     elif age_group == "70대 이상":
-        birth_year_min, birth_year_max = 0, current_year - 70
+        # 1955년생 이전 (70세 이상)
+        legislators = db.query(Legislator).filter(
+            func.substr(Legislator.bth_date, 1, 4) <= str(current_year - 70)
+        ).order_by(Legislator.overall_score.desc()).all()
     else:
         return []
-    
-    # 연령대에 해당하는 의원 목록 조회
-    legislators = db.query(Legislator).filter(
-        Legislator.bth_date.between(str(birth_year_min), str(birth_year_max))
-    ).order_by(Legislator.overall_score.desc()).all()
     
     # 결과 변환
     result = []
