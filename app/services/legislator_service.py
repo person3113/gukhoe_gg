@@ -139,12 +139,8 @@ def filter_legislators(
             # '기타' 카테고리는 세종특별자치시 선거구를 포함
             query = query.filter(Legislator.orig_nm.like('세종특별자치시%'))
         else:
-            # 다른 선거구는 광역시/도 단위로 시작하는 선거구 검색
-            # 공백이 없는 선거구(예: 비례대표)는 정확히 일치해야 함
-            if ' ' in district:
-                query = query.filter(Legislator.orig_nm.like(f'{district}%'))
-            else:
-                query = query.filter(Legislator.orig_nm == district)
+            # 광역시/도 단위로 선택한 경우, 해당 지역으로 시작하는 모든 선거구 포함
+            query = query.filter(Legislator.orig_nm.like(f'{district}%'))
     
     if term:
         query = query.filter(Legislator.reele_gbn_nm == term)
