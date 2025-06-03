@@ -687,7 +687,7 @@
 }
 
 .tier-challenger { background-color: #dc2626; }
-.tier-master { background-color: #f97316; }
+.tier-master { background-color: #ab47bc; }
 .tier-diamond { background-color: #2563eb; }
 .tier-platinum { background-color: #6b7280; }
 
@@ -968,7 +968,7 @@
                         {{ leg.party }}
                     </div>
                     <div class="podium-score">{{ leg.overall_score }}점</div>
-                    <span class="tier-badge tier-master">Master</span>
+                    <span class="tier-badge tier-{{ leg.tier.lower() }}">{{ leg.tier }}</span>
                 </div>
             </div>
             {% endif %}
@@ -991,7 +991,7 @@
                         {{ leg.party }}
                     </div>
                     <div class="podium-score">{{ leg.overall_score }}점</div>
-                    <span class="tier-badge tier-challenger">Challenger</span>
+                    <span class="tier-badge tier-{{ leg.tier.lower() }}">{{ leg.tier }}</span>
                 </div>
             </div>
             {% endif %}
@@ -1011,7 +1011,7 @@
                         {{ leg.party }}
                     </div>
                     <div class="podium-score">{{ leg.overall_score }}점</div>
-                    <span class="tier-badge tier-diamond">Diamond</span>
+                    <span class="tier-badge tier-{{ leg.tier.lower() }}">{{ leg.tier }}</span>
                 </div>
             </div>
             {% endif %}
