@@ -468,13 +468,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
             for (let i = 0; i < rows.length; i++) {
                 const nameCell = rows[i].getElementsByTagName('td')[2]; // 의원명 셀
-                const partyCell = rows[i].getElementsByTagName('td')[3]; // 정당 셀
                 
                 if (nameCell) {
                     const name = nameCell.textContent || nameCell.innerText;
-                    const party = partyCell.textContent || partyCell.innerText;
                     
-                    if (name.toLowerCase().indexOf(searchValue) > -1 || party.toLowerCase().indexOf(searchValue) > -1) {
+                    if (name.toLowerCase().indexOf(searchValue) > -1) {
                         rows[i].style.display = '';
                         visibleCount++; // 보이는 행 카운트 증가
                     } else {
