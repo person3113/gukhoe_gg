@@ -145,7 +145,7 @@
                 <div class="card-body">
                     {% if legislator.profile %}
                         {% for line in legislator.profile.splitlines() %}
-                        <p>{{ line }}</p>
+                        <p>{{ line|replace('&middot;', '·')|safe }}</p>
                         {% endfor %}
                     {% else %}
                         <p class="text-muted">약력 정보가 없습니다.</p>
