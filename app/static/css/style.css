@@ -188,6 +188,27 @@ body {
     color: #000;
 }
 
+.party-reform {
+    background-color: #9370DB;
+}
+
+.party-innovation {
+    background-color: #32CD32;
+}
+
+.party-basic {
+    background-color: #FF69B4;
+}
+
+.party-progressive {
+    background-color: #FF4500;
+}
+
+.party-social-democratic {
+    background-color: #000000;
+    color: white;
+}
+
 .party-other {
     background-color: #888888;
 }
@@ -389,6 +410,12 @@ a:hover {
 .party-tag.party-progressive {
     background: linear-gradient(135deg, #FF4500 0%, #CD5C5C 100%);
     border-color: #8B0000;
+    color: white;
+}
+
+.party-tag.party-social-democratic {
+    background: linear-gradient(135deg, #000000 0%, #2F2F2F 100%);
+    border-color: #000000;
     color: white;
 }
 
