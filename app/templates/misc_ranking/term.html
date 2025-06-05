@@ -291,7 +291,16 @@
                                         </a>
                                     </td>
                                     <td>
-                                        <span class="party-tag {% if legislator.party == '국민의힘' %}party-conservative{% elif legislator.party == '더불어민주당' %}party-democratic{% elif legislator.party == '정의당' %}party-justice{% else %}party-other{% endif %}">
+                                        <span class="party-tag 
+                                        {% if legislator.party == '국민의힘' %}party-conservative
+                                        {% elif legislator.party == '더불어민주당' %}party-democratic
+                                        {% elif legislator.party == '정의당' %}party-justice
+                                        {% elif legislator.party == '개혁신당' %}party-reform
+                                        {% elif legislator.party == '조국혁신당' %}party-innovation
+                                        {% elif legislator.party == '기본소득당' %}party-basic
+                                        {% elif legislator.party == '진보당' %}party-progressive
+                                        {% elif legislator.party == '사회민주당' %}party-social-democratic
+                                        {% else %}party-other{% endif %}">
                                             {{ legislator.party }}
                                         </span>
                                     </td>
